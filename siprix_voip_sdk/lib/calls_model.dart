@@ -5,15 +5,18 @@ import 'package:flutter/services.dart';
 import 'siprix_voip_sdk.dart';
 import 'cdrs_model.dart';
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Call destination
-
+/// Call destination -  contains lists of parameters for making outgoing call
 class CallDestination implements ISiprixData {
   CallDestination(this.toExt, this.fromAccId, this.withVideo);
+  /// Extension (phone number) to dial
   String toExt = "";  
+  /// Id of the account which should send INVITE request
   int    fromAccId = 0;
+  /// Set to true when it should be video call
   bool   withVideo = false;
+  /// How long wait reponse from remote server (value in seconds, by default 40)
   int?   inviteTimeout;
+  /// List of custom headers/values which should be added to INVITE request
   Map<String, String>? xheaders={};
 
   @override
@@ -31,28 +34,40 @@ class CallDestination implements ISiprixData {
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Call state
-
+/// Call state
 enum CallState{
-  dialing,      //Outgoing call just initiated
-  proceeding,   //Outgoing call in progress, received 100Trying or 180Ringing
+  /// Outgoing call just initiated
+  dialing,
+  /// Outgoing call in progress, received 100Trying or 180Ringing
+  proceeding,   
   
-  ringing,      //Incoming call just received
-  rejecting,    //Incoming call rejecting after invoke 'call.reject'
-  accepting,    //Incoming call accepting after invoke 'call.accept'
-  
-  connected,    //Call successfully established, RTP is flowing
-  
-  disconnecting,//Call disconnecting after invoke 'call.bye'
-  
-  holding,      //Call holding (renegotiating RTP stream states)
-  held,         //Call held, RTP is NOT flowing
+  /// Incoming call just received
+  ringing,
 
-  transferring, //Call transferring
+  /// Incoming call rejecting after invoke 'call.reject'
+  rejecting,
+
+  /// Incoming call accepting after invoke 'call.accept'
+  accepting,    
+  
+  /// Call successfully established, RTP is flowing
+  connected,    
+  
+  /// Call disconnecting after invoke 'call.bye'
+  disconnecting,
+  
+  /// Call holding (renegotiating RTP stream states)
+  holding,      
+  /// Call held, RTP is NOT flowing
+  held,         
+
+  /// Call transferring
+  transferring, 
 }
 
+/// Extension which resolves call state to name
 extension CallStateExtension on CallState {
+  ///Returns name of the call state
   String get name {
     switch(this) {
       case CallState.dialing:    return "Dialing";
@@ -69,19 +84,25 @@ extension CallStateExtension on CallState {
   }  
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Hold state
 
+/// Hold state
 enum HoldState {
+  /// No hold, media flows in both directions
   none(SiprixVoipSdk.kHoldStateNone, "None"),
+  /// Call put on hold by local side
   local(SiprixVoipSdk.kHoldStateLocal, "Local"), 
+  /// Call put on hold by remote side
   remote(SiprixVoipSdk.kHoldStateRemote, "Remote"),
+  /// Call put on hold by local and remote side
   localAndRemote(SiprixVoipSdk.kHoldStateLocalAndRemote, "LocalAndRemote");
 
   const HoldState(this.id, this.name);
+  /// Hold state id (one of the [SiprixVoipSdk.kHoldState*])
   final int id;
+  /// Hold state name
   final String name;
 
+  /// Returns hold state which matches specified int value
   static HoldState from(int val) { 
     switch(val) {
       case SiprixVoipSdk.kHoldStateLocal: return HoldState.local;
@@ -93,19 +114,23 @@ enum HoldState {
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////
-//PlayerState
 
-enum PlayerState 
-{
+/// File player State
+enum PlayerState {
+  /// Player started
   started(SiprixVoipSdk.kPlayerStateStarted, "Started"),
+  /// Player stopped
   stoppped(SiprixVoipSdk.kPlayerStateStopped,"Stopped"),
+  /// Player failed
   failed(SiprixVoipSdk.kPlayerStateFailed,   "Failed"); 
 
   const PlayerState(this.id, this.name);
+  /// Plater state id (one of the [SiprixVoipSdk.kPlayerState*])
   final int id;
+  /// Plater state name
   final String name;
 
+  /// Returns player state which matches specified int value
   static PlayerState from(int val) { 
     switch (val) {
       case SiprixVoipSdk.kPlayerStateStarted: return PlayerState.started;      
@@ -115,27 +140,23 @@ enum PlayerState
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//App-based contact name resolver
 
-typedef ResolveContactNameCallback = String Function(String phoneNumber);
-typedef CallSwitchedCallCallback = void Function(int callId);
-typedef NewIncomingCallCallback = void Function();
-
-////////////////////////////////////////////////////////////////////////////////////////
-//Call model
-
+/// Call model (contains call attributes, methods for managing them, handles library events)
 class CallModel extends ChangeNotifier {
   CallModel(this.myCallId, this.accUri, this.remoteExt, this.isIncoming, this.hasSecureMedia, this._hasVideo, [this._logs]) {
     _state = isIncoming ? CallState.ringing : CallState.dialing;
   }
   
+  /// Unique call id assigned by library
   final int myCallId;
-  final String accUri;     //Account URI used to accept/make this call
+  /// Account URI used to accept/make this call
+  final String accUri;
 
-  final String remoteExt;  //Phone number(extension) of remote side
+  /// Phone number(extension) of remote side of this call
+  final String remoteExt;  
   
-  String displName="";     //Contact name
+  /// Contact name (resolved by app)
+  String displName="";
   
   String _receivedDtmf="";
   String _response="";
@@ -145,20 +166,29 @@ class CallModel extends ChangeNotifier {
   Duration _duration = const Duration(seconds: 0);
   bool _hasVideo;
   int _playerId=0;
+  /// Is call incoming
   final bool isIncoming;
+  /// Has call encrypted audio/video
   final bool hasSecureMedia;
   bool _isMicMuted=false;
   bool _isCamMuted=false;
   bool _isRecStarted=false;
   final ILogsModel? _logs;
   
+  /// State of this call
   CallState get state => _state;
+
+  /// Hold state of this call
   HoldState get holdState => _holdState;
 
+  /// Name and extenstion of the remote side of this call
   String get nameAndExt => displName.isEmpty ? remoteExt : "$displName ($remoteExt)";
     
+  /// Duration of this call as string representation
   String get durationStr => formatDuration(_duration);
+  /// List of received DTMFs 
   String get receivedDtmf => _receivedDtmf;
+  /// Status line of the 1xx SIP response received from remote side when app makes outgoing call
   String get response => _response;
     
   bool get isMicMuted => _isMicMuted;
@@ -167,9 +197,12 @@ class CallModel extends ChangeNotifier {
   bool get hasVideo   => _hasVideo;
   int  get playerId   => _playerId;
   
+  /// Returns true if call put on hold by local side
   bool get isLocalHold => (_holdState==HoldState.local)||(_holdState==HoldState.localAndRemote);
+  /// Returns true if call put on hold by remote side
   bool get isRemoteHold => (_holdState==HoldState.remote)||(_holdState==HoldState.localAndRemote);
 
+  /// Format call duration as 'hh:mm:ss' or 'mm:ss'
   static String formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60).abs());
@@ -182,6 +215,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Calculate duration of this call (invoke by 1sec timer)
   void calcDuration() {
     if(_state != CallState.connected) return;
 
@@ -189,11 +223,13 @@ class CallModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Update display name
   void updateDisplName(String newDisplName) {
     displName = newDisplName;
     notifyListeners();
   }
 
+  ///End this call (send BYE request)
   Future<void> bye() async{
     _logs?.print('Ending callId:$myCallId');
     try{
@@ -206,6 +242,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Accept (answer) this call
   Future<void> accept([bool withVideo=true]) async{
     _logs?.print('Accepting callId:$myCallId withVideo:$withVideo');
     try{
@@ -218,6 +255,7 @@ class CallModel extends ChangeNotifier {
     }
   }
   
+  /// Reject this call
   Future<void> reject() async{
     _logs?.print('Rejecting callId:$myCallId');
     try {
@@ -230,6 +268,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Mute microphone for this call
   Future<void> muteMic(bool mute) async{
     _logs?.print('Muting $mute mic of call $myCallId');
 
@@ -243,6 +282,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Mute camera for this call
   Future<void> muteCam(bool mute) async{
     _logs?.print('Muting $mute camera of call $myCallId');
 
@@ -256,6 +296,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Send DTMF (single tone or sequence of tones) to remote side of this call
   Future<void> sendDtmf(String tone) async {
     _logs?.print('Sending dtmf callId:$myCallId tone:$tone');
     try{
@@ -266,6 +307,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Play file to remote side of this call
   Future<void> playFile(String pathToMp3File, {bool loop=false}) async {
     _logs?.print('Starting play file callId:$myCallId $pathToMp3File loop:$loop');
     try {
@@ -276,6 +318,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Stop playing file
   Future<void> stopPlayFile() async {
     if(_playerId==0) return;
     _logs?.print('Stop play file callId:$myCallId playerId:$_playerId');
@@ -287,6 +330,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Record received sound to file (current implementation records to wav file)
   Future<void> recordFile(String pathToMp3File) async {
     _logs?.print('Starting record file callId:$myCallId $pathToMp3File');
     try {
@@ -298,6 +342,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Stop recording
   Future<void> stopRecordFile() async {
     if(!_isRecStarted) return;
     _logs?.print('Stop record file callId:$myCallId');
@@ -310,6 +355,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Toggle hold of this call (hold means stop send/receive audio/video RTP streams)
   Future<void> hold() async {
     _logs?.print('Hold callId:$myCallId');
     try{
@@ -322,6 +368,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Transfer this call to specified extension
   Future<void> transferBlind(String toExt) async {
     _logs?.print('Transfer blind callId:$myCallId to:"$toExt"');
     if(toExt.isEmpty) return;
@@ -336,6 +383,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Transfer this call to specified call
   Future<void> transferAttended(int toCallId) async {
     _logs?.print('Transfer attended callId:$myCallId to callId $toCallId');
     
@@ -350,6 +398,7 @@ class CallModel extends ChangeNotifier {
     }
   }
 
+  /// Get value of the SIP header from last received response (when input param empty returns whole SIP response)
   Future<String?> getSipHeader(String headerName) async {
     try{
       String? hdrVal = await SiprixVoipSdk().getSipHeader(myCallId, headerName);
@@ -361,13 +410,16 @@ class CallModel extends ChangeNotifier {
     }
   }
   
-  //Event handlers
+  /// Event handlers-------------
+ 
+  /// Handles 1xx responses received from remote side 
   void onProceeding(String resp) {
     _state = CallState.proceeding;
     _response = resp;
     notifyListeners();
   }
 
+  /// Handles 2xx responses
   void onConnected(String hdrFrom, String hdrTo, bool withVideo) {
     _state = CallState.connected;
     _startTime = DateTime.now();
@@ -376,6 +428,7 @@ class CallModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Handle received DTMF tone
   void onDtmfReceived(int tone) {
     if(tone == 10) { _receivedDtmf += '*'; }else
     if(tone == 11) { _receivedDtmf += '#'; }
@@ -383,11 +436,13 @@ class CallModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Handle response of the 'transfer' request
   void onTransferred(int statusCode) {
     _state = CallState.connected;
     notifyListeners();
   }
 
+  /// Handle hold state changes
   void onHeld(HoldState holdState) {
     _holdState = holdState;
     _state = (holdState==HoldState.none) ?  CallState.connected : CallState.held;
@@ -398,9 +453,16 @@ class CallModel extends ChangeNotifier {
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Calls list model
+/// Callback function which is raised by model when it need to resolve contact name of the new callreceived
+typedef ResolveContactNameCallback = String Function(String phoneNumber);
+/// Callback function which is raised by model when call switched
+typedef CallSwitchedCallCallback = void Function(int callId);
+/// Callback function which is raised by model when new incomning call 
+typedef NewIncomingCallCallback = void Function();
 
+//--------------------------------------------------------------------------
+
+/// Calls list model (contains list of calls, methods for managing them, handlers of library events)
 class CallsModel extends ChangeNotifier {
   final List<CallModel> _callItems = [];
   final IAccountsModel _accountsModel;
@@ -411,6 +473,7 @@ class CallsModel extends ChangeNotifier {
   int _switchedCallId = kEmptyCallId;
   bool _confModeStarted = false;
     
+  /// Constructor (set event handler)
   CallsModel(this._accountsModel, [this._logs, this._cdrs]) {
     SiprixVoipSdk().callListener = CallStateListener(
       playerStateChanged: onPlayerStateChanged,
@@ -427,27 +490,37 @@ class CallsModel extends ChangeNotifier {
     );
   }
 
+  /// Callback function which is raised by model when it need to resolve contact name of the new call
   ResolveContactNameCallback? onResolveContactName;  
+  /// Callback function which is raised by model when call switched
   CallSwitchedCallCallback? onSwitchedCall;
+  /// Callback function which is raised by model when new incomning call received
   NewIncomingCallCallback? onNewIncomingCall;
 
+  /// Returns true when list of calls is empty
   bool get isEmpty => _callItems.isEmpty;
+  /// Returns number of calls in list
   int get length => _callItems.length;
+  /// Returns call by its index in list
   CallModel operator [](int i) => _callItems[i]; // get
 
-  int get switchedCallId => _switchedCallId;
-  bool get confModeStarted => _confModeStarted;
-  
+  /// Returns id of the switched call (or kEmptyCallId when there are no calls)
+  int get switchedCallId => _switchedCallId;  
+  /// Returns switched call instance (or null when there are no calls)
   CallModel? switchedCall() {
     final int index = _callItems.indexWhere((c) => c.myCallId==_switchedCallId);
     return (index == -1) ? null : _callItems[index];
   }
 
+  /// Returns true if exists call with specified id
   bool contains(int callId) {
     int index = _callItems.indexWhere((c) => c.myCallId==callId);
     return (index != -1);
   }
 
+  /// Returns true if conference mode started
+  bool get confModeStarted => _confModeStarted;
+  /// Returns true if present at least 2 calls in connected state
   bool hasConnectedFewCalls() {
     int counter = 0;
     for(CallModel m in _callItems) {
@@ -456,12 +529,14 @@ class CallsModel extends ChangeNotifier {
     return counter > 1;
   }
 
+  /// Calculate duration of connected calls in list (invoke it by 1sec timer)
   void calcDuration() {
     for(var c in _callItems) {
       c.calcDuration();
     }
   }
 
+  /// Initiate new outgoing call via sending INVITE request (creates new call instance, adds it to list, notifies UI)
   Future<void> invite(CallDestination dest) async{
     _logs?.print('Trying to invite ${dest.toExt} from account:${dest.fromAccId}');
     try {
@@ -488,6 +563,7 @@ class CallsModel extends ChangeNotifier {
     }
   }
 
+  /// Switch to call with specified id (configure mixer to send sound from mic to this call and play received sound of this call to speaker)
   Future<void> switchToCall(int callId) async{
     _logs?.print('Switching mixer to call $callId');
 
@@ -502,6 +578,7 @@ class CallsModel extends ChangeNotifier {
     }
   }
 
+  /// Join all calls to conference (configures mixer to send sound from mic to all calls and play received sound from all calls to speaker)
   Future<void> makeConference() async{
     try {
       if(_confModeStarted){
@@ -522,6 +599,8 @@ class CallsModel extends ChangeNotifier {
   }
 
   //Events handlers
+
+  /// Handle 1xx response event raised by library and route it to matched call instance
   void onProceeding(int callId, String response) {
     _logs?.print('onProceeding callId:$callId response:$response');
 
@@ -529,6 +608,7 @@ class CallsModel extends ChangeNotifier {
     if(index != -1) _callItems[index].onProceeding(response);
   }
 
+  ///Handle incoming call event raised by library (creates new call instance and adds it to list)
   void onIncoming(int callId, int accId, bool withVideo, String hdrFrom, String hdrTo) {
     _logs?.print('onIncoming callId:$callId accId:$accId from:$hdrFrom to:$hdrTo withVideo:$withVideo');
 
@@ -554,11 +634,13 @@ class CallsModel extends ChangeNotifier {
     onNewIncomingCall?.call();
   }
 
+  /// Handle case when call answered by tapping notification button (Android only)
   void onAcceptNotif(int callId, bool withVideo) {
     int index = _callItems.indexWhere((c) => c.myCallId==callId);
     if(index != -1) _callItems[index].accept(withVideo);
   }
 
+   /// Handles 2xx responses raised by library and route it to matched call instance
   void onConnected(int callId, String from, String to, bool withVideo) {
     _logs?.print('onConnected callId:$callId from:$from to:$to withVideo:$withVideo');
     _cdrs?.setConnected(callId, from, to, withVideo);
@@ -567,6 +649,7 @@ class CallsModel extends ChangeNotifier {
     if(index != -1) _callItems[index].onConnected(from, to, withVideo);
   }
 
+  /// Handle teminated call event raised by library (removes call instance from list and notifies UI)
   void onTerminated(int callId, int statusCode) {
     _logs?.print('onTerminated callId:$callId statusCode:$statusCode');
     
@@ -586,6 +669,7 @@ class CallsModel extends ChangeNotifier {
     }
   }
 
+  /// Handle transfer response event raised by library and route it to matched call instance
   void onTransferred(int callId, int statusCode) {
     _logs?.print('onTransferred callId:$callId statusCode:$statusCode');
     
@@ -593,6 +677,7 @@ class CallsModel extends ChangeNotifier {
     if(index != -1) _callItems[index].onTransferred(statusCode);
   }
 
+  /// Handle redirect response event raised by library and route it to matched call instance
   void onRedirected(int origCallId, int relatedCallId, String referTo) {
     _logs?.print('onRedirected origCallId:$origCallId relatedCallId:$relatedCallId to:$referTo');
     
@@ -607,6 +692,7 @@ class CallsModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Handle receive DTMF event raised by library and route it to matched call instance
   void onDtmfReceived(int callId, int tone) {
     _logs?.print('onDtmfReceived callId:$callId tone:$tone');
     
@@ -614,6 +700,7 @@ class CallsModel extends ChangeNotifier {
     if(index != -1) _callItems[index].onDtmfReceived(tone);
   }
 
+  /// Handle hold event raised by library and route it to matched call instance
   void onHeld(int callId, HoldState s) {
     _logs?.print('onHeld callId:$callId $s');
     
@@ -622,6 +709,7 @@ class CallsModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Handle call switched event raised by library
   void onSwitched(int callId) {
     _logs?.print('onSwitched callId:$callId');
     
@@ -631,12 +719,13 @@ class CallsModel extends ChangeNotifier {
       onSwitchedCall?.call(_switchedCallId);
     }
   }
-    
+
+  /// Handle call switched event raised by library
   void onPlayerStateChanged(int playerId, PlayerState state) {
     _logs?.print('onPlayerStateChanged playerId:$playerId $state');
   }
 
-
+  /// Parse SIP uri and return extension
   static String parseExt(String uri) {
     //uri format: "displName" <sip:ext@domain:port>
     final int startIndex = uri.indexOf(':');
@@ -646,6 +735,7 @@ class CallsModel extends ChangeNotifier {
     return (endIndex == -1) ? "" : uri.substring(startIndex+1, endIndex);
   }
 
+  /// Parse SIP uri and return display name
   static String parseDisplayName(String uri) {
     //uri format: "displName" <sip:ext@domain:port>
     final int startIndex = uri.indexOf('"');
@@ -655,6 +745,7 @@ class CallsModel extends ChangeNotifier {
     return (endIndex == -1) ? "" : uri.substring(startIndex+1, endIndex);
   }
 
+  /// Resolve contact name from SIP uri using callback function specified by app
   void _postResolveContactName(CallModel c) {    
     if(onResolveContactName != null) {
       Future.delayed(const Duration(milliseconds: 500), () {

@@ -7,25 +7,41 @@ import 'logs_model.dart';
 import 'siprix_voip_sdk.dart';
 import 'network_model.dart';
 
-////////////////////////////////////////////////////////////////////////////////////////
-//InitData - holds argument for Creating siprix module
 
+/// Holds lists of parameters using for initialization siprix module
 class InitData implements ISiprixData {
+  /// License credentials. When missed - library works in trial mode 
   String? license;
-  String? noCameraImgPath;
+  
+  /// Allows replace default product name string in logs, version
+  String? brandName;
+
+  /// Log level for file output (default level .info)
   LogLevel? logLevelFile;
+
+  /// Log level for IDE output (default level .info)
   LogLevel? logLevelIde;
+
+  /// RTP start port number (not implemented yet, library uses random port numbers)
   int?  rtpStartPort;
+
+  /// Enable verify server's certificate (common option for all accounts, by default disabled)
   bool? tlsVerifyServer;
+
+  /// Enable single call mode when library can make/accept only one call
   bool? singleCallMode;
+
+  /// Use same UDP transport for all accounts (by default enabled)
   bool? shareUdpTransport;
+
+  ///Enable TelStateListener which holds SIP calls when GSM call started (Valid only for Android, disabled by default, requires permission 'READ_PHONE_STATE')
   bool? listenTelState;
 
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> ret = {};
     if(license!=null)           ret['license'] = license;
-    if(noCameraImgPath!=null)   ret['noCameraImgPath'] = noCameraImgPath;    
+    if(brandName!=null)         ret['brandName'] = brandName;    
     if(logLevelFile!=null)      ret['logLevelFile'] = logLevelFile!.id;
     if(logLevelIde!=null)       ret['logLevelIde']  = logLevelIde!.id;
     if(rtpStartPort!=null)      ret['rtpStartPort'] = rtpStartPort;
@@ -38,14 +54,22 @@ class InitData implements ISiprixData {
 }//InitData
 
 
-////////////////////////////////////////////////////////////////////////////////////////
-//VideoData - holds video capturer params
 
+///Holds video capturer params
 class VideoData implements ISiprixData {
+  /// Path to jpg file path to the jpg file with image, which library will send when video device not available.
   String? noCameraImgPath;  
+
+  /// Capturer framerate (by default 15)
   int?  framerateFps;
+
+  /// Encoder bitrate, allows specify video bandwith (by default 600)
   int?  bitrateKbps;
+
+  /// Capturer video frame height (by default 480)
   int?  height;
+
+  /// Capturer video frame width (by default 600)
   int?  width;  
 
   @override
@@ -60,14 +84,16 @@ class VideoData implements ISiprixData {
   }
 }//VideoData
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Codec helper
 
+///Helper class for manipulating account' scodec settings
 class Codec {
   Codec(this.id, {this.selected=true});
+  /// Codec id (one of the [SiprixVoipSdk.kAudioCodec*])
   int  id;
+  /// Is this codec selected
   bool selected;
 
+  /// Returns codec name which matches specified codec id
   static String name(int codecId) {
     switch(codecId) {
       case SiprixVoipSdk.kAudioCodecOpus: return "OPUS/48000";
@@ -87,6 +113,7 @@ class Codec {
     }
   }
 
+  /// Returns list of all available audio/video codecs
   static List<int> availableCodecs(bool audio) {
     if(audio) {
       return [
@@ -111,6 +138,7 @@ class Codec {
     }
   }
 
+  /// Converts list of int id's to list of Codecs. When input list not specified - returns default codecs settings
   static List<Codec> getCodecsList(List<int>? selectedCodecsIds, {bool audio=true}) {
     List<Codec> ret = <Codec>[];
     if(selectedCodecsIds != null) {
@@ -135,6 +163,7 @@ class Codec {
     return ret;
   }
 
+  /// Returns list of int values which matches selected codecs id's
   static List<int> getSelectedCodecsIds(List<Codec> codecsList) {
     List<int> ret = <int>[];
     for(var c in codecsList) {
@@ -143,27 +172,32 @@ class Codec {
     return ret;
   }
 
+  /// Returns true when selected at least one codec in the input list
   static bool validateSel(List<Codec> items) {    
     for(Codec c in items) {
       if(c.selected) return true;
     }
     return false;
   }
-
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//SecureMedia
 
+/// SecureMedia options (audio/video encryption setting)
 enum SecureMedia {
+  /// Secure media disabled
   Disabled(SiprixVoipSdk.kSecureMediaDisabled, "Disabled"),  
+  /// Encryption audio/video using SDES SRTP
   SdesSrtp(SiprixVoipSdk.kSecureMediaSdesSrtp, "SDES SRTP"), 
+  /// Encryption audio/video using DTLS SRTP
   DtlsSrtp(SiprixVoipSdk.kSecureMediaDtlsSrtp, "DTLS SRTP");
 
   const SecureMedia(this.id, this.name);
+  /// Value
   final int id;
+  /// User friendly name of the selected option
   final String name;
 
+  /// Returns enum item which matches int constant
   static SecureMedia from(int val) {
     switch(val) {
       case SiprixVoipSdk.kSecureMediaSdesSrtp: return SecureMedia.SdesSrtp;
@@ -173,50 +207,87 @@ enum SecureMedia {
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Account's registration state
-enum RegState { success, failed, removed, inProgress}
+
+/// Account's registration state
+enum RegState { 
+  /// Registration success
+  success, 
+  /// Registration failed
+  failed,
+  /// Registration removed
+  removed, 
+  /// Registration in progress (request sent, waiting on response)
+  inProgress
+}
 
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Account model
 
+/// Holds properties of SIP Account model
 class AccountModel implements ISiprixData {
   AccountModel({this.sipServer="", this.sipExtension="", this.sipPassword="", this.expireTime});
+  /// Unique account id assigned by library (valid only during current session)
   int      myAccId=0;
+  /// Registration state
   RegState regState=RegState.inProgress;
+  /// Registration text, got from SIP response, received fro, remote server 
   String   regText="";
-
+ 
+  /// SIP Server (domain)
   String  sipServer="";
+  /// SIP Extension (phone number, user)
   String  sipExtension="";
+  /// SIP Password (used for registration on server)
   String  sipPassword="";
 
-  String? sipAuthId;  
+  ///AuthId (used for authentification, in case when server requires specific user name which doesn't match 'sipExtension')
+  String? sipAuthId;
+  /// Proxy server (used when 'sipServer' can't be resolved by DNS or need to override destination, where to send SIP requests)
   String? sipProxy;
+  ///Display name (caller Id) which library sends in the To/From headers. Example: "displayName"<sip:extension@server>
   String? displName;
+  /// UserAgent string which library sends in the 'User-Agent' header of SIP requests. Default value 'siprix'.
   String? userAgent;
-  int?    expireTime;//seconds
+  /// Registration expire time in seconds (how long server has to remember registration of this account). When app set 0 - registration disabled.
+  int?    expireTime;
+  /// SIP transport for this account
   SipTransport? transport = SipTransport.udp;
+  /// Local SIP port number for this account (by default 0 which means using random port)
   int?    port;
+  /// Path to the CA certificate file which library will use for verify server's certificate when establishes TLS connection
   String? tlsCaCertPath;
+  /// Use 'sip' scheme when TLS transport selected (By default 'false', library uses 'sips' scheme)
   bool?   tlsUseSipScheme;
+  /// Use RtcpMux (sending RTP and RTCP packets trough the same port, by default disabled).
   bool?   rtcpMuxEnabled;
+  /// Unique instance ID of this account and device (set value using method 'genAccInstId', see more RFC 5626)
   String? instanceId;
+  /// Path to the ringtone file which library will play when incoming call received
   String? ringTonePath;
 
-  int?    keepAliveTime;//seconds
+  /// Timeout in seconds which library uses for sending short packets (prevents closing ports between device and server, by default 30)
+  int?    keepAliveTime;
+  /// Enable rewrite IP address of Contact header with address got from received SIP response's 'Via/received=...'
   bool?   rewriteContactIp;
+  /// Enables verify SDP of the incoming call. When enabled and received call with SDP which can't be answered library silently rejects this call
   bool?   verifyIncomingCall;
+  /// Use specified proxy for all requests (by default disabled)
   bool?   forceSipProxy;
+  /// Audio/video encryption setting (by default disabled)
   SecureMedia?  secureMedia;
     
+  /// List of custom headers/values which should be added to REGISTER request
   Map<String, String>? xheaders;
+  /// List of custom params which should be added to Contact's URI
   Map<String, String>? xContactUriParams;
+  /// Selected audio codecs (use Codec.getCodecsList/Codec.getSelectedCodecsIds to retrive and set values)
   List<int>? aCodecs;
+  /// Selected video codecs (use Codec.getCodecsList/Codec.getSelectedCodecsIds to retrive and set values)
   List<int>? vCodecs;
 
+  ///URI of this account
   String get uri => '$sipExtension@$sipServer';
 
+  ///Returns true when enabled audio/video encryption
   bool get hasSecureMedia => (secureMedia!=null)&&(secureMedia!=SecureMedia.Disabled);
 
   @override
@@ -251,6 +322,7 @@ class AccountModel implements ISiprixData {
     return ret;
   }
 
+  /// Creates instance of AccountModel with values read from json
   factory AccountModel.fromJson(Map<String, dynamic> jsonMap) {
     AccountModel acc = AccountModel();
     jsonMap.forEach((key, value) {
@@ -285,10 +357,11 @@ class AccountModel implements ISiprixData {
 }//AccountModel
 
 
+/// Model invokes this callback when has changes which should be saved by the app
 typedef SaveChangesCallback = void Function(String jsonStr);
-////////////////////////////////////////////////////////////////////////////////////////
-//Accounts list model
 
+
+/// Accounts list model (contains list of accounts, methods for managing them, handlers of library events)
 class AccountsModel extends ChangeNotifier implements IAccountsModel {
   final List<AccountModel> _accounts = [];
   final ILogsModel? _logs;
@@ -300,11 +373,16 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     );
   }
 
+  /// Returns true when list of accounts is empty
   bool get isEmpty => _accounts.isEmpty;
+  /// Returns number of accounts in list
   int get length => _accounts.length;
+  /// Returns id of the selected account
   int? get selAccountId => (_selAccountIndex==null) ? null : _accounts[_selAccountIndex!].myAccId;
+  /// Returns account by its index in list
   AccountModel operator [](int i) => _accounts[i];
   
+  /// Callback which model invokes when accounts changes should be saved
   SaveChangesCallback? onSaveChanges;
   
   void _selectAccount(int? index) {
@@ -315,11 +393,13 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     }
   }
 
+  ///Set account as selected by its id
   void setSelectedAccountById(int accId) {
     int index = _accounts.indexWhere((a) => a.myAccId==accId);
     if(index != -1) _selectAccount(index);
   }
 
+  ///Set account as selected by its uri
   void setSelectedAccountByUri(String uri) {
     int index = _accounts.indexWhere((a) => a.uri==uri);
     if(index != -1) _selectAccount(index);
@@ -343,6 +423,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     return (index == -1) ? false : _accounts[index].hasSecureMedia;
   }
 
+  ///Add new account
   Future<void> addAccount(AccountModel acc, {bool saveChanges=true}) async {
     _logs?.print('Adding new account: ${acc.uri}');
 
@@ -390,7 +471,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
       if(saveChanges) _raiseSaveChanges();
   }
 
-
+  ///Update existing account with new params values
   Future<void> updateAccount(AccountModel acc) async {
      try {
       int index = _accounts.indexWhere((a) => a.myAccId==acc.myAccId);
@@ -410,6 +491,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     }
   }
   
+  /// Delete account specified by its index in the list
   Future<void> deleteAccount(int index) async {
     try {
       int accId = _accounts[index].myAccId;
@@ -431,6 +513,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     }
   }
 
+  ///Unregister account specified by its index in the list
   Future<void> unregisterAccount(int index) async {
     try {
       //Send register request
@@ -451,6 +534,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     }
   }
 
+  ///Refresh registration of the account specified by its index in the list
   Future<void> registerAccount(int index) async {
     try {
       //Send register request (use 300sec as expire time when account not registered)
@@ -474,6 +558,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     }
   }
 
+  /// Generates unique instance id. Used as value of AccountModel.instanceId
   Future<String?> genAccInstId() {
     return SiprixVoipSdk().genAccInstId();
   }
@@ -486,6 +571,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     }
   }
 
+  ///Handles registtation state changes when received response from server
   void onRegStateChanged(int accId, RegState state, String response) {
     _logs?.print('onRegStateChanged accId:$accId resp:\'$response\' ${state.toString()}');
     int idx = _accounts.indexWhere((account) => (account.myAccId == accId));
@@ -498,7 +584,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     notifyListeners();
   }
 
- 
+  /// Load list of accounts from json string
   Future<bool> loadFromJson(String accJsonStr) async {
     try {
       if(accJsonStr.isEmpty) return false;
@@ -522,6 +608,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     }
   }
 
+  /// Store list of accounts to json string
   String storeToJson() {
     Map<String, dynamic> ret = {
       'selAccIndex': _selAccountIndex,
@@ -531,4 +618,3 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
   }
 
 }//AccountsModel
-

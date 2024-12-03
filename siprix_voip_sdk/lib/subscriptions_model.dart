@@ -5,22 +5,31 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'siprix_voip_sdk.dart';
 
-////////////////////////////////////////////////////////////////////////////////////////
-//SubscriptionModel
 
+/// Holds properties of SIP subscription item
 class SubscriptionModel extends ChangeNotifier implements ISiprixData {
   SubscriptionModel([this.toExt="", this.fromAccId=0, this.mimeSubType="", this.eventType=""]);
+  ///Unique id assigned by library (valid only during current session)
   int mySubscrId=0;
+  ///Remote extension, which will notify us when its state changed
   String toExt="";
+  ///Account id using for sending subscribe request
   int    fromAccId=0;
+  ///Account URI used serialize as the 'fromAccId' valid only during current session and may got new value
+  String accUri="";
+  ///MimeSubType which library will put in the SIP header 'Accept'
   String mimeSubType="";
+  ///Event type which library will put in the SIP header 'Event'
   String eventType="";
+  ///Label using for display this subscription on UI
   String label="";
+  ///Expire time in seconds (how often library will update this subscription)
   int? expireTime;
 
+  ///State of the subscription dialog
   SubscriptionState state = SubscriptionState.created;
+  ///Response received from remote side in the body of SIP NOTIFY request
   String response="";
-  String accUri="";     //Account URI used to accept/make this call
 
   @override
   Map<String, dynamic> toJson() {
@@ -36,6 +45,7 @@ class SubscriptionModel extends ChangeNotifier implements ISiprixData {
     return ret;
   }
 
+  /// Creates instance of SubscriptionModel with values read from json
   SubscriptionModel.fromJson(Map<String, dynamic> jsonMap) {
     jsonMap.forEach((key, value) {
       if((key == 'extension')&&(value is String))   { toExt = value;       } else
@@ -49,30 +59,33 @@ class SubscriptionModel extends ChangeNotifier implements ISiprixData {
   }
 
   // ignore: non_constant_identifier_names
+  ///Create BLF subscription
   factory SubscriptionModel.BLF(String ext, int accId) {
     return SubscriptionModel(ext, accId, "dialog-info+xml", "dialog");
   }
 
   // ignore: non_constant_identifier_names
+  ///Create Presence subscription
   factory SubscriptionModel.Presence(String ext, int accId) {
     return SubscriptionModel(ext, accId, "pidf+xml", "presence");
   }
 
+  ///Handle event raised by library (override on app level)
   void onSubscrStateChanged(SubscriptionState s, String resp) {
     response = resp;
     state = s;
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Subscription state
+
+///Subscription state - using as member of SubscriptionModel
 enum SubscriptionState { created, updated, destroyed}
 
+/// Model invokes this callback when has changes which should be saved by the app
 typedef SaveChangesCallback = void Function(String jsonStr);
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Subscriptions list model
 
+/// Subscriptions list model ((contains list of subscriptions, methods for managing them, handlers of library event)
 class SubscriptionsModel<T extends SubscriptionModel> extends ChangeNotifier {
   final T Function(Map<String, dynamic>) _itemCreateFunc;
   final List<T> _subscriptions = [];  
@@ -85,13 +98,17 @@ class SubscriptionsModel<T extends SubscriptionModel> extends ChangeNotifier {
     );
   }
 
+  /// Returns true when list of subscriptions is empty
   bool get isEmpty => _subscriptions.isEmpty;
+  /// Returns number of subscriptions in list
   int get length => _subscriptions.length;
-
+  /// Returns subscription by its index in list
   T operator [](int i) => _subscriptions[i];
 
+  /// Callback which model invokes when subscriptions changes should be saved
   SaveChangesCallback? onSaveChanges;
 
+  ///Add new subscription
   Future<void> addSubscription(T sub, {bool saveChanges=true}) async {
     _logs?.print('Adding new subscription ext:${sub.toExt} accId:${sub.fromAccId}');
 
@@ -137,6 +154,7 @@ class SubscriptionsModel<T extends SubscriptionModel> extends ChangeNotifier {
     if(saveChanges) _raiseSaveChanges();
   }
   
+  ///Delete subscription by index (sends SUBSCRIBE request with expire=0)
   Future<void> deleteSubscription(int index) async {
     try {
       int subscrId = _subscriptions[index].mySubscrId;
@@ -154,6 +172,7 @@ class SubscriptionsModel<T extends SubscriptionModel> extends ChangeNotifier {
     }
   }
 
+  ///Handle library event raised when received NOTIFY request
   void onSubscrStateChanged(int subscrId, SubscriptionState s, String resp) {
     _logs?.print('onSubscrStateChanged subscrId:$subscrId resp:$resp ${s.toString()}');
     int idx = _subscriptions.indexWhere((sub) => (sub.mySubscrId == subscrId));
@@ -170,10 +189,12 @@ class SubscriptionsModel<T extends SubscriptionModel> extends ChangeNotifier {
     }
   }
 
+  /// Store list of subscriptions to json string
   String storeToJson() {
     return jsonEncode(_subscriptions);
   }
  
+  /// Load list of subscriptions from json string (app should invoke it after loading accounts)
   bool loadFromJson(String subscrJsonStr) {
     try {
       if(subscrJsonStr.isEmpty) return false;

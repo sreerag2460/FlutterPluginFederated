@@ -53,12 +53,15 @@ class MyApp extends StatefulWidget {
   @override
   State<MyApp> createState() => _MyAppState();
 
+  /// Returns ringtone's path saved on device
   static String getRingtonePath() => _ringtonePath;
 
+  /// Write ringtone file from asset to device
   void writeRingtoneAsset() async {
     _ringtonePath = await writeAssetAndGetFilePath("ringtone.mp3");
   }
 
+  /// Write file from assest to device and returns path to it
   static Future<String> writeAssetAndGetFilePath(String assetsFileName) async {
     var homeFolder = await SiprixVoipSdk().homeFolder();
     var filePath = '$homeFolder$assetsFileName';
@@ -74,6 +77,7 @@ class MyApp extends StatefulWidget {
     return filePath;
   }
 
+  ///returns path to folder when app stores recorded files
   static Future<String> getRecFilePath(String recFileName) async {
     var homeFolder = await SiprixVoipSdk().homeFolder();
     var filePath = '$homeFolder$recFileName';

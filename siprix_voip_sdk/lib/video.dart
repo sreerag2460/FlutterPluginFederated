@@ -4,9 +4,8 @@ import 'package:flutter/services.dart';
 
 import 'siprix_voip_sdk.dart';
 
-////////////////////////////////////////////////////////////////////////////////////////
-//RTCVideoValue
 
+/// Contains video frame attributes provided by native plugins
 class RTCVideoValue {
   const RTCVideoValue({
     this.width = 0.0,
@@ -15,7 +14,9 @@ class RTCVideoValue {
     this.hasTexture = false,
   });
   
+  ///Width of the video frame
   final double width;
+  ///Height of the video frame
   final double height;
   final int rotation;
   final bool hasTexture;
@@ -49,26 +50,34 @@ class RTCVideoValue {
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////
-//SiprixVideoRenderer
 
+/// SiprixVideoRenderer - holds texture, created by native plugins, and listening video frame events raised by native plugins
 class SiprixVideoRenderer extends ValueNotifier<RTCVideoValue> {
   SiprixVideoRenderer() : super(RTCVideoValue.empty);
   StreamSubscription<dynamic>? _eventSubscription;  
+  /// Invalid texture id constant
   static const int kInvalidTextureId = -1;
+  /// Invalid call id constant
   static const int kInvalidCallId = -1;
   int _textureId = kInvalidTextureId;
   late final ILogsModel? _logs;
 
+  /// Width of the received video frame
   int get videoWidth => value.width.toInt();
+  /// Height of the received video frame
   int get videoHeight => value.height.toInt();
+  /// AspectRatio of the received video frame
   double get aspectRatio => value.aspectRatio;
   
+  /// TextureId created for rendering
   int  get textureId => _textureId;
+  /// Is created texture
   bool get hasTexture=> _textureId != kInvalidTextureId;
   
+  /// Frame resize handler
   Function? onResize;
-    
+
+  /// Create texture id rendering video of the specifed call
   Future<void> init(int srcCallId, [ILogsModel? logs]) async {
     if (_textureId != kInvalidTextureId) return;
     _logs = logs;
@@ -89,6 +98,7 @@ class SiprixVideoRenderer extends ValueNotifier<RTCVideoValue> {
     }
   }
 
+  /// Use created texture for rendering video of specified call
   void setSourceCall(int callId) async {
     if(callId==kInvalidCallId) return;
 
@@ -111,6 +121,7 @@ class SiprixVideoRenderer extends ValueNotifier<RTCVideoValue> {
     return super.dispose();
   }
 
+  /// Handle video frame changes
   void eventListener(dynamic event) {
     final Map<dynamic, dynamic> map = event;
     switch (map['event']) {
@@ -128,6 +139,7 @@ class SiprixVideoRenderer extends ValueNotifier<RTCVideoValue> {
     }
   }
 
+  /// Handle video frame errors
   void errorListener(Object obj) {
     if (obj is Exception) {
       throw obj;
@@ -137,14 +149,14 @@ class SiprixVideoRenderer extends ValueNotifier<RTCVideoValue> {
 }//SiprixVideoRenderer
 
 
-////////////////////////////////////////////////////////////////////////////////////////
-//SiprixVideoView
-
+/// SiprixVideoView - widget which displays specified renderer
 class SiprixVideoView extends StatelessWidget {
+  /// Constructor
   const SiprixVideoView(this._renderer, {Key? key,}) : super(key: key);
 
   final SiprixVideoRenderer _renderer;
   
+  /// Set texture quality
   final FilterQuality filterQuality = FilterQuality.low; 
 
   @override

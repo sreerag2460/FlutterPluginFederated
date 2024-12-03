@@ -7,14 +7,14 @@ import 'accounts_model.dart';
 import 'network_model.dart';
 import 'calls_model.dart';
 
-////////////////////////////////////////////////////////////////////////////
-//Events arguments
 
+/// Helper class for handling 'onAccountRegState' event raised by library
 class AccRegStateArg {
   int accId=0;
   RegState regState=RegState.success;
   String response="";
 
+  /// Returns true when even's atrributes parsed successfully
   bool fromMap(Map<dynamic, dynamic> argsMap) {
     int argsCounter=0;
     int stateVal=0;
@@ -33,11 +33,13 @@ class AccRegStateArg {
   }
 }
 
+/// Helper class for handling 'onSubscriptionState' event raised by library
 class SubscriptionStateArg {
   int subscrId=0;
   SubscriptionState state=SubscriptionState.created;
   String response="";
 
+  /// Returns true when even's atrributes parsed successfully
   bool fromMap(Map<dynamic, dynamic> argsMap) {
     int argsCounter=0;
     int stateVal=0;
@@ -56,9 +58,11 @@ class SubscriptionStateArg {
   }
 }
 
+/// Helper class for handling 'onNetworkState' event raised by library
 class NetworkStateArg {  
   String name="";
-  NetState state=NetState.lost;
+  NetState state=NetState.lost;  
+  /// Returns true when even's atrributes parsed successfully
   bool fromMap(Map<dynamic, dynamic> argsMap) {    
     int argsCounter=0;
     int stateVal=0; 
@@ -77,10 +81,12 @@ class NetworkStateArg {
   }
 }
 
+/// Helper class for handling 'onPlayerState' event raised by library
 class PlayerStateArg {
   int playerId=0;
   PlayerState state=PlayerState.failed;
 
+  /// Returns true when even's atrributes parsed successfully
   bool fromMap(Map<dynamic, dynamic> argsMap) {    
     int argsCounter=0;    
     argsMap.forEach((key, value) {
@@ -92,7 +98,7 @@ class PlayerStateArg {
   }
 }
 
-
+/// Helper class for handling 'onCallProceeding' event raised by library
 class CallProceedingArg {
   int callId=0;
   String response="";
@@ -106,6 +112,7 @@ class CallProceedingArg {
   }
 }
 
+/// Helper class for handling 'onCallIncoming' event raised by library
 class CallIncomingArg {
   int accId=0;
   int callId=0;
@@ -125,6 +132,7 @@ class CallIncomingArg {
   }
 }
 
+/// Helper class for handling 'onCallAcceptNotif' event raised by library
 class CallAcceptNotifArg {  
   int callId=0;
   bool withVideo = false;
@@ -138,6 +146,7 @@ class CallAcceptNotifArg {
   }
 }
 
+/// Helper class for handling 'onCallConnected' event raised by library
 class CallConnectedArg {  
   int callId=0;
   String from="";
@@ -155,6 +164,7 @@ class CallConnectedArg {
   }
 }
 
+/// Helper class for handling 'onCallTerminated' event raised by library
 class CallTerminatedArg {  
   int callId=0;
   int statusCode=0;
@@ -168,6 +178,7 @@ class CallTerminatedArg {
   }
 }
 
+/// Helper class for handling 'onCallDtmfReceived' event raised by library
 class CallDtmfReceivedArg {  
   int callId=0;
   int tone=0;
@@ -181,6 +192,7 @@ class CallDtmfReceivedArg {
   }
 }
 
+/// Helper class for handling 'onCallTransferred' event raised by library
 class CallTransferredArg {  
   int callId=0;
   int statusCode=0;
@@ -194,6 +206,7 @@ class CallTransferredArg {
   }
 }
 
+/// Helper class for handling 'onCallRedirected' event raised by library
 class CallRedirectedArg {  
   int origCallId=0;
   int relatedCallId=0;
@@ -209,7 +222,7 @@ class CallRedirectedArg {
   }
 }
 
-
+/// Helper class for handling 'onCallHeld' event raised by library
 class CallHeldArg {  
   int callId=0;
   HoldState state = HoldState.none;
@@ -224,7 +237,7 @@ class CallHeldArg {
   }
 }
 
-
+/// Helper class for handling 'onCallSwitched' event raised by library
 class CallSwitchedArg {  
   int callId=0;  
   bool fromMap(Map<dynamic, dynamic> argsMap) {    
@@ -236,7 +249,7 @@ class CallSwitchedArg {
   }
 }
 
-
+/// Helper class for managing audio/video devices
 class MediaDevice {
   MediaDevice(this.index);
   String  name="";
@@ -254,24 +267,28 @@ class MediaDevice {
 }
 
 
-////////////////////////////////////////////////////////////////////////////
-//Listeners
+//-//////////////////////////////////////////////////////////////////////////
+//-Listeners using by models
 
+/// Account state listener, usign by 'AccountsModel'
 class AccStateListener {
   AccStateListener({this.regStateChanged});
   void Function(int accId, RegState state, String response)? regStateChanged;
 }
 
+/// Subscription state listener, usign by 'SubscriptionsModel'
 class SubscrStateListener {
   SubscrStateListener({this.subscrStateChanged});
   void Function(int subscrId, SubscriptionState state, String response)? subscrStateChanged;
 }
 
+/// Network state listener, usign by 'NetworkModel'
 class NetStateListener {
   NetStateListener({this.networkStateChanged});  
   void Function(String name, NetState state)? networkStateChanged;
 }
 
+/// Call state listener, usign by 'CallsModel'
 class CallStateListener {
   CallStateListener({this.proceeding, this.incoming, this.acceptNotif,
     this.connected, this.terminated, this.dtmfReceived,
@@ -291,32 +308,38 @@ class CallStateListener {
   void Function(int callId)? switched;
 }
 
+/// Devices state listener, usign by 'DevicesModel'
 class DevicesStateListener {
   DevicesStateListener({this.devicesChanged});
   void Function()?  devicesChanged;
 }
 
+/// Trial mode listener, usign by 'LogsModel'
 class TrialModeListener {
   TrialModeListener({this.notified});
   void Function()?  notified;
 }
 
+/// Inteface of the log model, allows others models to display debug output
 abstract interface class ILogsModel {
   void print(String s);
 }
 
+/// Inteface of the accounts model, allows others models to resolve accountUri from Id and vice versa
 abstract interface class IAccountsModel {
+  ///Get accountUri by its id
   String getUri(int accId);
+  ///Get accountId by its uri
   int getAccId(String uri);
+  ///Returns true when account with specified id enabled secure media
   bool hasSecureMedia(int accId);
 }
 
 
-//////////////////////////////////////////////////////////////////////////////////////////
-//SiprixVoipSdk - root implementation
 
+/// Root of the library implementation
 class SiprixVoipSdk {
-  //Constants
+  ///Log level constants
   static const int kLogLevelStack   = 0;
   static const int kLogLevelDebug   = 1;
   static const int kLogLevelInfo    = 2;
@@ -324,30 +347,37 @@ class SiprixVoipSdk {
   static const int kLogLevelError   = 4;
   static const int kLogLevelNone    = 5;
 
+  ///Sip transport constants
   static const int kSipTransportUdp = 0;
   static const int kSipTransportTcp = 1;
   static const int kSipTransportTls = 2;
 
+  ///Secure media constants
   static const int kSecureMediaDisabled = 0;
   static const int kSecureMediaSdesSrtp = 1;  
   static const int kSecureMediaDtlsSrtp = 2;
 
+  ///Account registration state constants
   static const int kRegStateSuccess = 0;
   static const int kRegStateFailed  = 1;
   static const int kRegStateRemoved = 2;
 
+  ///Subscription state constants
   static const int kSubscrStateCreated = 0;
   static const int kSubscrStateUpdated = 1;
   static const int kSubscrStateDestroyed = 2;
 
+  ///Network state constants
   static const int kNetStateLost     = 0;
   static const int kNetStateRestored = 1;
   static const int kNetStateSwitched = 2;
 
+  ///Player state constants
   static const int kPlayerStateStarted = 0;
   static const int kPlayerStateStopped = 1;
   static const int kPlayerStateFailed  = 2;
 
+  ///Audio codec constants
   static const int kAudioCodecOpus  = 65;
   static const int kAudioCodecISAC16= 66;
   static const int kAudioCodecISAC32= 67;
@@ -358,27 +388,32 @@ class SiprixVoipSdk {
   static const int kAudioCodecDTMF  = 72;
   static const int kAudioCodecCN    = 73;
 
+  ///Video codec constants
   static const int kVideoCodecH264  = 80;
   static const int kVideoCodecVP8   = 81;
   static const int kVideoCodecVP9   = 82;
   static const int kVideoCodecAV1   = 83;
 
+  ///DTMF method constants
   static const int kDtmfMethodRtp  = 0;
   static const int kDtmfMethodInfo = 1;
 
+  ///Hold state constants
   static const int kHoldStateNone   = 0;
   static const int kHoldStateLocal  = 1;
   static const int kHoldStateRemote = 2;
   static const int kHoldStateLocalAndRemote = 3;
 
+  ///Error codes constants
   static const int eOK = 0;
   static const int eDuplicateAccount=-1021;
   static const int eSubscrAlreadyExist=-1083;
   
+  ///Special callId used for creating renderer of the local camera
   static const int kLocalVideoCallId=0;
  
-  ////////////////////////////////////////////////////////////////////////////////////////
-  //Channel and instance implementation
+  //-//////////////////////////////////////////////////////////////////////////////////////
+  //-Channel and instance implementation
   
   static final SiprixVoipSdk _instance = SiprixVoipSdk._internal();
   static  SiprixVoipSdk get instance => _instance;
@@ -388,29 +423,36 @@ class SiprixVoipSdk {
 
   static SiprixVoipSdkPlatform get _platform => SiprixVoipSdkPlatform.instance;
 
+  ///Network state listener
   NetStateListener? netListener;
+  ///Account state listener
   AccStateListener? accListener;
+  ///Subscription state listener
   SubscrStateListener? subscrListener;
+  ///Call state listener
   CallStateListener? callListener;
+  ///Device changes listener
   DevicesStateListener? dvcListener;
+  ///Trial mode listenerer
   TrialModeListener? trialListener;
   
-  ////////////////////////////////////////////////////////////////////////////////////////
-  //Siprix module methods implementation
 
+  /// Initialize siprix module
   void initialize(InitData iniData, ILogsModel? logsModel) async {    
     _platform.setEventsHandler(_eventsHandler);
+    String brand = iniData.brandName ?? "Siprix";
     try {
       await _platform.initialize(iniData);
       String verStr = await version() ?? "???";
       //int verCode = await versionCode() ?? 0;
-      logsModel?.print('Siprix module initialized successfully');
+      logsModel?.print('$brand module initialized successfully');
       logsModel?.print('Version: $verStr');
     } on PlatformException catch (err) {
-      logsModel?.print('Can\'t initialize Siprix module Err: ${err.code} ${err.message}');
+      logsModel?.print('Can\'t initialize $brand module Err: ${err.code} ${err.message}');
     }
   }
 
+  /// UnInitialize siprix module
   void unInitialize(ILogsModel? logsModel) async {    
     try {
       await _platform.unInitialize();
@@ -420,14 +462,17 @@ class SiprixVoipSdk {
     }
   }
 
+  /// Path to the home folder created by library on device
   Future<String?> homeFolder() async {
     return _platform.homeFolder();
   }
 
+  /// Version (build date) of the library
   Future<String?> version() async {
     return _platform.version();
   }
 
+  /// Version code of the library (similar to Android API level)
   Future<int?> versionCode() async {
     return _platform.versionCode();
   } 
@@ -435,130 +480,158 @@ class SiprixVoipSdk {
   ////////////////////////////////////////////////////////////////////////////////////////
   //Siprix Account methods implementation
 
+  /// Add new account, return unique id assigned by library
   Future<int?> addAccount(AccountModel newAccount) {
     return _platform.addAccount(newAccount);
   }
 
+  /// Update existing account with new attributes
   Future<void> updateAccount(AccountModel updAccount) {
     return _platform.updateAccount(updAccount);
   }
 
+  /// Delete account specified by its id
   Future<void> deleteAccount(int accId) {
     return _platform.deleteAccount(accId);
   }
 
+  /// Unregister account specified by its id
   Future<void> unRegisterAccount(int accId) {
     return _platform.unRegisterAccount(accId);
   }
 
+  /// Reresh registration of account specified by its id
   Future<void> registerAccount(int accId, int expireTime) {
     return _platform.registerAccount(accId, expireTime);
   }
 
+  /// Generate unique instance id. Used as value of AccountModel.instanceId
   Future<String?> genAccInstId() {
     return _platform.genAccInstId();
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////
-  //Siprix Calls methods implementation 
-
+  //-//////////////////////////////////////////////////////////////////////////////////////
+  
+  /// Iniate new outgoing call
   Future<int?> invite(CallDestination destData) {
     return _platform.invite(destData);
   }
 
+  /// Reject incoming call specified by its id, send response with status code
   Future<void> reject(int callId, int statusCode) {
     return _platform.reject(callId, statusCode);
   }
 
+  /// Accept incoming call specified by its id. Use 'withVideo' to set audio-only or video call
   Future<void> accept(int callId, bool withVideo) {
     return _platform.accept(callId, withVideo);
   }
 
+  /// Send DTMF tone to remote side of the specified call
   Future<void> sendDtmf(int callId, String tones, int durationMs, int intertoneGapMs, [int method = kDtmfMethodRtp]) {
     return _platform.sendDtmf(callId, tones, durationMs, intertoneGapMs, method);
   }
 
+  /// End specified call
   Future<void> bye(int callId) {
     return _platform.bye(callId);
   }
 
+  /// Hold/unhold specified call
   Future<void> hold(int callId) {
     return _platform.hold(callId);
   }
 
+  /// Get hold state of the specified call
   Future<int?> getHoldState(int callId) {
     return _platform.getHoldState(callId);
   }
 
+  /// Get value of the SIP header from last received response
   Future<String?> getSipHeader(int callId, String headerName) {
     return _platform.getSipHeader(callId, headerName);
   }
 
+  /// Mute microphone for the specified call
   Future<void> muteMic(int callId, bool mute) {
     return _platform.muteMic(callId, mute);
   }
 
+  /// Mute camera for the specified call
   Future<void> muteCam(int callId, bool mute) {
     return _platform.muteCam(callId, mute);
   }
 
+  /// Play file to remote side of the specified call
   Future<int?> playFile(int callId, String pathToMp3File, bool loop) {
     return _platform.playFile(callId, pathToMp3File, loop);
   }
 
+  /// Stop play file
   Future<void> stopPlayFile(int playerId) {
     return _platform.stopPlayFile(playerId);
   }
     
+  /// Start recording sound, received from remote side to specified file
   Future<void> recordFile(int callId, String pathToMp3File) {
     return _platform.recordFile(callId, pathToMp3File);
   }
 
+  /// Stop recording file
   Future<void> stopRecordFile(int callId) {
     return _platform.stopRecordFile(callId);
   }  
 
+  /// Make blind transfer of the call to specified extension
   Future<void> transferBlind(int callId, String toExt) {
     return _platform.transferBlind(callId, toExt);
   }
   
+  /// Make attended transfer of the call to specified call
   Future<void> transferAttended(int fromCallId, int toCallId) {
     return _platform.transferAttended(fromCallId, toCallId);
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////
-  //Siprix Mixer methods implmentation
+  //-//////////////////////////////////////////////////////////////////////////////////////
+  //-Siprix Mixer methods implmentation
   
+  /// Switch to the selected call (sound from microphone is sending to this call and speaker plays sound received from this call)
   Future<void> switchToCall(int callId) {
     return _platform.switchToCall(callId);
   }
   
+  /// Join all calls to conference (configures mixer gains and handles audio streams in way when each call can hear other calls)
   Future<void> makeConference() {
     return _platform.makeConference();
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////
-  //Siprix subscriptions
+  //-//////////////////////////////////////////////////////////////////////////////////////
+  //-Siprix subscriptions
 
+  /// Add new subscription (sends SUBSCRIBE request)
   Future<int?> addSubscription(SubscriptionModel newSubscription) {
     return _platform.addSubscription(newSubscription);
   }
 
+  /// Delete subscription
   Future<void> deleteSubscription(int subscriptionId) {
     return _platform.deleteSubscription(subscriptionId);
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////
-  //Siprix Devices methods implementation
+  //-//////////////////////////////////////////////////////////////////////////////////////
+  //-Siprix Devices methods implementation
 
+  /// Get number of avialable spekaer devices
   Future<int?> getPlayoutDevices() {
     return _platform.getPlayoutDevices();
   }
 
+  /// Get number of avialable microphone devices
   Future<int?> getRecordingDevices() {
     return _platform.getRecordingDevices();
   }
 
+  /// Get number of camera devices
   Future<int?> getVideoDevices() {
     return _platform.getVideoDevices();
   }
@@ -575,30 +648,37 @@ class SiprixVoipSdk {
     }
   }
   
+  /// Get speaker device details by its index
   Future<MediaDevice?> getPlayoutDevice(int index) async {
     return _getMediaDevice(index, SiprixVoipSdkPlatform.kMethodDvcGetPlayout);     
   }
 
+  /// Get microphone device details by its index
   Future<MediaDevice?> getRecordingDevice(int index) async {
     return _getMediaDevice(index, SiprixVoipSdkPlatform.kMethodDvcGetRecording);     
   }
 
+  /// Get camera details by its index
   Future<MediaDevice?> getVideoDevice(int index) async {
     return _getMediaDevice(index, SiprixVoipSdkPlatform.kMethodDvcGetVideo);     
   }
 
+  /// Set speaker device by its index
   Future<void> setPlayoutDevice(int index) {
     return _platform.setPlayoutDevice(index);
   }
   
+  /// Set microphone device by its index
   Future<void> setRecordingDevice(int index) {
     return _platform.setRecordingDevice(index);
   }
 
+  /// Set camera device by its index
   Future<void> setVideoDevice(int index) {
     return _platform.setVideoDevice(index);
   }
 
+  /// Set video capturer params (common for all calls)
   Future<void> setVideoParams(VideoData videoData) {
     return _platform.setVideoParams(videoData);
   }
@@ -608,38 +688,43 @@ class SiprixVoipSdk {
   //}
   
   
-  ////////////////////////////////////////////////////////////////////////////////////////
-  //Siprix video renderers
+  //-//////////////////////////////////////////////////////////////////////////////////////
+  //-Siprix video renderers
 
+  /// Create video renderer
   Future<int?> videoRendererCreate() {
     return _platform.videoRendererCreate();
   }
 
+  /// Set call whose video should be using as source for rendering
   Future<void> videoRendererSetSourceCall(int textureId, int callId) {
     return _platform.videoRendererSetSourceCall(textureId, callId);
   }
 
-  
+  ///Dispose renderer
   Future<void> videoRendererDispose(int textureId) {
     return _platform.videoRendererDispose(textureId);
   }
   
-  ////////////////////////////////////////////////////////////////////////////////////////
-  //Android specific implementation
+  //-//////////////////////////////////////////////////////////////////////////////////////
+  //-Android specific implementation
 
+  ///Set foreground mode of the android service (android only, allows app to stay in background)
   Future<void>? setForegroundMode(bool enabled) {    
     return _platform.setForegroundMode(enabled);
   }
 
+  ///Returns true if android service is running in foreground mode
   Future<bool?>? isForegroundMode() {
     return _platform.isForegroundMode();
   }
   
   
 
-  ////////////////////////////////////////////////////////////////////////////////////////
-  //Siprix callbacks handler
+  //-//////////////////////////////////////////////////////////////////////////////////////
+  //-Siprix callbacks handler
 
+  ///Handles signals received from event channel
   Future<void> _eventsHandler(MethodCall methodCall) async {
     debugPrint('event ${methodCall.method.toString()} ${methodCall.arguments.toString()}');
     if(methodCall.arguments is! Map<dynamic, dynamic>) {
@@ -648,85 +733,84 @@ class SiprixVoipSdk {
 
     Map<dynamic, dynamic> argsMap = methodCall.arguments as Map<dynamic, dynamic>;
     switch(methodCall.method) {
-      case SiprixVoipSdkPlatform.kOnAccountRegState  : onAccountRegState(argsMap);  break;
-      case SiprixVoipSdkPlatform.kOnSubscriptionState: onSubscriptionState(argsMap);break;
-      case SiprixVoipSdkPlatform.kOnNetworkState     : onNetworkState(argsMap);     break;
-      case SiprixVoipSdkPlatform.kOnPlayerState      : onPlayerState(argsMap);      break;
+      case SiprixVoipSdkPlatform.kOnAccountRegState  : _onAccountRegState(argsMap);  break;
+      case SiprixVoipSdkPlatform.kOnSubscriptionState: _onSubscriptionState(argsMap);break;
+      case SiprixVoipSdkPlatform.kOnNetworkState     : _onNetworkState(argsMap);     break;
+      case SiprixVoipSdkPlatform.kOnPlayerState      : _onPlayerState(argsMap);      break;
 
-      case SiprixVoipSdkPlatform.kOnTrialModeNotif   : onTrialModeNotif(argsMap);   break;
-      case SiprixVoipSdkPlatform.kOnDevicesChanged   : onDevicesChanged(argsMap);   break;
+      case SiprixVoipSdkPlatform.kOnTrialModeNotif   : _onTrialModeNotif(argsMap);   break;
+      case SiprixVoipSdkPlatform.kOnDevicesChanged   : _onDevicesChanged(argsMap);   break;
       
-      case SiprixVoipSdkPlatform.kOnCallIncoming     : onCallIncoming(argsMap);     break;
-      case SiprixVoipSdkPlatform.kOnCallAcceptNotif  : onCallAcceptNotif(argsMap);  break;
-      case SiprixVoipSdkPlatform.kOnCallConnected    : onCallConnected(argsMap);    break;      
-      case SiprixVoipSdkPlatform.kOnCallTerminated   : onCallTerminated(argsMap);   break;
-      case SiprixVoipSdkPlatform.kOnCallProceeding   : onCallProceeding(argsMap);   break;      
-      case SiprixVoipSdkPlatform.kOnCallDtmfReceived : onCallDtmfReceived(argsMap); break;
-      case SiprixVoipSdkPlatform.kOnCallTransferred  : onCallTransferred(argsMap);  break;
-      case SiprixVoipSdkPlatform.kOnCallRedirected   : onCallRedirected(argsMap);   break;
-      case SiprixVoipSdkPlatform.kOnCallSwitched     : onCallSwitched(argsMap);     break;
-      case SiprixVoipSdkPlatform.kOnCallHeld         : onCallHeld(argsMap);         break;
+      case SiprixVoipSdkPlatform.kOnCallIncoming     : _onCallIncoming(argsMap);     break;
+      case SiprixVoipSdkPlatform.kOnCallAcceptNotif  : _onCallAcceptNotif(argsMap);  break;
+      case SiprixVoipSdkPlatform.kOnCallConnected    : _onCallConnected(argsMap);    break;      
+      case SiprixVoipSdkPlatform.kOnCallTerminated   : _onCallTerminated(argsMap);   break;
+      case SiprixVoipSdkPlatform.kOnCallProceeding   : _onCallProceeding(argsMap);   break;      
+      case SiprixVoipSdkPlatform.kOnCallDtmfReceived : _onCallDtmfReceived(argsMap); break;
+      case SiprixVoipSdkPlatform.kOnCallTransferred  : _onCallTransferred(argsMap);  break;
+      case SiprixVoipSdkPlatform.kOnCallRedirected   : _onCallRedirected(argsMap);   break;
+      case SiprixVoipSdkPlatform.kOnCallSwitched     : _onCallSwitched(argsMap);     break;
+      case SiprixVoipSdkPlatform.kOnCallHeld         : _onCallHeld(argsMap);         break;
     }    
   }
 
-  void onAccountRegState(Map<dynamic, dynamic> argsMap) {
+  void _onAccountRegState(Map<dynamic, dynamic> argsMap) {
     AccRegStateArg arg = AccRegStateArg();
     if(arg.fromMap(argsMap)) {
       accListener?.regStateChanged?.call(arg.accId, arg.regState, arg.response);
     }
   }
 
-  void onSubscriptionState(Map<dynamic, dynamic> argsMap) {
+  void _onSubscriptionState(Map<dynamic, dynamic> argsMap) {
     SubscriptionStateArg arg = SubscriptionStateArg();
     if(arg.fromMap(argsMap)) {
       subscrListener?.subscrStateChanged?.call(arg.subscrId, arg.state, arg.response);
     }
   }
 
-  void onNetworkState(Map<dynamic, dynamic> argsMap) {
+  void _onNetworkState(Map<dynamic, dynamic> argsMap) {
     NetworkStateArg arg = NetworkStateArg();
     if(arg.fromMap(argsMap)) {      
       netListener?.networkStateChanged?.call(arg.name, arg.state);
     }    
   }
   
-
-  void onPlayerState(Map<dynamic, dynamic> argsMap) {
+  void _onPlayerState(Map<dynamic, dynamic> argsMap) {
     PlayerStateArg arg =PlayerStateArg();
     if(arg.fromMap(argsMap)) {
       callListener?.playerStateChanged?.call(arg.playerId, arg.state);
     }
   }
   
-  void onCallProceeding(Map<dynamic, dynamic> argsMap) {
+  void _onCallProceeding(Map<dynamic, dynamic> argsMap) {
     CallProceedingArg arg = CallProceedingArg();
     if(arg.fromMap(argsMap)) {
       callListener?.proceeding?.call(arg.callId, arg.response);
     }
   }
 
-  void onCallTerminated(Map<dynamic, dynamic> argsMap) {
+  void _onCallTerminated(Map<dynamic, dynamic> argsMap) {
     CallTerminatedArg arg = CallTerminatedArg();
     if(arg.fromMap(argsMap)) {
       callListener?.terminated?.call(arg.callId, arg.statusCode);
     }
   }
 
-  void onCallConnected(Map<dynamic, dynamic> argsMap) {
+  void _onCallConnected(Map<dynamic, dynamic> argsMap) {
     CallConnectedArg arg = CallConnectedArg();
     if(arg.fromMap(argsMap)) {
       callListener?.connected?.call(arg.callId, arg.from, arg.to, arg.withVideo);
     }
   }
 
-  void onCallIncoming(Map<dynamic, dynamic> argsMap) {
+  void _onCallIncoming(Map<dynamic, dynamic> argsMap) {
     CallIncomingArg arg = CallIncomingArg();
     if(arg.fromMap(argsMap)) {
       callListener?.incoming?.call(arg.callId, arg.accId, arg.withVideo, arg.from, arg.to);
     }
   }
 
-  void onCallAcceptNotif(Map<dynamic, dynamic> argsMap) {
+  void _onCallAcceptNotif(Map<dynamic, dynamic> argsMap) {
     CallAcceptNotifArg arg = CallAcceptNotifArg();
     if(arg.fromMap(argsMap)) {
       callListener?.acceptNotif?.call(arg.callId, arg.withVideo);
@@ -734,49 +818,47 @@ class SiprixVoipSdk {
   }
   
 
-  void onCallDtmfReceived(Map<dynamic, dynamic> argsMap) {
+  void _onCallDtmfReceived(Map<dynamic, dynamic> argsMap) {
     CallDtmfReceivedArg arg = CallDtmfReceivedArg();
     if(arg.fromMap(argsMap)) {
       callListener?.dtmfReceived?.call(arg.callId, arg.tone);
     }
   }
 
-  void onCallTransferred(Map<dynamic, dynamic> argsMap) {
+  void _onCallTransferred(Map<dynamic, dynamic> argsMap) {
     CallTransferredArg arg = CallTransferredArg();
     if(arg.fromMap(argsMap)) {
       callListener?.transferred?.call(arg.callId, arg.statusCode);
     }
   }
 
-  void onCallRedirected(Map<dynamic, dynamic> argsMap) {
+  void _onCallRedirected(Map<dynamic, dynamic> argsMap) {
     CallRedirectedArg arg = CallRedirectedArg();
     if(arg.fromMap(argsMap)) {
       callListener?.redirected?.call(arg.origCallId, arg.relatedCallId, arg.referTo);
     }
   }
 
-  void onCallHeld(Map<dynamic, dynamic> argsMap) {
+  void _onCallHeld(Map<dynamic, dynamic> argsMap) {
     CallHeldArg arg = CallHeldArg();
     if(arg.fromMap(argsMap)) {
       callListener?.held?.call(arg.callId, arg.state);
     }
   }
 
-  void onCallSwitched(Map<dynamic, dynamic> argsMap) {
+  void _onCallSwitched(Map<dynamic, dynamic> argsMap) {
     CallSwitchedArg arg = CallSwitchedArg();
     if(arg.fromMap(argsMap)) {
       callListener?.switched?.call(arg.callId);
     }
   }
 
-  void onDevicesChanged(Map<dynamic, dynamic> argsMap) {
+  void _onDevicesChanged(Map<dynamic, dynamic> argsMap) {
     dvcListener?.devicesChanged?.call();
   }
 
-  void onTrialModeNotif(Map<dynamic, dynamic> argsMap) {
+  void _onTrialModeNotif(Map<dynamic, dynamic> argsMap) {
     trialListener?.notified?.call();
-  }
-
-  
+  }  
   
 }//SiprixVoipSdk

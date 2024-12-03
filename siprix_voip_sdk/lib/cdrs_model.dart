@@ -5,27 +5,36 @@ import 'package:intl/intl.dart';
 
 import 'calls_model.dart';
 
-////////////////////////////////////////////////////////////////////////////////////////
-//CDR = CallDetailRecord
-
-class CdrModel extends ChangeNotifier {    
+/// CDR = CallDetailRecord model (contains attributes of recent call, serializes them to/from json)
+class CdrModel extends ChangeNotifier {
   CdrModel.fromCall(this.myCallId, this.accUri, this.remoteExt, this.incoming, this.hasVideo);
   CdrModel();
   static final _fmt = DateFormat('MMM dd, HH:mm a');
   
+  /// Id if the CallModel, generated this record
   int myCallId=0;
   
-  String displName="";  //Contact name
-  String remoteExt="";  //Phone number(extension) of remote side
-  String accUri="";     //Account URI
+  /// Display name (Contact name if resolved)
+  String displName="";
+  /// Phone number(extension) of remote side
+  String remoteExt="";
+  /// Account URI
+  String accUri="";
   
+  /// Duration of the call
   String duration="";
+  /// Has call video
   bool hasVideo = false;
+  /// Was call incoming
   bool incoming = false;
+  /// Was call connected
   bool connected = false;
+  /// Time when call has been initiated
   String madeAtDate = _fmt.format(DateTime.now());
+  /// Status code assigned when call ended
   int statusCode=0;
 
+ ///Store model to json string
   Map<String, dynamic> toJson() {
     Map<String, dynamic> ret = {
       'accUri' : accUri,
@@ -41,6 +50,7 @@ class CdrModel extends ChangeNotifier {
     return ret;
   }
 
+  /// Creates instance of CdrModel with values read from json
   factory CdrModel.fromJson(Map<String, dynamic> jsonMap) {
     CdrModel cdr = CdrModel();
     jsonMap.forEach((key, value) {      
@@ -59,22 +69,25 @@ class CdrModel extends ChangeNotifier {
 }//CdrModel
 
 
-
+/// Model invokes this callback when has changes which should be saved by the app
 typedef SaveChangesCallback = void Function(String jsonStr);
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Cdrs list model
-
+/// CDRs list model (contains list of recent calls, methods for managing them)
 class CdrsModel extends ChangeNotifier {
   final List<CdrModel> _cdrItems = [];
   static const int kMaxItems=10;
 
+  /// Returns true when list of recent calls is empty
   bool get isEmpty => _cdrItems.isEmpty;
+  /// Returns number of recent calls in list
   int get length => _cdrItems.length;
-  CdrModel operator [](int i) => _cdrItems[i]; // get
+  /// Returns recent call by its index in list
+  CdrModel operator [](int i) => _cdrItems[i];
 
+  /// Callback which model invokes when recent calls changes should be saved
   SaveChangesCallback? onSaveChanges;
 
+  /// Add new recent call item based on specified CallModel
   void add(CallModel c) {
     CdrModel cdr = CdrModel.fromCall(c.myCallId, c.accUri, c.remoteExt, c.isIncoming, c.hasVideo);
     _cdrItems.insert(0, cdr);
@@ -85,6 +98,7 @@ class CdrsModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Set 'connected' and other attributes of the recent call item specified by callId
   void setConnected(int callId, String from, String to, bool hasVideo) {
     int index = _cdrItems.indexWhere((c) => c.myCallId==callId);
     if(index == -1) return;
@@ -95,6 +109,7 @@ class CdrsModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Set 'terminated' and other attributes of the recent call item specified by callId
   void setTerminated(int callId, int statusCode, String displName, String duration) {
     int index = _cdrItems.indexWhere((c) => c.myCallId==callId);
     if(index == -1) return;
@@ -109,6 +124,7 @@ class CdrsModel extends ChangeNotifier {
     _raiseSaveChanges();
   }
 
+  /// Remote recent call item by its index in the list
   void remove(int index) {
     if((index>=0)&&(index < length)) {
       _cdrItems.removeAt(index);
@@ -116,6 +132,7 @@ class CdrsModel extends ChangeNotifier {
     }
   }
 
+  /// Load list of recent calls from json string
   bool loadFromJson(String cdrsJsonStr) {
     try {
       if(cdrsJsonStr.isEmpty) return false;
@@ -143,6 +160,7 @@ class CdrsModel extends ChangeNotifier {
     }
   }
 
+  /// Store list of recent calls to json string
   String storeToJson() {
     return jsonEncode(_cdrItems);
   }

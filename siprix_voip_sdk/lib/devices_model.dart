@@ -5,9 +5,8 @@ import 'package:flutter/services.dart';
 
 import 'siprix_voip_sdk.dart';
 
-////////////////////////////////////////////////////////////////////////////////////////
-//Devices list model
 
+/// Devices list model (contains list of avaialable audio/video devices)
 class DevicesModel extends ChangeNotifier {  
   final List<MediaDevice> _playout = [];
   final List<MediaDevice> _recording = [];
@@ -21,22 +20,31 @@ class DevicesModel extends ChangeNotifier {
   final ILogsModel? _logs;
   bool _loaded = false;
   
+  /// Create instance and set event handler
   DevicesModel([this._logs]) {
     SiprixVoipSdk().dvcListener = DevicesStateListener(
       devicesChanged : onAudioDevicesChanged
     );
   }
 
+  /// List of audio speaker devices
   List<MediaDevice> get playout   => List.unmodifiable(_playout);
+  /// List of audio microphone devices
   List<MediaDevice> get recording => List.unmodifiable(_recording);
+  /// List of audio camera devices
   List<MediaDevice> get video     => List.unmodifiable(_video);
 
+  /// Index of selected speaker device
   int get playoutIndex   => _selPlayoutIndex;
+  /// Index of selected microphone device
   int get recordingIndex => _selRecordingIndex;
+  /// Index of selected camera device
   int get videoIndex     => _selVideoIndex;
 
+  /// Returns true if android service works in foreground mode (Android only!)
   bool get foregroundModeEnabled => _foregroundModeEnabled;
 
+  /// Load list of available devices
   void load() {
     if(_loaded) return;
     _loadPlayoutDevices();
@@ -90,12 +98,14 @@ class DevicesModel extends ChangeNotifier {
     }
   }
 
+  /// Handle event raised by library (notifies that list of audio devices has changed)
   void onAudioDevicesChanged() {
     _logs?.print('onAudioDevicesChanged');
     _loadPlayoutDevices();
     _loadRecordingDevices();
   }
 
+  /// Set current speaker device by its index
   Future<void> setPlayoutDevice(int? index) async{
     if(index==null) return;
     _logs?.print('set playoutDevice - $index');
@@ -109,6 +119,7 @@ class DevicesModel extends ChangeNotifier {
     }
   }
 
+  /// Set current microphone device by its index
   Future<void> setRecordingDevice(int? index) async{
     if(index==null) return;
     _logs?.print('set recordingDevice - $index');
@@ -122,6 +133,7 @@ class DevicesModel extends ChangeNotifier {
     }
   }
 
+  /// Set current camera device by its index
   Future<void> setVideoDevice(int? index) async{
     if(index==null) return;
     _logs?.print('set videoDevice - $index');
@@ -135,6 +147,7 @@ class DevicesModel extends ChangeNotifier {
     }
   }
 
+  /// Set running mode of android service (Android only!)
   Future<void> setForegroundMode(bool enabled) async{
     if(Platform.isAndroid) {
       if(_foregroundModeEnabled==enabled) return;
