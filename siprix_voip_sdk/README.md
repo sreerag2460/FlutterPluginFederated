@@ -12,9 +12,29 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 - Detect network changes and automatically update registration/switch and restore call(s) media
 - Echo cancelation and noise suppression
 - Create BLF/Presence subscriptions and monitor state of remote extension(s)
+- Ready to use models for fast and easy UI creating
 
 ## Usage
 
+### Add dependency in pubspec.yaml
+```
+dependencies:
+  siprix_voip_sdk: ^1.0.0
+  provider: ^6.1.1
+```
+
+### Add imports
+```
+import 'package:provider/provider.dart';
+
+import 'package:siprix_voip_sdk/accounts_model.dart';
+import 'package:siprix_voip_sdk/network_model.dart';
+import 'package:siprix_voip_sdk/calls_model.dart';
+import 'package:siprix_voip_sdk/cdrs_model.dart';
+import 'package:siprix_voip_sdk/devices_model.dart';
+import 'package:siprix_voip_sdk/logs_model.dart';
+import 'package:siprix_voip_sdk/siprix_voip_sdk.dart';
+```
 
 ### Prepare models
 

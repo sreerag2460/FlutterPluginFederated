@@ -1,3 +1,8 @@
+## 1.0.1
+* Fixed podspec file for ios/macos
+* Added new ini property 'brandName'
+* Enabled ability to make attended transfer when call on hold
+
 ## 1.0.0
 
 * Initial release. 

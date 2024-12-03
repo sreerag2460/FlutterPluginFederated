@@ -15,6 +15,25 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 
 ## Usage
 
+### Add dependency in pubspec.yaml
+```
+dependencies:
+  siprix_voip_sdk: ^1.0.0
+  provider: ^6.1.1
+```
+
+### Add imports
+```
+import 'package:provider/provider.dart';
+
+import 'package:siprix_voip_sdk/accounts_model.dart';
+import 'package:siprix_voip_sdk/network_model.dart';
+import 'package:siprix_voip_sdk/calls_model.dart';
+import 'package:siprix_voip_sdk/cdrs_model.dart';
+import 'package:siprix_voip_sdk/devices_model.dart';
+import 'package:siprix_voip_sdk/logs_model.dart';
+import 'package:siprix_voip_sdk/siprix_voip_sdk.dart';
+```
 
 ### Prepare models
 

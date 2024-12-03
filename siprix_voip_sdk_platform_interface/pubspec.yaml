@@ -1,7 +1,7 @@
 name: siprix_voip_sdk_platform_interface
 description: A common platform interface for the Siprix VoIP SDK Flutter plugin.
 homepage: https://siprix-voip.com
-repository: https://github.com/siprix/FlutterPluginFederated
+repository: https://github.com/siprix/FlutterPluginFederated/tree/main/siprix_voip_sdk_platform_interface
 documentation: https://docs.siprix-voip.com
 version: 1.0.0
 
