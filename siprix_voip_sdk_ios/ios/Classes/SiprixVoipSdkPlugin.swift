@@ -1005,7 +1005,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         if(err == kErrorCodeEOK){
             result(subscrData.mySubscrId)
         }else{
-            result(FlutterError(code: String(err), message: _siprixModule.getErrorText(err), details: nil))
+            result(FlutterError(code: String(err), message: _siprixModule.getErrorText(err), details: subscrData.mySubscrId))
         }
     }
 

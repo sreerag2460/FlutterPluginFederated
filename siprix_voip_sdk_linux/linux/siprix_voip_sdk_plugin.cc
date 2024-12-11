@@ -940,11 +940,15 @@ FlMethodResponse* handleSubscriptionAdd(FlValue* args, SiprixVoipSdkPlugin* self
     
   Siprix::SubscriptionId subscrId=0;
   const Siprix::ErrorCode err = Siprix::Subscription_Create(self->module_, subscrData, &subscrId);
-  if(err == Siprix::EOK){
-    g_autoptr(FlValue) res = fl_value_new_int(subscrId);
+  g_autoptr(FlValue) res = fl_value_new_int(subscrId);
+
+  if(err == Siprix::EOK) {
     return FL_METHOD_RESPONSE(fl_method_success_response_new(res));
   }
-  return sendResult(err);
+  else {
+    return FL_METHOD_RESPONSE(fl_method_error_response_new(
+            g_strdup_printf("%d", err), Siprix::GetErrorText(err), res));
+  }
 }
 
 FlMethodResponse* handleSubscriptionDelete(FlValue* args, SiprixVoipSdkPlugin* self)

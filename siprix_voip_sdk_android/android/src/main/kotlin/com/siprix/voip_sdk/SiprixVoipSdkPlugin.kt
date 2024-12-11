@@ -1221,7 +1221,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     if(err == kErrorCodeEOK) {
       result.success(subscrIdArg.value)
     }else{
-      result.error(err.toString(), core!!.getErrText(err), null)
+      result.error(err.toString(), core!!.getErrText(err), subscrIdArg.value)
     }
   }
 

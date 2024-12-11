@@ -820,10 +820,11 @@ void SiprixVoipSdkPlugin::handleSubscriptionAdd(const flutter::EncodableMap& arg
 
   Siprix::SubscriptionId subscrId=0;
   const Siprix::ErrorCode err = Siprix::Subscription_Create(module_, subscrData, &subscrId);
+  auto subscrIdVal = flutter::EncodableValue(static_cast<int32_t>(subscrId));
   if(err == Siprix::EOK){
-    result->Success(flutter::EncodableValue(static_cast<int32_t>(subscrId)));
+    result->Success(subscrIdVal);
   }else{
-    result->Error(std::to_string(err), std::string(Siprix::GetErrorText(err)));
+    result->Error(std::to_string(err), std::string(Siprix::GetErrorText(err)), subscrIdVal);
   }
 }
 
