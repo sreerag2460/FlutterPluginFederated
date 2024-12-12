@@ -1,4 +1,7 @@
-## 1.0.2 * 
+## 1.0.3
+* Added MinimumOSVersion in plist
+
+## 1.0.2
 * Fixed handling case when app adds duplicate subscription.
 * Now library raises error 'ESubscrAlreadyExist' and also returns existing subscrId
 

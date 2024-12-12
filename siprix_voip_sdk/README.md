@@ -19,7 +19,7 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 ### Add dependency in pubspec.yaml
 ```
 dependencies:
-  siprix_voip_sdk: ^1.0.0
+  siprix_voip_sdk: ^1.0.3
   provider: ^6.1.1
 ```
 
@@ -116,6 +116,8 @@ void _addCall() {
 ```
 
 [More detailed integration guide](https://docs.siprix-voip.com/rst/flutter.html#integration-into-flutter-application)
+
+Please contact [support@siprix-voip.com](mailto:support@siprix-voip.com) if you have technical questions.
 
 
 ## Limitations
