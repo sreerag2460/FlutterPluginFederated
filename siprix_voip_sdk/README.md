@@ -1,6 +1,6 @@
 # siprix_voip_sdk
 
-Siprix VoIP SDK plugin for embedding voice and video communication (based on SIP/RTP protocols) into Flutter applications.
+Siprix VoIP SDK plugin for embedding voice-over-IP (VoIP) audio/video calls based on SIP/RTP protocols into Flutter applications.
 It contains native SIP client implementations for 5 platforms: Android, iOS, MacOS, Windows, Linux and unified API for all them. 
 
 Plugin implements ready to use SIP VoIP Client with ability to:
@@ -13,6 +13,7 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 - Echo cancelation and noise suppression
 - Create BLF/Presence subscriptions and monitor state of remote extension(s)
 - Ready to use models for fast and easy UI creating
+- Embedded CallKit support in iOS version of plugin
 
 ## Usage
 
@@ -64,6 +65,7 @@ class _MyAppState extends State<MyApp> {
     InitData iniData = InitData();
     iniData.license  = "...license-credentials...";
     iniData.logLevelFile = LogLevel.info;
+    //iniData.enableCallKit = true; <- uncomment if required
     SiprixVoipSdk().initialize(iniData, logsModel);
   }
 ```

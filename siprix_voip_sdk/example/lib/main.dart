@@ -119,9 +119,11 @@ class _MyAppState extends State<MyApp> {
     iniData.license  = "...license-credentials...";
     iniData.logLevelFile = LogLevel.debug;
     iniData.logLevelIde = LogLevel.info;
+    //- uncomment if required -//
     //iniData.listenTelState = true;
     //iniData.singleCallMode = false;
     //iniData.tlsVerifyServer = false;
+    //iniData.enableCallKit = true;
     SiprixVoipSdk().initialize(iniData, logsModel);
 
     //Set video params (if required)

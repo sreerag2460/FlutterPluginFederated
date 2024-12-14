@@ -37,6 +37,12 @@ class InitData implements ISiprixData {
   ///Enable TelStateListener which holds SIP calls when GSM call started (Valid only for Android, disabled by default, requires permission 'READ_PHONE_STATE')
   bool? listenTelState;
 
+  ///Enable CallKit support for iOS
+  bool? enableCallKit;
+
+  ///Enable include a call in the system’s Recents list after the call ends.
+  bool? enableCallKitRecents;
+
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> ret = {};
@@ -49,6 +55,9 @@ class InitData implements ISiprixData {
     if(singleCallMode!=null)    ret['singleCallMode'] = singleCallMode;
     if(shareUdpTransport!=null) ret['shareUdpTransport'] = shareUdpTransport;
     if(listenTelState!=null)    ret['listenTelState'] = listenTelState;
+    if(enableCallKit!=null)     ret['enableCallKit'] = enableCallKit;
+    if(enableCallKitRecents!=null) ret['enableCallKitRecents'] = enableCallKitRecents;
+    
     return ret;
   }
 }//InitData

@@ -1,3 +1,7 @@
+## 1.0.4
+* Added CallKit support to iOS (library automatically manages it)
+* Fixed logs flooding with UDP transport error
+
 ## 1.0.3
 * Added MinimumOSVersion in plist
 
