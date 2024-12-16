@@ -168,7 +168,7 @@ abstract class SiprixVoipSdkPlatform extends PlatformInterface {
   }
 
   Future<void> updateAccount(ISiprixData updAccount) {    
-    return _methodChannel.invokeMethod<void>(kMethodAccountUpdate, updAccount.toJson);
+    return _methodChannel.invokeMethod<void>(kMethodAccountUpdate, updAccount.toJson());
   }
 
   Future<void> deleteAccount(int accId) {
