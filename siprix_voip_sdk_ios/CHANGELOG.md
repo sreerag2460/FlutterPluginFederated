@@ -1,3 +1,6 @@
+## 1.0.6
+* Fixed crash when app restored from background
+
 ## 1.0.5
 * Added ability to re-create transports when app become active after long time in background
 
