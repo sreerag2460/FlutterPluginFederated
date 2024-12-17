@@ -1,3 +1,7 @@
+## 1.0.5
+* iOS: Added ability to re-create transports when app become active after long time in background
+* Fixed wrong argument of method 'updateAccount' in 'platform_interface'
+
 ## 1.0.4
 * Added CallKit support to iOS (library automatically manages it)
 * Fixed logs flooding with UDP transport error
