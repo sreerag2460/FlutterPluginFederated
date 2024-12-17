@@ -1,3 +1,6 @@
+## 1.0.5
+* Added ability to re-create transports when app become active after long time in background
+
 ## 1.0.4
 * Added CallKit support to iOS (library automatically manages it)
 * Fixed logs flooding with UDP transport error
