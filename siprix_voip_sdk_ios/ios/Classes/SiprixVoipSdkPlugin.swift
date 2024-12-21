@@ -531,9 +531,9 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
   }//handle
         
   deinit {
-      if (_initialized) {
-          _siprixModule.unInitialize()
-      }
+      //if (_initialized) {//Let app to decide when uninit required
+      //    _siprixModule.unInitialize()
+      //}
   }
 
   func handleModuleInitialize(_ args : ArgsMap, result: @escaping FlutterResult) {
