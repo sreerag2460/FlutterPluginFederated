@@ -1,3 +1,7 @@
+## 1.0.7
+* Few more fixes related to handle networks switching and restore registration when app becomes active; 
+* Don't unregister account(s) when app stopped by swiping out
+
 ## 1.0.6
 * Fixed crash when app restored from background
 
