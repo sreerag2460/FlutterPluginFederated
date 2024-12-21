@@ -61,7 +61,7 @@ class CdrModel extends ChangeNotifier {
       if((key == 'incoming')&&(value is bool))     { cdr.incoming  = value; } else
       if((key == 'connected')&&(value is bool))    { cdr.connected = value; } else 
       if((key == 'duration')&&(value is String))   { cdr.duration  = value; } else
-      if((key == 'madeAtDate')&&(value is String)) { cdr.madeAtDate= value; }
+      if((key == 'madeAt')&&(value is String))     { cdr.madeAtDate= value; }
     });    
     return cdr;
   }
