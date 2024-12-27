@@ -1,3 +1,6 @@
+## 1.0.4
+* Fixed potential crash when app switched between networks 
+
 ## 1.0.3
 * Added ability to handle AirPlaneMode ON/OFF
 * Fixes related to handle networks switching; 
