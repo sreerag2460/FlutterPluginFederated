@@ -2,6 +2,7 @@ import 'package:siprix_voip_sdk_platform_interface/siprix_voip_sdk_platform_inte
 import 'package:flutter/services.dart'; 
 import 'package:flutter/material.dart';
 
+import 'dart:math';
 import 'dart:convert';
 import 'logs_model.dart';
 import 'siprix_voip_sdk.dart';
@@ -437,6 +438,8 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     _logs?.print('Adding new account: ${acc.uri}');
 
     try {
+      _generateRandomLocalPort(acc);
+
       acc.myAccId  = await SiprixVoipSdk().addAccount(acc) ?? 0;
       acc.regState = (acc.expireTime==0) ? RegState.removed : RegState.inProgress;
       acc.regText = (acc.expireTime==0) ? "Removed" : "In progress...";
@@ -478,6 +481,12 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
 
       _logs?.print('Added successfully with id: ${acc.myAccId}');
       if(saveChanges) _raiseSaveChanges();
+  }
+
+  void _generateRandomLocalPort(AccountModel acc) {
+    if((acc.port==null)||(acc.port==0)) {
+      acc.port = Random().nextInt(65535-1024) + 1024;
+    }
   }
 
   ///Update existing account with new params values
