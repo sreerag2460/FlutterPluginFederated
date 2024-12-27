@@ -1,3 +1,7 @@
+## 1.0.8
+* Android, iOS: Fixed potential crash when app switched between networks and updates registration 
+* Generate random port number on plugin level when adding new account
+
 ## 1.0.7
 * Android: Added ability to handle AirPlaneMode ON/OFF; Fixes related to handle networks switching; 
 * iOS: Fixes related to handle networks switching and restore registration when app becomes active; 
