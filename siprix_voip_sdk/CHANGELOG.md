@@ -1,3 +1,10 @@
+## 1.0.9
+* iOS: Updated TLS transport implementation (use TLS1.3 by default, ability to use also 1.2 and 1.0)
+* iOS: Improved ability to detect transports lose/switch and automatically restore registration
+* iOS: Added more detailed log output for some cases
+* iOS: Added CallKit icon
+* Android: Removed foreground service permissions
+
 ## 1.0.8
 * Android, iOS: Fixed potential crash when app switched between networks and updates registration 
 * Generate random port number on plugin level when adding new account
