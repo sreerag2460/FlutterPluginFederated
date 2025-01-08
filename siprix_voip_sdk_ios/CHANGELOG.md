@@ -1,3 +1,8 @@
+## 1.0.9
+* Updated TLS transport implementation (use TLS1.3 by default, ability to use also 1.2 and 1.0)
+* Improved ability to detect lost/switched network connections and automatically restore registration
+* Added more detailed log output for some cases
+
 ## 1.0.8
 * Fixed potential crash when app switched between networks and updates registration 
 
