@@ -1,3 +1,7 @@
+## 1.0.5
+* Send call incoming/accepts events to the app only after sync accounts
+  (happens when activity destroyed, but service continues running and received new call)
+
 ## 1.0.4
 * Fixed potential crash when app switched between networks 
 

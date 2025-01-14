@@ -47,6 +47,7 @@ class CallNotifService : Service(), ISiprixServiceListener {
     private var appAcceptBtnLabel_: String = "Accept call"
     private var appNameLabel_: String = "AppName"
     private var appIconId_: Int = 0
+    private var requestCode_: Int = 1;
 
     inner class LocalBinder : Binder() {
         val service: CallNotifService
@@ -148,8 +149,8 @@ class CallNotifService : Service(), ISiprixServiceListener {
         activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         activityIntent.putExtras(bundle)
         return PendingIntent.getActivity(
-            this, 1,
-            activityIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            this, requestCode_++, activityIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 
@@ -158,8 +159,8 @@ class CallNotifService : Service(), ISiprixServiceListener {
         srvIntent.setClassName(this, CallNotifService::class.java.name)
         srvIntent.putExtras(bundle)
         return PendingIntent.getService(
-            this, 1,
-            srvIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            this, requestCode_++, srvIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 
@@ -187,6 +188,7 @@ class CallNotifService : Service(), ISiprixServiceListener {
         callId: Int, accId: Int,
         withVideo: Boolean, hdrFrom: String?, hdrTo: String?
     ) {
+        Log.d(TAG, "displayIncomingCallNotification " + callId)
         val bundle : Bundle = Bundle()
         bundle.putInt(kExtraCallId, callId)
         bundle.putInt(kExtraAccId, accId)
@@ -298,6 +300,7 @@ class CallNotifService : Service(), ISiprixServiceListener {
         callId: Int, accId: Int, withVideo: Boolean,
         hdrFrom: String, hdrTo: String
     ) {
+        Log.i(TAG, "onCallIncoming "+callId)
         if (!isAppInForeground) {
             displayIncomingCallNotification(callId, accId, withVideo, hdrFrom, hdrTo)
         }
@@ -361,6 +364,7 @@ class CallNotifService : Service(), ISiprixServiceListener {
         //Created - when activity started
         //Destroyed - when service destroyed
         var core: SiprixCore? = null
+        var syncAccountsCount: Int = 0
     }
 }
 

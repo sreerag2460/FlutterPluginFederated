@@ -155,6 +155,7 @@ const val kFrom      = "from"
 const val kTo        = "to"
 
 const val kErrorCodeEOK = 0
+const val kErrorDuplicateAccount = -1021
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //EventListener
@@ -520,6 +521,9 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   private var bgService: CallNotifService? = null
   private var serviceBound = false
 
+  private var syncAccountsCount = 0
+  private var pendingIntents : MutableList<Intent> = mutableListOf()
+
   private val renderAdapters = HashMap<Long, FlutterRendererAdapter>()
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -541,6 +545,10 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     //Create instance when hasn't created yet
     if (CallNotifService.core == null) {
       CallNotifService.core = SiprixCore(flutterPluginBinding.applicationContext)
+      Log.i(TAG, "SiprixCore created")
+    }else{
+      syncAccountsCount = CallNotifService.syncAccountsCount//Actual count of existing accounts
+      Log.i(TAG, "SiprixCore already exist")
     }
     core = CallNotifService.core
     core?.setModelListener(eventListener)
@@ -606,7 +614,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   }
 
   private fun createMethodChannel(messenger: BinaryMessenger) {
-    Log.w(TAG, "createMethodChannel " + this.hashCode())
+    Log.w(TAG, "createMethodChannel " + this.hashCode() + " channel:" + channel)
     channel = MethodChannel(messenger, kChannelName)
     channel?.setMethodCallHandler(this)
   }
@@ -618,6 +626,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       bgService = binder.service
       serviceBound = true
       if(activity!=null) {
+        Log.i(TAG, "onServiceConnected")
         bgService?.setActivityClassName(activity!!.javaClass.name) //!!!
 
         raiseIncomingCallEvent(activity!!.intent)
@@ -627,6 +636,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
     // Called when the connection with the service disconnects unexpectedly.
     override fun onServiceDisconnected(className: ComponentName) {
+      Log.i(TAG, "onServiceDisconnected")
       serviceBound = false
       bgService = null
     }
@@ -879,8 +889,10 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val err = core!!.accountAdd(accData, accIdArg)
     if(err == kErrorCodeEOK){
       result.success(accIdArg.value)
+      CallNotifService.syncAccountsCount += 1
     }else{
       result.error(err.toString(), core!!.getErrText(err), accIdArg.value)
+      syncAccountsWithApp(err)
     }
   }
 
@@ -925,6 +937,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     if(accId != null) {
       val err = core!!.accountDelete(accId)
       sendResult(err, result)
+      CallNotifService.syncAccountsCount -= 1
     }else{
       sendBadArguments(result)
     }
@@ -1431,27 +1444,53 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
   override fun onNewIntent(intent: Intent): Boolean {
     //Raised when activity exist, but in background
+    Log.i(TAG, "onNewIntent action:" + intent.action)
     bgService?.handleIncomingCallIntent(intent)
     return raiseIncomingCallEvent(intent)
   }
 
   private fun raiseIncomingCallEvent(intent: Intent):Boolean {
-    val args = intent.extras
-    val callId = args?.getInt(CallNotifService.kExtraCallId)
-    val accId = args?.getInt(CallNotifService.kExtraAccId)
-    val video = args?.getBoolean(CallNotifService.kExtraWithVideo)
-    val from = args?.getString(CallNotifService.kExtraHdrFrom)
-    val to = args?.getString(CallNotifService.kExtraHdrTo)
+    Log.i(TAG, "raiseIncomingCallEvent action:" + intent.action + " extras:" + intent.extras)
 
-    if((callId != null)&&(accId != null)&&(video != null)) {
-      eventListener.onCallIncoming(callId, accId, video, from, to)
+    //Skip intent if extra is null or action not expected
+    val isCallIncomingAction = (CallNotifService.kActionIncomingCall == intent.action)//tap on notification
+    val isCallAcceptAction = (CallNotifService.kActionIncomingCallAccept == intent.action)//tap on 'Accept'
+    if((intent.extras == null) ||
+      (!isCallIncomingAction && !isCallAcceptAction)) {
+      return false
+    }
 
-      if(CallNotifService.kActionIncomingCallAccept == intent.action)
-        eventListener.onCallAcceptNotif(callId, false)
-
+    //Store intent and send later
+    if(syncAccountsCount > 0) {
+      Log.w(TAG, "skip as not sync with app")
+      pendingIntents.add(intent)
       return true
     }
-    return false
+
+    //Send events
+    val args = intent.extras!!
+    val callId = args.getInt(CallNotifService.kExtraCallId)
+    val accId = args.getInt(CallNotifService.kExtraAccId)
+    val video = args.getBoolean(CallNotifService.kExtraWithVideo)
+    val from = args.getString(CallNotifService.kExtraHdrFrom)
+    val to = args.getString(CallNotifService.kExtraHdrTo)
+
+    Log.i(TAG, "raise onCallIncoming " + callId)
+    eventListener.onCallIncoming(callId, accId, video, from, to)
+
+    if(isCallAcceptAction) {
+      Log.i(TAG, "raise onCallAcceptNotif " + callId)
+      eventListener.onCallAcceptNotif(callId, video)
+    }
+    return true
+  }
+
+  private fun syncAccountsWithApp(accAddErr : Int) {
+    if((accAddErr == kErrorDuplicateAccount) && (--syncAccountsCount == 0)) {
+      //Accounts sync with app - send and clear pending intents
+      pendingIntents.forEach{ raiseIncomingCallEvent(it) }
+      pendingIntents.clear()
+    }
   }
 
   private fun setActivityFlags(activity: Activity) {
