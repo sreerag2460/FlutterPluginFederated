@@ -1,3 +1,10 @@
+## 1.0.10
+* iOS: Fixed closing app caused by SIGPIPE signal
+* Android: Send callIncoming/accept events to the app only after sync accounts
+* Android: Restored foreground service permissions in example app manifest 
+  (plugin doesn't add them by default)
+* Added more arguments to the method 'CallsModel::sendDtmf'
+
 ## 1.0.9
 * iOS: Updated TLS transport implementation (use TLS1.3 by default, ability to use also 1.2 and 1.0)
 * iOS: Improved ability to detect transports lose/switch and automatically restore registration
