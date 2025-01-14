@@ -297,10 +297,10 @@ class CallModel extends ChangeNotifier {
   }
 
   /// Send DTMF (single tone or sequence of tones) to remote side of this call
-  Future<void> sendDtmf(String tone) async {
-    _logs?.print('Sending dtmf callId:$myCallId tone:$tone');
+  Future<void> sendDtmf(String tones, [int durationMs=200, int intertoneGapMs=50, int method = SiprixVoipSdk.kDtmfMethodRtp]) async {
+    _logs?.print('Sending dtmf callId:$myCallId tone:$tones');
     try{
-      await SiprixVoipSdk().sendDtmf(myCallId, tone, 200, 50);
+      await SiprixVoipSdk().sendDtmf(myCallId, tones, durationMs, intertoneGapMs, method);
     } on PlatformException catch (err) {
       _logs?.print('Can\'t send dtmf callId:$myCallId Err: ${err.code} ${err.message}');
       return Future.error((err.message==null) ? err.code : err.message!);
