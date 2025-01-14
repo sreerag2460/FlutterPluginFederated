@@ -1,3 +1,6 @@
+## 1.0.10
+* Fixed app closing caused by SIGPIPE signal
+
 ## 1.0.9
 * Updated TLS transport implementation (use TLS1.3 by default, ability to use also 1.2 and 1.0)
 * Improved ability to detect lost/switched network connections and automatically restore registration
