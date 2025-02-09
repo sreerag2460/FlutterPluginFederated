@@ -61,6 +61,8 @@ const char kMethodCallBye[]             = "Call_Bye";
 const char kMethodMixerSwitchToCall[]   = "Mixer_SwitchToCall";
 const char kMethodMixerMakeConference[] = "Mixer_MakeConference";
 
+const char kMethodMessageSend[]         = "Message_Send";
+
 const char kMethodSubscriptionAdd[]     = "Subscription_Add";
 const char kMethodSubscriptionDelete[]  = "Subscription_Delete";
 
@@ -98,6 +100,9 @@ const char kOnCallRedirected[]   = "OnCallRedirected";
 const char kOnCallSwitched[]     = "OnCallSwitched";
 const char kOnCallHeld[]         = "OnCallHeld";
 
+const char kOnMessageSentState[] = "OnMessageSentState";
+const char kOnMessageIncoming[]  = "OnMessageIncoming";
+
 const char kArgVideoTextureId[]  = "videoTextureId";
 
 const char kArgStarted[]    = "started";
@@ -109,25 +114,28 @@ const char kArgDvcIndex[] = "dvcIndex";
 const char kArgDvcName[]  = "dvcName";
 const char kArgDvcGuid[]  = "dvcGuid";
 
-const char kArgCallId[]= "callId";
+const char kArgCallId[]     = "callId";
 const char kArgFromCallId[] = "fromCallId";
 const char kArgToCallId[]   = "toCallId";
 const char kArgToExt[]      = "toExt";
 
-const char kArgAccId[] = "accId";
+const char kArgAccId[]    = "accId";
 const char kArgPlayerId[] = "playerId";
 const char kArgSubscrId[] = "subscrId";
-const char kRegState[] = "regState";
-const char kHoldState[]= "holdState";
+const char kArgMsgId[]    = "msgId";
+const char kRegState[]    = "regState";
+const char kHoldState[]   = "holdState";
 const char kPlayerState[] = "playerState";
 const char kSubscrState[] = "subscrState";
 
-const char kNetState[]    = "netState";
+const char kNetState[] = "netState";
 const char kResponse[] = "response";
+const char kSuccess[]  = "success";
 const char kArgName[]  = "name";
 const char kArgTone[]  = "tone";
 const char kFrom[]     = "from";
 const char kTo[]       = "to";
+const char kBody[]     = "body";
 
 
 class EventHandler : public Siprix::ISiprixEventHandler {
@@ -151,6 +159,9 @@ class EventHandler : public Siprix::ISiprixEventHandler {
   void OnCallRedirected(Siprix::CallId origCallId, Siprix::CallId relatedCallId, const char* referTo)override;
   void OnCallHeld(Siprix::CallId callId, Siprix::HoldState state) override;
   void OnCallSwitched(Siprix::CallId callId) override;
+
+  void OnMessageSentState(Siprix::MessageId messageId, bool success, const char* response) override;
+  void OnMessageIncoming(Siprix::AccountId accId, const char* hdrFrom, const char* body) override;
 
   FlMethodChannel* channel_;
 };
@@ -636,6 +647,10 @@ FlMethodResponse* handleCallInvite(FlValue* args, SiprixVoipSdkPlugin* self)
   if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_BOOL)
       Siprix::Dest_SetVideoCall(destData, fl_value_get_bool(val));
 
+  val = fl_value_lookup_string(args, "displName");
+  if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_STRING)
+      Dest_SetDisplayName(destData, fl_value_get_string(val));
+
   val = fl_value_lookup_string(args, "xheaders");
   if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_MAP) {
       for (size_t i = 0; i < fl_value_get_length(val); ++i) {
@@ -912,6 +927,39 @@ FlMethodResponse* handleMixerMakeConference(FlValue* args, SiprixVoipSdkPlugin* 
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
+//Siprix messages
+
+FlMethodResponse* handleMessageSend(FlValue* args, SiprixVoipSdkPlugin* self)
+{
+  Siprix::MsgData* msgData = Siprix::Msg_GetDefault();
+  
+  FlValue* val = fl_value_lookup_string(args, "extension");
+  if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_STRING)
+      Siprix::Msg_SetExtension(msgData, fl_value_get_string(val));
+
+  val = fl_value_lookup_string(args, kArgAccId);
+  if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_INT)
+      Siprix::Msg_SetAccountId(msgData, fl_value_get_int(val));
+
+  val = fl_value_lookup_string(args, kBody);
+  if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_STRING)
+      Msg_SetBody(msgData, fl_value_get_string(val));
+    
+  Siprix::MessageId msgId = 0;
+  const Siprix::ErrorCode err = Siprix::Message_Send(self->module_, msgData, &msgId);
+  g_autoptr(FlValue) res = fl_value_new_int(msgId);
+
+  if(err == Siprix::EOK) {
+    return FL_METHOD_RESPONSE(fl_method_success_response_new(res));
+  }
+  else {
+    return FL_METHOD_RESPONSE(fl_method_error_response_new(
+            g_strdup_printf("%d", err), Siprix::GetErrorText(err), res));
+  }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////
 //Siprix subscriptions
 
 FlMethodResponse* handleSubscriptionAdd(FlValue* args, SiprixVoipSdkPlugin* self)
@@ -920,7 +968,7 @@ FlMethodResponse* handleSubscriptionAdd(FlValue* args, SiprixVoipSdkPlugin* self
   
   FlValue* val = fl_value_lookup_string(args, "extension");
   if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_STRING)
-      Subscr_SetExtension(subscrData, fl_value_get_string(val));
+      Siprix::Subscr_SetExtension(subscrData, fl_value_get_string(val));
 
   val = fl_value_lookup_string(args, kArgAccId);
   if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_INT)
@@ -1197,6 +1245,8 @@ static void siprix_voip_sdk_plugin_handle_method_call(
 
     if(strcmp(method, kMethodMixerSwitchToCall) == 0)    response = handleMixerSwitchToCall(args, self); else
     if(strcmp(method, kMethodMixerMakeConference) == 0)  response = handleMixerMakeConference(args, self);else
+
+    if(strcmp(method, kMethodMessageSend) == 0)          response = handleMessageSend(args, self); else
     
     if(strcmp(method, kMethodSubscriptionAdd) == 0)      response = handleSubscriptionAdd(args, self); else
     if(strcmp(method, kMethodSubscriptionDelete) == 0)   response = handleSubscriptionDelete(args, self);else
@@ -1398,7 +1448,7 @@ void EventHandler::OnCallSwitched(Siprix::CallId callId)
 
 void EventHandler::OnCallHeld(Siprix::CallId callId, Siprix::HoldState state)
 {
-     g_autoptr(FlValue) args = fl_value_new_map();
+    g_autoptr(FlValue) args = fl_value_new_map();
     fl_value_set_string_take(args, kArgCallId, fl_value_new_int(callId));
     fl_value_set_string_take(args, kHoldState, fl_value_new_int(state));
     
@@ -1406,7 +1456,27 @@ void EventHandler::OnCallHeld(Siprix::CallId callId, Siprix::HoldState state)
         nullptr, nullptr, nullptr);
 }
 
+void EventHandler::OnMessageSentState(Siprix::MessageId messageId, bool success, const char* response)
+{
+    g_autoptr(FlValue) args = fl_value_new_map();
+    fl_value_set_string_take(args, kArgMsgId, fl_value_new_int(messageId));
+    fl_value_set_string_take(args, kSuccess,  fl_value_new_bool(success));
+    fl_value_set_string_take(args, kResponse, fl_value_new_string(response));
 
+    fl_method_channel_invoke_method(channel_, kOnMessageSentState, args,
+        nullptr, nullptr, nullptr);
+}
+
+void EventHandler::OnMessageIncoming(Siprix::AccountId accId, const char* hdrFrom, const char* body)
+{
+    g_autoptr(FlValue) args = fl_value_new_map();
+    fl_value_set_string_take(args, kArgAccId, fl_value_new_int(accId));
+    fl_value_set_string_take(args, kFrom,     fl_value_new_string(hdrFrom));
+    fl_value_set_string_take(args, kBody,     fl_value_new_string(body));
+
+    fl_method_channel_invoke_method(channel_, kOnMessageIncoming, args,
+        nullptr, nullptr, nullptr);
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
