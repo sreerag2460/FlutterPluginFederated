@@ -183,6 +183,7 @@ EXPORT
 @property(nonatomic, retain) NSNumber * _Nullable withVideo;
 @property(nonatomic, retain) NSNumber * _Nullable inviteTimeoutSec;
 @property(nonatomic, retain) NSDictionary * _Nullable xheaders;
+@property(nonatomic, retain) NSString* _Nullable displName;
 @end
 
 EXPORT
@@ -193,6 +194,14 @@ EXPORT
 @property(nonatomic, retain) NSString* _Nonnull mimeSubtype;
 @property(nonatomic, retain) NSString* _Nonnull eventType;
 @property(nonatomic, retain) NSNumber* _Nullable expireTime;
+@end
+
+EXPORT
+@interface SiprixMsgData : NSObject
+@property(nonatomic, assign) int myMessageId;
+@property(nonatomic, assign) int fromAccId;
+@property(nonatomic, retain) NSString* _Nonnull toExt;
+@property(nonatomic, retain) NSString* _Nonnull body;
 @end
 
 EXPORT
@@ -296,6 +305,12 @@ EXPORT
 
 - (void)onCallHeld:(NSInteger)callId
           holdState:(HoldState)holdState;
+
+- (void)onMessageSentState:(NSInteger)messageId success:(BOOL)success
+          response:(NSString * _Nonnull)response;
+- (void)onMessageIncoming:(NSInteger)accId
+          hdrFrom:(NSString * _Nonnull)hdrFrom
+          body:(NSString * _Nonnull)body;
 @end
 
 
@@ -375,6 +390,8 @@ EXPORT
 
 - (int)subscrCreate:(SiprixSubscrData * _Nonnull)subscrData;
 - (int)subscrDestroy:(int)subscrId;
+
+- (int)messageSend:(SiprixMsgData * _Nonnull)msgData;
 
 - (NSString* _Nonnull)getErrorText:(int)errCode;
 - (void)dealloc;
