@@ -102,6 +102,10 @@ class CallNotifService : Service(), ISiprixServiceListener {
             createNotifChannel()
         }
 
+        if(kActionIncomingCallStopRinger == intent.action) {
+            ringer_?.stop()
+        }
+
         return result
     }
 
@@ -218,6 +222,7 @@ class CallNotifService : Service(), ISiprixServiceListener {
             .setStyle(bigTextStyle)
             .addAction(0, appRejectBtnLabel_, pendingRejectCall)
             .addAction(0, appAcceptBtnLabel_, pendingAcceptCall)
+            .setDeleteIntent(getIntentService(kActionIncomingCallStopRinger, bundle))
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(Notification.PRIORITY_MAX)
 
@@ -347,6 +352,7 @@ class CallNotifService : Service(), ISiprixServiceListener {
         const val kActionIncomingCall = "kActionIncomingCall"
         const val kActionIncomingCallAccept = "kActionIncomingCallAccept"
         const val kActionIncomingCallReject = "kActionIncomingCallReject"
+        const val kActionIncomingCallStopRinger = "kActionIncomingCallStopRinger"
 
         const val kExtraCallId   = "kExtraCallId"
         const val kExtraAccId    = "kExtraAccId"

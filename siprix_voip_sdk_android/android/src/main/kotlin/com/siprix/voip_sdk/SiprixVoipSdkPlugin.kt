@@ -5,28 +5,33 @@ package com.siprix.voip_sdk
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.SurfaceTexture
+import android.net.Uri
 import android.os.Build
-import android.os.IBinder
-import android.util.Log
 import android.os.Handler
+import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import android.view.WindowManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.siprix.IniData
 import com.siprix.AccData
 import com.siprix.DestData
-import com.siprix.VideoData
-import com.siprix.SubscrData
+import com.siprix.ISiprixModelListener
+import com.siprix.IniData
+import com.siprix.MsgData
 import com.siprix.SiprixCore
 import com.siprix.SiprixEglBase
-import com.siprix.ISiprixModelListener
+import com.siprix.SubscrData
+import com.siprix.VideoData
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -57,7 +62,7 @@ const val kChannelName                = "siprix_voip_sdk"
 
 const val kMethodModuleInitialize     = "Module_Initialize"
 const val kMethodModuleUnInitialize   = "Module_UnInitialize"
-const val kMethodModuleHomeFolder     = "Module_HomeFolder";
+const val kMethodModuleHomeFolder     = "Module_HomeFolder"
 const val kMethodModuleVersionCode    = "Module_VersionCode"
 const val kMethodModuleVersion        = "Module_Version"
 
@@ -66,14 +71,14 @@ const val kMethodAccountUpdate        = "Account_Update"
 const val kMethodAccountRegister      = "Account_Register"
 const val kMethodAccountUnregister    = "Account_Unregister"
 const val kMethodAccountDelete        = "Account_Delete"
-const val kMethodAccountGenInstId     = "Account_GenInstId";
+const val kMethodAccountGenInstId     = "Account_GenInstId"
 
 const val kMethodCallInvite           = "Call_Invite"
 const val kMethodCallReject           = "Call_Reject"
 const val kMethodCallAccept           = "Call_Accept"
 const val kMethodCallHold             = "Call_Hold"
 const val kMethodCallGetHoldState     = "Call_GetHoldState"
-const val kMethodCallGetSipHeader     = "Call_GetSipHeader";
+const val kMethodCallGetSipHeader     = "Call_GetSipHeader"
 const val kMethodCallMuteMic          = "Call_MuteMic"
 const val kMethodCallMuteCam          = "Call_MuteCam"
 const val kMethodCallSendDtmf         = "Call_SendDtmf"
@@ -87,6 +92,8 @@ const val kMethodCallBye              = "Call_Bye"
 
 const val kMethodMixerSwitchToCall   = "Mixer_SwitchToCall"
 const val kMethodMixerMakeConference = "Mixer_MakeConference"
+
+const val kMethodMessageSend         = "Message_Send"
 
 const val kMethodSubscriptionAdd     = "Subscription_Add"
 const val kMethodSubscriptionDelete  = "Subscription_Delete"
@@ -125,6 +132,9 @@ const val kOnCallRedirected   = "OnCallRedirected"
 const val kOnCallSwitched     = "OnCallSwitched"
 const val kOnCallHeld         = "OnCallHeld"
 
+const val kOnMessageSentState = "OnMessageSentState"
+const val kOnMessageIncoming  = "OnMessageIncoming"
+
 const val kArgVideoTextureId  = "videoTextureId"
 
 const val kArgForeground = "foreground"
@@ -143,16 +153,19 @@ const val kArgToExt      = "toExt"
 const val kArgAccId      = "accId"
 const val kArgPlayerId   = "playerId"
 const val kArgSubscrId   = "subscrId"
+const val kArgMsgId    = "msgId"
 const val kRegState    = "regState"
 const val kHoldState   = "holdState"
 const val kPlayerState = "playerState"
 const val kSubscrState = "subscrState"
 const val kNetState    = "netState"
 const val kResponse    = "response"
+const val kSuccess   = "success"
 const val kArgName   = "name"
 const val kArgTone   = "tone"
 const val kFrom      = "from"
 const val kTo        = "to"
+const val kBody      = "body"
 
 const val kErrorCodeEOK = 0
 const val kErrorDuplicateAccount = -1021
@@ -163,7 +176,7 @@ const val kErrorDuplicateAccount = -1021
 class EventListener: ISiprixModelListener {
   private var channel: MethodChannel? = null
 
-  public fun setMethodChannel(c : MethodChannel?) {
+  fun setMethodChannel(c : MethodChannel?) {
     channel = c
   }
 
@@ -284,8 +297,23 @@ class EventListener: ISiprixModelListener {
     argsMap[kArgCallId] = callId
     channel?.invokeMethod(kOnCallSwitched, argsMap)
   }
+
+  override fun onMessageSentState(messageId: Int, success: Boolean, response: String?) {
+    val argsMap = HashMap<String, Any?> ()
+    argsMap[kArgMsgId] = messageId
+    argsMap[kSuccess] = success
+    argsMap[kResponse] = response
+    channel?.invokeMethod(kOnMessageSentState, argsMap)
 }
 
+  override fun onMessageIncoming(accId: Int, hdrFrom: String?, body: String?) {
+    val argsMap = HashMap<String, Any?> ()
+    argsMap[kArgAccId] = accId
+    argsMap[kFrom] = hdrFrom
+    argsMap[kBody] = body
+    channel?.invokeMethod(kOnMessageIncoming, argsMap)
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /// SurfaceTextureRenderer - Displays the video stream on a Surface.
@@ -502,9 +530,11 @@ class FlutterRendererAdapter(texturesRegistry: TextureRegistry,
 /// SiprixVoipSdkPlugin
 
 class SiprixVoipSdkPlugin: FlutterPlugin,
-  MethodCallHandler, ActivityAware, PluginRegistry.NewIntentListener {
+  MethodCallHandler, ActivityAware, PluginRegistry.NewIntentListener,
+  PluginRegistry.RequestPermissionsResultListener {
 
   companion object {
+    private var permissionRequestCode = 1
     private const val TAG = "SiprixVoipSdkPlugin"
     private var pluginBinding: FlutterPlugin.FlutterPluginBinding? = null
     private var channel : MethodChannel? = null
@@ -569,6 +599,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     Log.i(TAG, "onAttachedToActivity " + this.hashCode())
     activity = binding.activity
     binding.addOnNewIntentListener(this)
+    binding.addRequestPermissionsResultListener(this)
 
     pluginBinding?.binaryMessenger?.let {
       // Reinitialize MethodChannel Forcefully from MainIsolate
@@ -584,9 +615,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       )
     }
 
-    hasMicPermission()
-    hasCamPermission()
-    hasNotifPermission()
+    requestsPermissions()
   }
 
   override fun onDetachedFromActivityForConfigChanges() {
@@ -688,6 +717,8 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
       kMethodMixerSwitchToCall ->   handleMixerSwitchToCall(args, result)
       kMethodMixerMakeConference -> handleMixerMakeConference(args, result)
+
+      kMethodMessageSend ->          handleMessageSend(args, result)
 
       kMethodSubscriptionAdd ->      handleSubscriptionAdd(args, result)
       kMethodSubscriptionDelete ->   handleSubscriptionDelete(args, result)
@@ -951,7 +982,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   //Siprix Calls methods implementation
   
   private fun handleCallInvite(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    if(!hasMicPermission()) {
+    if(!hasPermission(Manifest.permission.RECORD_AUDIO)) {
       result.error("Microphone permission required", "-", null)
       return
     }
@@ -970,6 +1001,9 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
     val withVideo : Boolean? = args[kArgWithVideo] as? Boolean
     if(withVideo != null) { destData.setVideoCall(withVideo); }
+
+    val displName : String? = args["displName"] as? String
+    if(displName != null) { destData.setDisplayName(displName); }
 
     val xheaders: HashMap<String, Any?>? = args["xheaders"] as? HashMap<String, Any?>?
     if(xheaders != null) {
@@ -1002,7 +1036,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   }
   
   private fun handleCallAccept(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    if(!hasMicPermission()) {
+    if(!hasPermission(Manifest.permission.RECORD_AUDIO)) {
       result.error("Microphone permission required", "-", null)
       return
     }
@@ -1208,6 +1242,32 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
+  //Siprix message
+
+  private fun handleMessageSend(args : HashMap<String, Any?>, result: MethodChannel.Result) {
+    //Get arguments from map
+    val msgData = MsgData()
+
+    val toExt : String? = args["extension"] as? String
+    if(toExt != null) { msgData.setExtension(toExt); }
+
+    val fromAccId : Int? = args[kArgAccId] as? Int
+    if(fromAccId != null) { msgData.setAccountId(fromAccId); }
+
+    val body : String? = args[kBody] as? String
+    if(body != null) { msgData.setBody(body); }
+
+    val msgIdArg = SiprixCore.IdOutArg()
+    val err = core!!.messageSend(msgData, msgIdArg)
+    if(err == kErrorCodeEOK) {
+      result.success(msgIdArg.value)
+    }else{
+      result.error(err.toString(), core!!.getErrText(err), null)
+    }
+  }
+
+
+  ////////////////////////////////////////////////////////////////////////////////////////
   //Siprix subscriptions
 
   private fun handleSubscriptionAdd(args : HashMap<String, Any?>, result: MethodChannel.Result) {
@@ -1327,6 +1387,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     result.success("Success")
   }
   private fun handleDvcSetVideo(args : HashMap<String, Any?>, result: MethodChannel.Result) {
+    core!!.dvcSwitchCamera()
     result.success("Success")
   }
 
@@ -1369,7 +1430,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   private fun handleVideoRendererSetSrc(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     val callId = args[kArgCallId] as? Int
     var textureId = args[kArgVideoTextureId] as? Long
-    if(textureId==null) textureId = (args[kArgVideoTextureId] as? Int)?.toLong();
+    if(textureId==null) textureId = (args[kArgVideoTextureId] as? Int)?.toLong()
 
     if((callId == null) || ( textureId == null)) {
       sendBadArguments(result)
@@ -1386,7 +1447,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
   private fun handleVideoRendererDispose(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     var textureId = args[kArgVideoTextureId] as? Long
-    if(textureId==null) textureId = (args[kArgVideoTextureId] as? Int)?.toLong();
+    if(textureId==null) textureId = (args[kArgVideoTextureId] as? Int)?.toLong()
     if(textureId == null) { sendBadArguments(result); return; }
 
     val renderAdapter: FlutterRendererAdapter? = renderAdapters[textureId]
@@ -1414,32 +1475,78 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     result.error( "-", kBadArgumentsError, null)
   }
 
-  private fun hasNotifPermission(): Boolean {
-    return if (Build.VERSION.SDK_INT >= 33) {
-      hasPermission(Manifest.permission.POST_NOTIFICATIONS)
-    }
-    else true
-  }
-
-  private fun hasMicPermission(): Boolean {
-    return hasPermission(Manifest.permission.RECORD_AUDIO)
-  }
-
-  private fun hasCamPermission(): Boolean {
-    return hasPermission(Manifest.permission.CAMERA)
-  }
-
   private fun hasPermission(permission: String): Boolean {
-    if ((activity == null) || ContextCompat.checkSelfPermission(
-        activity!!, permission) == PackageManager.PERMISSION_GRANTED
-    ) {
-      return true
+    return ((activity == null) ||
+            ContextCompat.checkSelfPermission(activity!!, permission) == PackageManager.PERMISSION_GRANTED)
+  }
+
+  private fun requestsPermissions() {
+    val permissions =
+      if (Build.VERSION.SDK_INT >= 33)
+        arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
+      else
+        arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+    ActivityCompat.requestPermissions(activity!!, permissions, permissionRequestCode)
+  }
+
+  override fun onRequestPermissionsResult(requestCode: Int,
+                                          permissions: Array<String?>, grantResults: IntArray
+  ): Boolean {
+    if((requestCode != permissionRequestCode) ||
+      (permissions.size == 0 && grantResults.size == 0)) return false
+
+    val firstRun: Boolean = isRunningFirstTime()
+    for(index in permissions.indices) {
+      if (grantResults[index] == PackageManager.PERMISSION_GRANTED) continue
+
+      val permission = permissions[index]
+      if (ActivityCompat.shouldShowRequestPermissionRationale(activity!!, permission!!)) {
+        displayPermissionAlert(permission, false)
+      } else if (firstRun) {
+        requestPermissionAgain(permission, false)
+      } else {
+        displayPermissionAlert(permission, true)
+      }
     }
-    val requestCode = 1
-    ActivityCompat.requestPermissions(activity!!, arrayOf(permission),
-      requestCode
-    )
-    return false
+    return true
+  }
+
+  fun displayPermissionAlert(permission: String, openAppSettings: Boolean) {
+    if (openAppSettings && permission.equals(Manifest.permission.CAMERA)) return
+    val message = when (permission) {
+      Manifest.permission.CAMERA -> "Permission 'Camera' is required for video calls."
+      Manifest.permission.RECORD_AUDIO -> "Permission 'Record audio' is required to access microphone.\nApplication can't make calls without it."
+      Manifest.permission.POST_NOTIFICATIONS -> "Permission 'Notifications' is required for displaying incoming call notifications when app is in background"
+      else -> "$permission is required [?]" //shouldn't happen
+    }
+
+    AlertDialog.Builder(activity!!)
+      .setTitle("Permission required")
+      .setMessage(message)
+      .setNegativeButton("Cancel"
+      ) { dialog: DialogInterface, which: Int -> dialog.cancel() }
+      .setPositiveButton(
+        if (openAppSettings) "Go to settings" else "Allow"
+      ) { dialog: DialogInterface?, which: Int -> requestPermissionAgain(permission, openAppSettings)
+      }
+      .show()
+  }
+
+  fun requestPermissionAgain(permission: String, openAppSettings: Boolean) {
+    if (openAppSettings) {
+      val intent: Intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+      intent.data = Uri.fromParts("package", activity!!.getPackageName(), null)
+      activity!!.startActivity(intent)
+    } else {
+      ActivityCompat.requestPermissions(activity!!, arrayOf<String>(permission), permissionRequestCode)
+    }
+  }
+
+  fun isRunningFirstTime(): Boolean {
+    val pref: SharedPreferences = activity!!.getSharedPreferences(TAG, Context.MODE_PRIVATE)
+    val firstRun = pref.getBoolean("firstRun", true)
+    if (firstRun) pref.edit().putBoolean("firstRun", false).apply()
+    return firstRun
   }
 
   override fun onNewIntent(intent: Intent): Boolean {
