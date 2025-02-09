@@ -21,6 +21,7 @@ class CallAddPage extends StatefulWidget {
 
 class _CallAddPageState extends State<CallAddPage> {
   final _phoneNumbCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   String _errText="";
   int _selCdrRowIdx=0;
 
@@ -40,14 +41,14 @@ class _CallAddPageState extends State<CallAddPage> {
   }
 
   Widget _buildBody(AccountsModel accounts) {
-    return 
+    return
       Column(crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(color: Theme.of(context).dialogBackgroundColor, padding: const EdgeInsets.fromLTRB(10,0,10,5), 
             child: Column(children: [
               _buildAccountsMenu(accounts),
               const SizedBox(height: 5),
-              _buildPhoneNumberField(),
+              Form(key: _formKey, child:_buildPhoneNumberField()),
             ])),
           Expanded(child: buildCdrsList()),
           if(_errText.isNotEmpty)
@@ -56,17 +57,18 @@ class _CallAddPageState extends State<CallAddPage> {
   }
 
   Widget _buildAccountsMenu(AccountsModel accounts) {
-    return ButtonTheme(child: DropdownButtonFormField<int>(
-      decoration: const InputDecoration(border: UnderlineInputBorder(), 
-        labelText: 'Select account:', ),
-      value: accounts.selAccountId,
-      onChanged: (int? accId) {  accounts.setSelectedAccountById(accId!); },
-      items: List.generate(accounts.length, (index) => accMenuItem(accounts[index], index)),
+    return
+      ButtonTheme(child:
+        DropdownButtonFormField<int>(
+          isExpanded: true,
+          decoration: const InputDecoration(border: UnderlineInputBorder(),
+          labelText: 'Select account', ),
+          value: accounts.selAccountId,
+          onChanged: (int? accId) {  accounts.setSelectedAccountById(accId!); },
+          items: List.generate(accounts.length, (index)
+                  => DropdownMenuItem<int>(value: accounts[index].myAccId, child: Text(accounts[index].uri))
+      ),
     ));
-  }
-
-  DropdownMenuItem<int> accMenuItem(AccountModel acc, int index) {
-    return DropdownMenuItem<int>(value: acc.myAccId, child: Text(acc.uri));
   }
 
   Widget _buildPhoneNumberField() {
@@ -79,9 +81,10 @@ class _CallAddPageState extends State<CallAddPage> {
         suffixIcon: Wrap(alignment: WrapAlignment.center, spacing: 10, children:[
             FilledButton(onPressed: _inviteAudio, child: const Icon(Icons.add_call)),
             OutlinedButton(onPressed: _inviteVideo, child: const Icon(Icons.video_call_outlined))
-            ]),
+        ]),
       ),
       controller: _phoneNumbCtrl,
+      validator: (value) { return (value == null || value.isEmpty) ? "Phone number can't be empty" : null; },
     );
   }
 
@@ -99,10 +102,10 @@ class _CallAddPageState extends State<CallAddPage> {
           //contentPadding:const EdgeInsets.fromLTRB(0, 0, 10, 0),
           leading: _getCdrIcon(cdr),
           title: _getCdrTitle(cdr),
-          subtitle: _getCdrSubTitle(cdr, (_selCdrRowIdx == index)),
+          subtitle: (_selCdrRowIdx == index) ? _getCdrSubTitle(cdr) : null,
           trailing: _getCdrRowTrailing(cdr, index),
           dense: true,
-          onTap: () { 
+          onTap: () {
               setState(() {
                 context.read<AccountsModel>().setSelectedAccountByUri(cdr.accUri);
                 _phoneNumbCtrl.text = cdr.remoteExt;
@@ -127,29 +130,26 @@ class _CallAddPageState extends State<CallAddPage> {
   }
 
   Widget _getCdrTitle(CdrModel cdr) {
-    return 
-      Text(cdr.displName.isEmpty ? cdr.remoteExt : "${cdr.displName} (${cdr.remoteExt})", 
+    return
+      Text(cdr.displName.isEmpty ? cdr.remoteExt : "${cdr.displName} (${cdr.remoteExt})",
         style: Theme.of(context).textTheme.titleSmall);
   }
 
-  Widget _getCdrSubTitle(CdrModel cdr, bool isSelected) {
-    Text accText = Text(cdr.accUri, style: const TextStyle(fontSize: 12.0, fontStyle: FontStyle.italic, color: Colors.grey));
-    if(!isSelected) { return accText;  }
-    else {
-      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        accText,
+  Widget? _getCdrSubTitle(CdrModel cdr) {
+    return
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(cdr.accUri, style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)),
         Wrap(spacing:5, children: [
-          Text(cdr.madeAtDate), 
+          Text(cdr.madeAtDate),
           if(cdr.connected) Text("Duration: ${cdr.duration}"),
           if(cdr.statusCode!=0) Text("Status code: ${cdr.statusCode}"),
           if(cdr.hasVideo) const Icon(Icons.videocam_outlined, color: Colors.grey, size:18),
         ])
       ]);
-    }
   }
 
   Widget _getCdrRowTrailing(CdrModel cdr, int index) {
-    return 
+    return
         PopupMenuButton<CdrAction>(
           onSelected: (CdrAction action) { _onCdrMenuAction(action, index); },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<CdrAction>>[
@@ -161,8 +161,7 @@ class _CallAddPageState extends State<CallAddPage> {
   }
 
   void _onCdrMenuAction(CdrAction action, int index) {
-    final cdrs = context.read<CdrsModel>();
-    cdrs.remove(index);
+    context.read<CdrsModel>().remove(index);
   }
 
   void _inviteVideo() => _invite(true);
@@ -170,10 +169,8 @@ class _CallAddPageState extends State<CallAddPage> {
 
   void _invite(bool withVideo) {
     //Check entered number
-    if(_phoneNumbCtrl.text.isEmpty) {
-      setState((){ _errText="Phone(extenstion) number is empty"; });
-      return;
-    }
+    final form = _formKey.currentState;
+    if (form == null || !form.validate()) return;
 
     //Check selected account
     final accounts = context.read<AccountsModel>();
@@ -182,7 +179,7 @@ class _CallAddPageState extends State<CallAddPage> {
       return;
     }
 
-    //Prepare destination details    
+    //Prepare destination details
     CallDestination dest = CallDestination(_phoneNumbCtrl.text, accounts.selAccountId!, withVideo);
 
     //Invite

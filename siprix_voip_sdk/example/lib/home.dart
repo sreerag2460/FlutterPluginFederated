@@ -6,6 +6,7 @@ import 'package:siprix_voip_sdk/calls_model.dart';
 import 'package:siprix_voip_sdk/network_model.dart';
 import 'package:siprix_voip_sdk/logs_model.dart';
 
+import 'messages.dart';
 import 'subscr_list.dart';
 import 'accounts_list.dart';
 import 'settings.dart';
@@ -22,7 +23,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {  
+class _HomePageState extends State<HomePage> {
   final _pageController = PageController();
   int _selectedPageIndex = 0;
 
@@ -35,25 +36,26 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return 
+    return
       Scaffold(
-        appBar: AppBar(backgroundColor: Theme.of(context).primaryColor.withOpacity(0.4), 
+        appBar: AppBar(backgroundColor: Theme.of(context).primaryColor.withOpacity(0.4),
           titleSpacing: 0,
-          title: ListTile(            
-            title:Text('Siprix VoIP SDK', style: Theme.of(context).textTheme.headlineSmall),
-            subtitle: Text('www.siprix-voip.com', style: Theme.of(context).textTheme.bodySmall),
+          title: ListTile(
+            title:Text('Siprix VoIP SDK', style: Theme.of(context).textTheme.headlineSmall, overflow: TextOverflow.ellipsis),
+            subtitle: Text('www.siprix-voip.com', style: Theme.of(context).textTheme.bodySmall, overflow: TextOverflow.ellipsis),
           ),
-          actions: [            
-            Padding(padding: const EdgeInsets.only(right: 20), 
+          actions: [
+            Padding(padding: const EdgeInsets.only(right: 20),
               child:IconButton(icon: const Icon(Icons.settings), onPressed:_onShowSettings)),
           ]
         ),
-        body: PageView(controller: _pageController, 
-          physics: const NeverScrollableScrollPhysics(), 
+        body: PageView(controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
           children: const [
             AccountsListPage(),
             CallsListPage(),
             SubscrListPage(),
+            MessagesListPage(),
             LogsPage()
           ]),
         bottomSheet: _networkLostIndicator(),
@@ -62,6 +64,7 @@ class _HomePageState extends State<HomePage> {
             const BottomNavigationBarItem(icon: Icon(Icons.widgets), label: 'Accounts'),
                   BottomNavigationBarItem(icon: _callsTabIcon(), label: 'Calls'),
             const BottomNavigationBarItem(icon: Icon(Icons.hub), label: 'BLF'),
+            const BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Messages'),
             const BottomNavigationBarItem(icon: Icon(Icons.text_snippet), label: 'Logs'),
           ],
           currentIndex: _selectedPageIndex,
@@ -91,7 +94,7 @@ class _HomePageState extends State<HomePage> {
   void _onTabTapped(int index) {
     setState(() {
       _selectedPageIndex = index;
-      _pageController.jumpToPage(index);      
+      _pageController.jumpToPage(index);
     });
   }
 

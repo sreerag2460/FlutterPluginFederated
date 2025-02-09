@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:siprix_voip_sdk/accounts_model.dart';
+import 'package:siprix_voip_sdk/messages_model.dart';
 import 'package:siprix_voip_sdk/network_model.dart';
 import 'package:siprix_voip_sdk/calls_model.dart';
 import 'package:siprix_voip_sdk/cdrs_model.dart';
@@ -21,13 +22,14 @@ import 'subscr_model.dart';
 import 'settings.dart';
 import 'home.dart';
 
-void main() async {  
+void main() async {
   LogsModel logsModel = LogsModel(true);//Set 'false' when logs won't rendering on UI
   CdrsModel cdrsModel = CdrsModel();//List of recent calls (Call Details Records)
 
   DevicesModel devicesModel = DevicesModel(logsModel);//List of devices
   NetworkModel networkModel = NetworkModel(logsModel);//Network state details
   AccountsModel accountsModel = AccountsModel(logsModel);//List of accounts
+  MessagesModel messagesModel = MessagesModel(accountsModel, logsModel);
   CallsModel callsModel = CallsModel(accountsModel, logsModel, cdrsModel);//List of calls
   SubscriptionsModel subscrModel = SubscriptionsModel<BlfSubscrModel>(accountsModel, BlfSubscrModel.fromJson, logsModel);//List of subscriptions
 
@@ -37,6 +39,7 @@ void main() async {
       ChangeNotifierProvider(create: (context) => accountsModel),
       ChangeNotifierProvider(create: (context) => networkModel),
       ChangeNotifierProvider(create: (context) => devicesModel),
+      ChangeNotifierProvider(create: (context) => messagesModel),
       ChangeNotifierProvider(create: (context) => subscrModel),
       ChangeNotifierProvider(create: (context) => callsModel),
       ChangeNotifierProvider(create: (context) => cdrsModel),
@@ -47,7 +50,7 @@ void main() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});  
+  const MyApp({super.key});
   static String _ringtonePath="";
 
   @override
@@ -65,7 +68,7 @@ class MyApp extends StatefulWidget {
   static Future<String> writeAssetAndGetFilePath(String assetsFileName) async {
     var homeFolder = await SiprixVoipSdk().homeFolder();
     var filePath = '$homeFolder$assetsFileName';
-    
+
     var file = File(filePath);
     var exists = file.existsSync();
     debugPrint("writeAsset: '$filePath' exists:$exists");
@@ -138,18 +141,22 @@ class _MyAppState extends State<MyApp> {
       String accJsonStr = prefs.getString('accounts') ?? '';
       String subsJsonStr = prefs.getString('subscriptions') ?? '';
       String cdrsJsonStr = prefs.getString('cdrs') ?? '';
-      _loadModels(accJsonStr, cdrsJsonStr, subsJsonStr);
+      String msgsJsonStr = prefs.getString('msgs') ?? '';
+      _loadModels(accJsonStr, cdrsJsonStr, subsJsonStr, msgsJsonStr);
     });
   }
 
-  void _loadModels(String accJsonStr, String cdrsJsonStr, String subsJsonStr) {
+  void _loadModels(String accJsonStr, String cdrsJsonStr, String subsJsonStr, String msgsJsonStr) {
     //Accounts
     AccountsModel accsModel = context.read<AccountsModel>();
     accsModel.onSaveChanges = _saveAccountChanges;
-      
+
     //Subscriptions
-    SubscriptionsModel subsModel = context.read<SubscriptionsModel>();
-    subsModel.onSaveChanges = _saveSubscriptionChanges;
+    SubscriptionsModel subs = context.read<SubscriptionsModel>();
+    subs.onSaveChanges = _saveSubscriptionChanges;
+
+    MessagesModel msgs = context.read<MessagesModel>();
+    msgs.onSaveChanges = _saveMessagesChanges;
 
     //CDRs (Call Details Records)
     CdrsModel cdrs = context.read<CdrsModel>();
@@ -157,8 +164,9 @@ class _MyAppState extends State<MyApp> {
 
     //Load accounts, then other models
     accsModel.loadFromJson(accJsonStr).then((val)  {
-      subsModel.loadFromJson(subsJsonStr);
+      subs.loadFromJson(subsJsonStr);
       cdrs.loadFromJson(cdrsJsonStr);
+      msgs.loadFromJson(msgsJsonStr);
     });
 
     //Assign contact name resolver
@@ -186,10 +194,16 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void _saveMessagesChanges(String msgsJsonStr) {
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('msgs', msgsJsonStr);
+    });
+  }
+
   String _resolveContactName(String phoneNumber) {
     return ""; //TODO add own implementation
     //if(phoneNumber=="100") { return "MyFriend100"; } else
-    //if(phoneNumber=="101") { return "MyFriend101"; } 
+    //if(phoneNumber=="101") { return "MyFriend101"; }
     //else                  { return "";        }
   }
 }
