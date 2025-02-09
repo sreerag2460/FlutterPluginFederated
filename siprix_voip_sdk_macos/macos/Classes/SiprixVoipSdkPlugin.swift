@@ -43,6 +43,8 @@ private let kMethodCallBye              = "Call_Bye"
 private let kMethodMixerSwitchToCall   = "Mixer_SwitchToCall"
 private let kMethodMixerMakeConference = "Mixer_MakeConference"
 
+private let kMethodMessageSend         = "Message_Send"
+
 private let kMethodSubscriptionAdd     = "Subscription_Add"
 private let kMethodSubscriptionDelete  = "Subscription_Delete"
 
@@ -78,6 +80,9 @@ private let kOnCallRedirected   = "OnCallRedirected"
 private let kOnCallSwitched     = "OnCallSwitched"
 private let kOnCallHeld         = "OnCallHeld"
 
+private let kOnMessageSentState = "OnMessageSentState"
+private let kOnMessageIncoming  = "OnMessageIncoming"
+
 private let kArgVideoTextureId  = "videoTextureId"
 
 private let kArgStatusCode = "statusCode"
@@ -96,17 +101,20 @@ private let kArgToExt      = "toExt"
 private let kArgAccId    = "accId"
 private let kArgPlayerId = "playerId"
 private let kArgSubscrId = "subscrId"
+private let kArgMsgId    = "msgId"
 private let kRegState    = "regState"
 private let kHoldState   = "holdState"
 private let kPlayerState = "playerState"
 private let kSubscrState = "subscrState"
 private let kNetState    = "netState"
 private let kResponse    = "response"
+private let kSuccess     = "success"
 
 private let kArgName  = "name"
 private let kArgTone  = "tone"
 private let kFrom     = "from"
 private let kTo       = "to"
+private let kBody      = "body"
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -231,6 +239,22 @@ class SiprixEventHandler : NSObject, SiprixEventDelegate {
         argsMap[kHoldState] = holdState.rawValue
         _channel.invokeMethod(kOnCallHeld, arguments: argsMap)
     }
+
+    public func onMessageSentState(_ messageId:Int, success:Bool, response:String) {
+        var argsMap = [String:Any]()
+        argsMap[kArgMsgId] = messageId
+        argsMap[kSuccess] = success
+        argsMap[kResponse] = response
+        _channel.invokeMethod(kOnMessageSentState, arguments: argsMap)
+    }
+
+    public func onMessageIncoming(_ accId:Int, hdrFrom:String, body:String) {
+        var argsMap = [String:Any]()
+        argsMap[kArgAccId] = accId
+        argsMap[kFrom] = hdrFrom
+        argsMap[kBody] = body
+        _channel.invokeMethod(kOnMessageIncoming, arguments: argsMap)
+    }
 }
 
 
@@ -295,7 +319,7 @@ class FlutterVideoRenderer : NSObject, SiprixVideoRendererDelegate, FlutterTextu
                          kCVPixelBufferMetalCompatibilityKey: kCFBooleanTrue] as CFDictionary
             
             CVPixelBufferCreate(nil, _pixelBufferWidth, _pixelBufferHeight,
-                                kCVPixelFormatType_32ARGB, attrs, &_pixelBuffer)
+                                kCVPixelFormatType_32BGRA, attrs, &_pixelBuffer)
         }
         
         CVPixelBufferLockBaseAddress(_pixelBuffer!, CVPixelBufferLockFlags(rawValue: 0))
@@ -416,6 +440,8 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
 
                 case kMethodMixerSwitchToCall :   handleMixerSwitchToCall(argsMap!, result:result)
                 case kMethodMixerMakeConference : handleMixerMakeConference(argsMap!, result:result)
+
+                case kMethodMessageSend :          handleMessageSend(argsMap!, result:result)
 
                 case kMethodSubscriptionAdd    :   handleSubscriptionAdd(argsMap!, result:result)
                 case kMethodSubscriptionDelete :   handleSubscriptionDelete(argsMap!, result:result)
@@ -673,6 +699,9 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         let xheaders = args["xheaders"] as? Dictionary<AnyHashable,Any>
         if(xheaders != nil) { destData.xheaders = xheaders }
      
+        let displName = args["displName"] as? String
+        if(displName != nil) { destData.displName = displName! }
+     
         let err = _siprixModule.callInvite(destData)
         if(err == kErrorCodeEOK){
             result(destData.myCallId)
@@ -896,6 +925,30 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
     func handleMixerMakeConference(_ args : ArgsMap, result: @escaping FlutterResult) {
         let err = _siprixModule.mixerMakeConference()
         sendResult(err, result:result)
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    //Siprix messages
+
+    func handleMessageSend(_ args : ArgsMap, result: @escaping FlutterResult) {
+        //Get arguments from map
+        let msgData = SiprixMsgData()
+        
+        let toExt = args["extension"] as? String
+        if(toExt != nil) { msgData.toExt = toExt! }
+        
+        let fromAccId = args[kArgAccId] as? Int
+        if(fromAccId != nil) { msgData.fromAccId = Int32(fromAccId!) }
+       
+        let body = args[kBody] as? String
+        if(body != nil) { msgData.body = body! }
+
+        let err = _siprixModule.messageSend(msgData)
+        if(err == kErrorCodeEOK){
+            result(msgData.myMessageId)
+        }else{
+            result(FlutterError(code: String(err), message: _siprixModule.getErrorText(err), details: nil))
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////
