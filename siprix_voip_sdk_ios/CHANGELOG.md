@@ -1,5 +1,13 @@
+## 1.0.11
+- Added ability to send and receive text messages (SIP MESSAGE request)
+- Added ability to override DisplayName in outgoing call (method 'Dest_SetDisplayName')
+- Added ability to handle received MediaControlEvent 'picture_fast_update'
+- Fixed bug in 'RewriteContactIp' option implementation when TCP/TLS transport is using
+- Fixed parsing RTCP FB parameters of video in SDP
+- iOS: Added PushKit support
+
 ## 1.0.10
-* Fixed app closing caused by SIGPIPE signal
+* Fixed closing app caused by SIGPIPE signal
 
 ## 1.0.9
 * Updated TLS transport implementation (use TLS1.3 by default, ability to use also 1.2 and 1.0)
