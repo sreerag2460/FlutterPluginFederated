@@ -53,16 +53,16 @@ class CdrModel extends ChangeNotifier {
   /// Creates instance of CdrModel with values read from json
   factory CdrModel.fromJson(Map<String, dynamic> jsonMap) {
     CdrModel cdr = CdrModel();
-    jsonMap.forEach((key, value) {      
+    jsonMap.forEach((key, value) {
       if((key == 'accUri')&&(value is String))     { cdr.accUri    = value; } else
       if((key == 'remoteExt')&&(value is String))  { cdr.remoteExt = value; } else
-      if((key == 'displName')&&(value is String))  { cdr.displName = value; } else      
+      if((key == 'displName')&&(value is String))  { cdr.displName = value; } else
       if((key == 'statusCode')&&(value is int))    { cdr.statusCode= value; } else
       if((key == 'incoming')&&(value is bool))     { cdr.incoming  = value; } else
-      if((key == 'connected')&&(value is bool))    { cdr.connected = value; } else 
+      if((key == 'connected')&&(value is bool))    { cdr.connected = value; } else
       if((key == 'duration')&&(value is String))   { cdr.duration  = value; } else
       if((key == 'madeAt')&&(value is String))     { cdr.madeAtDate= value; }
-    });    
+    });
     return cdr;
   }
 
@@ -102,10 +102,10 @@ class CdrsModel extends ChangeNotifier {
   void setConnected(int callId, String from, String to, bool hasVideo) {
     int index = _cdrItems.indexWhere((c) => c.myCallId==callId);
     if(index == -1) return;
-    
+
     CdrModel cdr = _cdrItems[index];
     cdr.hasVideo = hasVideo;
-    cdr.connected = true;    
+    cdr.connected = true;
     notifyListeners();
   }
 

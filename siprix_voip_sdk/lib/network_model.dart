@@ -56,16 +56,16 @@ enum NetState {
 
 
 /// NetworkModel - contains network 
-class NetworkModel extends ChangeNotifier {    
+class NetworkModel extends ChangeNotifier {
   bool _networkLost = false;
   final ILogsModel? _logs;
 
   ///Is network connection lost (using for displaying some indicator on UI)
   bool get networkLost => _networkLost;
-  
+
   /// Constructor (set event handler)
   NetworkModel([this._logs]) {
-    SiprixVoipSdk().netListener = NetStateListener(      
+    SiprixVoipSdk().netListener = NetStateListener(
       networkStateChanged : onNetworkStateChanged
     );
   }

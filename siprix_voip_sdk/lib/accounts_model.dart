@@ -11,9 +11,9 @@ import 'network_model.dart';
 
 /// Holds lists of parameters using for initialization siprix module
 class InitData implements ISiprixData {
-  /// License credentials. When missed - library works in trial mode 
+  /// License credentials. When missed - library works in trial mode
   String? license;
-  
+
   /// Allows replace default product name string in logs, version
   String? brandName;
 
@@ -38,6 +38,9 @@ class InitData implements ISiprixData {
   ///Enable TelStateListener which holds SIP calls when GSM call started (Valid only for Android, disabled by default, requires permission 'READ_PHONE_STATE')
   bool? listenTelState;
 
+  ///Enable PushKit support for iOS
+  bool? enablePushKit;
+
   ///Enable CallKit support for iOS
   bool? enableCallKit;
 
@@ -48,7 +51,7 @@ class InitData implements ISiprixData {
   Map<String, dynamic> toJson() {
     Map<String, dynamic> ret = {};
     if(license!=null)           ret['license'] = license;
-    if(brandName!=null)         ret['brandName'] = brandName;    
+    if(brandName!=null)         ret['brandName'] = brandName;
     if(logLevelFile!=null)      ret['logLevelFile'] = logLevelFile!.id;
     if(logLevelIde!=null)       ret['logLevelIde']  = logLevelIde!.id;
     if(rtpStartPort!=null)      ret['rtpStartPort'] = rtpStartPort;
@@ -56,9 +59,10 @@ class InitData implements ISiprixData {
     if(singleCallMode!=null)    ret['singleCallMode'] = singleCallMode;
     if(shareUdpTransport!=null) ret['shareUdpTransport'] = shareUdpTransport;
     if(listenTelState!=null)    ret['listenTelState'] = listenTelState;
+    if(enablePushKit!=null)     ret['enablePushKit'] = enablePushKit;
     if(enableCallKit!=null)     ret['enableCallKit'] = enableCallKit;
     if(enableCallKitRecents!=null) ret['enableCallKitRecents'] = enableCallKitRecents;
-    
+
     return ret;
   }
 }//InitData
@@ -68,7 +72,7 @@ class InitData implements ISiprixData {
 ///Holds video capturer params
 class VideoData implements ISiprixData {
   /// Path to jpg file path to the jpg file with image, which library will send when video device not available.
-  String? noCameraImgPath;  
+  String? noCameraImgPath;
 
   /// Capturer framerate (by default 15)
   int?  framerateFps;
@@ -80,12 +84,12 @@ class VideoData implements ISiprixData {
   int?  height;
 
   /// Capturer video frame width (by default 600)
-  int?  width;  
+  int?  width;
 
   @override
   Map<String, dynamic> toJson() {
-    Map<String, dynamic> ret = {};    
-    if(noCameraImgPath!=null) ret['noCameraImgPath'] = noCameraImgPath;    
+    Map<String, dynamic> ret = {};
+    if(noCameraImgPath!=null) ret['noCameraImgPath'] = noCameraImgPath;
     if(framerateFps!=null)    ret['framerateFps'] = framerateFps;
     if(bitrateKbps!=null)     ret['bitrateKbps']  = bitrateKbps;
     if(height!=null)          ret['height'] = height;
@@ -158,7 +162,7 @@ class Codec {
 
       for(var c in Codec.availableCodecs(audio)) {
         if(ret.indexWhere((codec) => (codec.id == c))==-1) {
-          ret.add(Codec(c, selected:false));          
+          ret.add(Codec(c, selected:false));
         }
       }
     }
@@ -166,10 +170,10 @@ class Codec {
       for(var c in Codec.availableCodecs(audio)) {
         bool sel = ((c==SiprixVoipSdk.kAudioCodecDTMF)||(c==SiprixVoipSdk.kVideoCodecVP8)||
                   (c==SiprixVoipSdk.kAudioCodecOpus)||(c==SiprixVoipSdk.kAudioCodecPCMA));
-        ret.add(Codec(c, selected:sel));       
+        ret.add(Codec(c, selected:sel));
       }
-    }    
-    
+    }
+
     return ret;
   }
 
@@ -183,7 +187,7 @@ class Codec {
   }
 
   /// Returns true when selected at least one codec in the input list
-  static bool validateSel(List<Codec> items) {    
+  static bool validateSel(List<Codec> items) {
     for(Codec c in items) {
       if(c.selected) return true;
     }
@@ -195,9 +199,9 @@ class Codec {
 /// SecureMedia options (audio/video encryption setting)
 enum SecureMedia {
   /// Secure media disabled
-  Disabled(SiprixVoipSdk.kSecureMediaDisabled, "Disabled"),  
+  Disabled(SiprixVoipSdk.kSecureMediaDisabled, "Disabled"),
   /// Encryption audio/video using SDES SRTP
-  SdesSrtp(SiprixVoipSdk.kSecureMediaSdesSrtp, "SDES SRTP"), 
+  SdesSrtp(SiprixVoipSdk.kSecureMediaSdesSrtp, "SDES SRTP"),
   /// Encryption audio/video using DTLS SRTP
   DtlsSrtp(SiprixVoipSdk.kSecureMediaDtlsSrtp, "DTLS SRTP");
 
@@ -219,13 +223,13 @@ enum SecureMedia {
 
 
 /// Account's registration state
-enum RegState { 
+enum RegState {
   /// Registration success
-  success, 
+  success,
   /// Registration failed
   failed,
   /// Registration removed
-  removed, 
+  removed,
   /// Registration in progress (request sent, waiting on response)
   inProgress
 }
@@ -239,9 +243,9 @@ class AccountModel implements ISiprixData {
   int      myAccId=0;
   /// Registration state
   RegState regState=RegState.inProgress;
-  /// Registration text, got from SIP response, received fro, remote server 
+  /// Registration text, got from SIP response, received fro, remote server
   String   regText="";
- 
+
   /// SIP Server (domain)
   String  sipServer="";
   /// SIP Extension (phone number, user)
@@ -284,7 +288,7 @@ class AccountModel implements ISiprixData {
   bool?   forceSipProxy;
   /// Audio/video encryption setting (by default disabled)
   SecureMedia?  secureMedia;
-    
+
   /// List of custom headers/values which should be added to REGISTER request
   Map<String, String>? xheaders;
   /// List of custom params which should be added to Contact's URI
@@ -320,7 +324,7 @@ class AccountModel implements ISiprixData {
     if(rtcpMuxEnabled  !=null) ret['rtcpMuxEnabled']  = rtcpMuxEnabled;
     if(instanceId      !=null) ret['instanceId']      = instanceId;
     if(ringTonePath    !=null) ret['ringTonePath']    = ringTonePath;
-    if(keepAliveTime   !=null) ret['keepAliveTime']   = keepAliveTime;    
+    if(keepAliveTime   !=null) ret['keepAliveTime']   = keepAliveTime;
     if(rewriteContactIp!=null) ret['rewriteContactIp']= rewriteContactIp;
     if(forceSipProxy   !=null) ret['forceSipProxy']   = forceSipProxy;
     if(verifyIncomingCall!=null) ret['verifyIncomingCall']= verifyIncomingCall;
@@ -328,7 +332,7 @@ class AccountModel implements ISiprixData {
     if(xContactUriParams !=null) ret['xContactUriParams'] = xContactUriParams;
     if(xheaders        !=null) ret['xheaders']        = xheaders;
     if(aCodecs         !=null) ret['aCodecs']         = aCodecs;
-    if(vCodecs         !=null) ret['vCodecs']         = vCodecs;    
+    if(vCodecs         !=null) ret['vCodecs']         = vCodecs;
     return ret;
   }
 
@@ -344,7 +348,7 @@ class AccountModel implements ISiprixData {
       if((key == 'displName')&&(value is String))     { acc.displName = value;    } else
       if((key == 'userAgent')&&(value is String))     { acc.userAgent = value;    } else
       if((key == 'expireTime')&&(value is int))       { acc.expireTime = value;   } else
-      if((key == 'transport')&&(value is int))        { acc.transport = SipTransport.from(value);  } else      
+      if((key == 'transport')&&(value is int))        { acc.transport = SipTransport.from(value);  } else
       if((key == 'port')&&(value is int))             { acc.port = value;           } else
       if((key == 'tlsCaCertPath')&&(value is String)) { acc.tlsCaCertPath = value;  } else
       if((key == 'tlsUseSipScheme')&&(value is bool)) { acc.tlsUseSipScheme = value;} else
@@ -360,7 +364,7 @@ class AccountModel implements ISiprixData {
       if((key == 'xheaders')&&(value is Map))         { acc.xheaders = Map<String, String>.from(value); } else
       if((key == 'aCodecs')&&(value is List))         { acc.aCodecs = List<int>.from(value); } else
       if((key == 'vCodecs')&&(value is List))         { acc.vCodecs = List<int>.from(value); } 
-    });    
+    });
     return acc;
   }
 
@@ -376,7 +380,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
   final List<AccountModel> _accounts = [];
   final ILogsModel? _logs;
   int? _selAccountIndex;
-    
+
   AccountsModel([this._logs]) {
     SiprixVoipSdk().accListener = AccStateListener(
       regStateChanged : onRegStateChanged
@@ -391,13 +395,13 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
   int? get selAccountId => (_selAccountIndex==null) ? null : _accounts[_selAccountIndex!].myAccId;
   /// Returns account by its index in list
   AccountModel operator [](int i) => _accounts[i];
-  
+
   /// Callback which model invokes when accounts changes should be saved
   SaveChangesCallback? onSaveChanges;
-  
+
   void _selectAccount(int? index) {
     if((index != null)&&(index >=0)&&(index < length)&&(_selAccountIndex != index)){
-      _selAccountIndex = index;      
+      _selAccountIndex = index;
       _raiseSaveChanges();
       notifyListeners();
     }
@@ -445,7 +449,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
       acc.regText = (acc.expireTime==0) ? "Removed" : "In progress...";
 
       _integrateAddedAccount(acc, saveChanges);
-      
+
     } on PlatformException catch (err) {
       if(err.code == SiprixVoipSdk.eDuplicateAccount.toString()) {
         int existingAccId = err.details;
@@ -494,27 +498,27 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
      try {
       int index = _accounts.indexWhere((a) => a.myAccId==acc.myAccId);
       if(index == -1) return Future.error("Account with specified id not found");
-      
+
       await SiprixVoipSdk().updateAccount(acc);
-      
+
       _accounts[index] = acc;
-      
-      notifyListeners();      
+
+      notifyListeners();
       _raiseSaveChanges();
       _logs?.print('Updated account accId:${acc.myAccId}');
-      
+
     } on PlatformException catch (err) {
       _logs?.print('Can\'t update account: ${err.code} ${err.message}');
       return Future.error((err.message==null) ? err.code : err.message!);
     }
   }
-  
+
   /// Delete account specified by its index in the list
   Future<void> deleteAccount(int index) async {
     try {
       int accId = _accounts[index].myAccId;
       await SiprixVoipSdk().deleteAccount(accId);
-      
+
       _accounts.removeAt(index);
 
       if(_selAccountIndex! >= length) {
@@ -535,7 +539,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
   Future<void> unregisterAccount(int index) async {
     try {
       //Send register request
-      int accId = _accounts[index].myAccId;      
+      int accId = _accounts[index].myAccId;
       await SiprixVoipSdk().unRegisterAccount(accId);
 
       //Update UI
@@ -544,7 +548,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
 
       notifyListeners();
       _raiseSaveChanges();
-      _logs?.print('Unregistering accId:$accId');      
+      _logs?.print('Unregistering accId:$accId');
 
     } on PlatformException catch (err) {
       _logs?.print('Can\'t unregister account: ${err.code} ${err.message}');
@@ -566,7 +570,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
       _accounts[index].regState = RegState.inProgress;
       notifyListeners();
 
-      //Save changes      
+      //Save changes
       _raiseSaveChanges();
       _logs?.print('Refreshing registration accId:$accId');
 
@@ -598,7 +602,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     AccountModel acc = _accounts[idx];
     acc.regText = response;
     acc.regState = state;
-    
+
     notifyListeners();
   }
 
