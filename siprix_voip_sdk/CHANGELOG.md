@@ -1,3 +1,13 @@
+## 1.0.11
+- Added ability to send and receive text messages (SIP MESSAGE request)
+- Added ability to override DisplayName in outgoing call (method 'Dest_SetDisplayName')
+- Added ability to handle received MediaControlEvent 'picture_fast_update'
+- Fixed bug in 'RewriteContactIp' option implementation when TCP/TLS transport is using
+- Fixed parsing RTCP FB parameters of video in SDP
+- Android: added ability to switch camera by invoke 'setVideoDevice(0)'
+- Android: updated permissions request functionality
+- iOS: Added PushKit support
+
 ## 1.0.10
 * iOS: Fixed closing app caused by SIGPIPE signal
 * Android: Send callIncoming/accept events to the app only after sync accounts
