@@ -57,6 +57,8 @@ const char kMethodCallBye[]             = "Call_Bye";
 const char kMethodMixerSwitchToCall[]   = "Mixer_SwitchToCall";
 const char kMethodMixerMakeConference[] = "Mixer_MakeConference";
 
+const char kMethodMessageSend[]         = "Message_Send";
+
 const char kMethodSubscriptionAdd[]     = "Subscription_Add";
 const char kMethodSubscriptionDelete[]  = "Subscription_Delete";
 
@@ -94,6 +96,9 @@ const char kOnCallRedirected[]   = "OnCallRedirected";
 const char kOnCallSwitched[]     = "OnCallSwitched";
 const char kOnCallHeld[]         = "OnCallHeld";
 
+const char kOnMessageSentState[] = "OnMessageSentState";
+const char kOnMessageIncoming[]  = "OnMessageIncoming";
+
 const char kArgVideoTextureId[]  = "videoTextureId";
 
 const char kArgStatusCode[] = "statusCode";
@@ -112,17 +117,20 @@ const char kArgToExt[]      = "toExt";
 const char kArgAccId[]    = "accId";
 const char kArgPlayerId[] = "playerId";
 const char kArgSubscrId[] = "subscrId";
+const char kArgMsgId[]    = "msgId";
 const char kRegState[]    = "regState";
 const char kHoldState[]   = "holdState";
 const char kNetState[]    = "netState";
 const char kPlayerState[] = "playerState";
 const char kSubscrState[] = "subscrState";
 
-const char kResponse[]    = "response";
+const char kResponse[] = "response";
+const char kSuccess[]  = "success";
 const char kArgName[]  = "name";
 const char kArgTone[]  = "tone";
 const char kFrom[]     = "from";
 const char kTo[]       = "to";
+const char kBody[]     = "body";
 
 // static
 void SiprixVoipSdkPlugin::RegisterWithRegistrar(
@@ -199,6 +207,8 @@ void SiprixVoipSdkPlugin::buildHandlersTable()
      
      handlers_[kMethodMixerSwitchToCall]    = std::bind(&SiprixVoipSdkPlugin::handleMixerSwitchToCall,   this, std::placeholders::_1, std::placeholders::_2);
      handlers_[kMethodMixerMakeConference]  = std::bind(&SiprixVoipSdkPlugin::handleMixerMakeConference, this, std::placeholders::_1, std::placeholders::_2);
+
+     handlers_[kMethodMessageSend]          = std::bind(&SiprixVoipSdkPlugin::handleMessageSend,         this, std::placeholders::_1, std::placeholders::_2);
 
      handlers_[kMethodSubscriptionAdd]      = std::bind(&SiprixVoipSdkPlugin::handleSubscriptionAdd,     this, std::placeholders::_1, std::placeholders::_2);
      handlers_[kMethodSubscriptionDelete]   = std::bind(&SiprixVoipSdkPlugin::handleSubscriptionDelete,  this, std::placeholders::_1, std::placeholders::_2);
@@ -555,6 +565,7 @@ void SiprixVoipSdkPlugin::handleCallInvite(const flutter::EncodableMap& argsMap,
     const std::string* strVal = std::get_if<std::string>(&val.second);
     if(strVal) {
         if(valName->compare("extension")   == 0) Siprix::Dest_SetExtension(destData, strVal->c_str());
+        if(valName->compare("displName")   == 0) Siprix::Dest_SetDisplayName(destData, strVal->c_str());
         continue;
     }
 
@@ -789,6 +800,41 @@ void SiprixVoipSdkPlugin::handleMixerMakeConference(const flutter::EncodableMap&
 {
     const Siprix::ErrorCode err = Siprix::Mixer_MakeConference(module_);
     sendResult(err, result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+//Siprix message
+
+void SiprixVoipSdkPlugin::handleMessageSend(const flutter::EncodableMap& argsMap, MethodResultEncValPtr& result)
+{
+  Siprix::MsgData* msgData = Siprix::Msg_GetDefault();
+  
+  for(const auto& val : argsMap) {
+    const std::string* valName = std::get_if<std::string>(&val.first);
+    if(!valName) continue;
+
+    const std::string* strVal = std::get_if<std::string>(&val.second);
+    if(strVal) {
+        if(valName->compare("extension") == 0) Siprix::Msg_SetExtension(msgData, strVal->c_str());
+        if(valName->compare(kBody) == 0)       Siprix::Msg_SetBody(msgData, strVal->c_str());
+        continue;
+    }
+
+    const int32_t* intVal = std::get_if<int32_t>(&val.second);
+    if(intVal) {
+      if(valName->compare(kArgAccId)    == 0)   Siprix::Msg_SetAccountId(msgData,  *intVal);
+      continue;
+    }
+  }//for
+
+  Siprix::MessageId msgId=0;
+  const Siprix::ErrorCode err = Siprix::Message_Send(module_, msgData, &msgId);
+  auto msgIdVal = flutter::EncodableValue(static_cast<int32_t>(msgId));
+  if(err == Siprix::EOK){
+    result->Success(msgIdVal);
+  }else{
+    result->Error(std::to_string(err), std::string(Siprix::GetErrorText(err)));
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -1206,6 +1252,28 @@ void SiprixVoipSdkPlugin::OnCallHeld(Siprix::CallId callId, Siprix::HoldState st
     argsMap[flutter::EncodableValue(kHoldState)] = flutter::EncodableValue(static_cast<int32_t>(state));
 
     channel_->InvokeMethod(kOnCallHeld,
+        std::make_unique<flutter::EncodableValue>(std::move(argsMap)));
+}
+
+void SiprixVoipSdkPlugin::OnMessageSentState(Siprix::MessageId messageId, bool success, const char* response)
+{
+    flutter::EncodableMap argsMap;
+    argsMap[flutter::EncodableValue(kArgMsgId)] = flutter::EncodableValue(static_cast<int32_t>(messageId));  
+    argsMap[flutter::EncodableValue(kSuccess)]  = flutter::EncodableValue(success);
+    argsMap[flutter::EncodableValue(kResponse)] = flutter::EncodableValue(response);
+
+    channel_->InvokeMethod(kOnMessageSentState,
+        std::make_unique<flutter::EncodableValue>(std::move(argsMap)));
+}
+
+void SiprixVoipSdkPlugin::OnMessageIncoming(Siprix::AccountId accId, const char* hdrFrom, const char* body)
+{
+    flutter::EncodableMap argsMap;
+    argsMap[flutter::EncodableValue(kArgAccId)] = flutter::EncodableValue(static_cast<int32_t>(accId));  
+    argsMap[flutter::EncodableValue(kFrom)] = flutter::EncodableValue(hdrFrom);
+    argsMap[flutter::EncodableValue(kBody)] = flutter::EncodableValue(body);
+
+    channel_->InvokeMethod(kOnMessageIncoming,
         std::make_unique<flutter::EncodableValue>(std::move(argsMap)));
 }
 

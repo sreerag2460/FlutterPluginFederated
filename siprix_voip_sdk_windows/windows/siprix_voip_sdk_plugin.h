@@ -69,6 +69,8 @@ class SiprixVoipSdkPlugin : public flutter::Plugin, public Siprix::ISiprixEventH
   void handleMixerSwitchToCall(const flutter::EncodableMap& argsMap, MethodResultEncValPtr& result);
   void handleMixerMakeConference(const flutter::EncodableMap& argsMap, MethodResultEncValPtr& result);
 
+  void handleMessageSend(const flutter::EncodableMap& argsMap, MethodResultEncValPtr& result);
+
   void handleSubscriptionAdd(const flutter::EncodableMap& argsMap, MethodResultEncValPtr& result);
   void handleSubscriptionDelete(const flutter::EncodableMap& argsMap, MethodResultEncValPtr& result);
 
@@ -119,6 +121,9 @@ protected:
   void OnCallRedirected(Siprix::CallId origCallId, Siprix::CallId relatedCallId, const char* referTo)override;
   void OnCallHeld(Siprix::CallId callId, Siprix::HoldState state) override;
   void OnCallSwitched(Siprix::CallId callId) override;
+
+  void OnMessageSentState(Siprix::MessageId messageId, bool success, const char* response);
+  void OnMessageIncoming(Siprix::AccountId accId, const char* hdrFrom, const char* body);
 
 protected:
    MethodChannelPtr channel_;
