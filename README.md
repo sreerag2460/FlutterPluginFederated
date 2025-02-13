@@ -12,13 +12,16 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 - Detect network changes and automatically update registration/switch and restore call(s) media
 - Echo cancelation and noise suppression
 - Create BLF/Presence subscriptions and monitor state of remote extension(s)
+- Send/receive text messages
+- Ready to use models for fast and easy UI creating
+- Embedded CallKit/PushKit support in iOS version of plugin
 
 ## Usage
 
 ### Add dependency in pubspec.yaml
 ```
 dependencies:
-  siprix_voip_sdk: ^1.0.0
+  siprix_voip_sdk: ^1.0.11
   provider: ^6.1.1
 ```
 
@@ -115,6 +118,19 @@ void _addCall() {
 ```
 
 [More detailed integration guide](https://docs.siprix-voip.com/rst/flutter.html#integration-into-flutter-application)
+
+## How to use this library without provider?
+
+Library doesn't have any limitations related to provider.
+You can copy source code of existing models to your project and use as you need/want.
+Also you can create own classes and directly invoke library's methods like:\
+`int callId = await SiprixVoipSdk().invite(dest) ?? 0;`\
+`int accId  = await SiprixVoipSdk().addAccount(acc) ?? 0;`\
+
+The same is true for listening events - add own class as listener which will handles events:\
+`SiprixVoipSdk().accListener = MyAccStateListener(regStateChanged : onRegStateChanged);`
+
+Use source code of existing models as implementation hint or ask support@siprix-voip.com in case of difficulties.
 
 
 ## Limitations
