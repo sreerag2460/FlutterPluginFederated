@@ -1,3 +1,6 @@
+## 1.0.12
+- iOS: Redesigned and improved CallKit+PushKit implementation
+
 ## 1.0.11
 - Added ability to send and receive text messages (SIP MESSAGE request)
 - Added ability to override DisplayName in outgoing call (method 'Dest_SetDisplayName')

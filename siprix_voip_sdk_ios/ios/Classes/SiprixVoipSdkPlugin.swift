@@ -154,7 +154,7 @@ class SiprixEventHandler : NSObject, SiprixEventDelegate {
     }
     
     public func didReceiveIncomingPush(_ dictionaryPayload : [AnyHashable : Any]) {
-        let callKit_callUUID = _callKitProvider?.didReceiveIncomingPush()
+        let callKit_callUUID = _callKitProvider?.onPushIncoming()
         if(callKit_callUUID != nil) {
             var argsMap = [String:Any]()
             argsMap[kArgCallKitUuid] = callKit_callUUID
@@ -218,7 +218,7 @@ class SiprixEventHandler : NSObject, SiprixEventDelegate {
         argsMap[kArgCallId] = callId
         argsMap[kResponse] = response
         _channel.invokeMethod(kOnCallProceeding, arguments: argsMap)
-        _callKitProvider?.onCxActionProceeding(callId)
+        _callKitProvider?.onSipProceeding(callId)
     }
 
     public func onCallTerminated(_ callId: Int, statusCode:Int) {
@@ -226,7 +226,7 @@ class SiprixEventHandler : NSObject, SiprixEventDelegate {
         argsMap[kArgCallId] = callId
         argsMap[kArgStatusCode] = statusCode
         _channel.invokeMethod(kOnCallTerminated, arguments: argsMap)
-        _callKitProvider?.onCxActionTerminated(callId)
+        _callKitProvider?.onSipTerminated(callId)
     }
 
     public func onCallConnected(_ callId: Int, hdrFrom:String, hdrTo:String, withVideo:Bool) {
@@ -236,7 +236,7 @@ class SiprixEventHandler : NSObject, SiprixEventDelegate {
         argsMap[kFrom] = hdrFrom
         argsMap[kTo] = hdrTo
         _channel.invokeMethod(kOnCallConnected, arguments: argsMap)
-        _callKitProvider?.onCxActionConnected(callId, withVideo:withVideo)
+        _callKitProvider?.onSipConnected(callId, withVideo:withVideo)
     }
 
     public func onCallIncoming(_ callId:Int, accId:Int, withVideo:Bool, hdrFrom:String, hdrTo:String) {
@@ -249,7 +249,7 @@ class SiprixEventHandler : NSObject, SiprixEventDelegate {
         _channel.invokeMethod(kOnCallIncoming, arguments: argsMap)
         
         if(_pushKitDisabled) {
-            _callKitProvider?.onCxActionNewIncomingCall(callId, withVideo:withVideo, hdrFrom:hdrFrom, hdrTo:hdrTo)
+            _callKitProvider?.onSipIncoming(callId, withVideo:withVideo, hdrFrom:hdrFrom, hdrTo:hdrTo)
         }
     }
 
@@ -279,7 +279,7 @@ class SiprixEventHandler : NSObject, SiprixEventDelegate {
         argsMap[kArgToCallId] = relatedCallId
         argsMap[kArgToExt] = referTo
         _channel.invokeMethod(kOnCallRedirected, arguments: argsMap)
-        _callKitProvider?.onCallRedirected(origCallId:origCallId, relatedCallId:relatedCallId, referTo:referTo)
+        _callKitProvider?.onSipRedirected(origCallId:origCallId, relatedCallId:relatedCallId, referTo:referTo)
     }
 
     public func onCallHeld(_ callId:Int, holdState:HoldState) {
@@ -337,7 +337,7 @@ class Ringer {
         do {
             try session.setCategory(AVAudioSession.Category.playAndRecord, options: options)
         } catch {
-            print("Can't start ringer: error \(error)")
+            print("siprix: Ringer: Can't start ringer: error \(error)")
         }
         #endif
     }
@@ -642,10 +642,11 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
             _callKitProvider = SiprixCxProvider(_siprixModule, singleCallMode:singleCall, includeInRecents:includeInRecents)
         }
       
-        if((err == kErrorCodeEOK) && (enablePushKit != nil) && enablePushKit!) {
+        if((err == kErrorCodeEOK) && (_callKitProvider != nil) && (enablePushKit != nil) && enablePushKit!) {
             _pushKitProvider = SiprixPushRegistry(_eventHandler)
         }
         #endif
+      
         _siprixModule.enableCallKit(_callKitProvider != nil)
         _eventHandler.setCallKitProvider(_callKitProvider, pushKitProvider:_pushKitProvider)
         
@@ -872,7 +873,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        if(_callKitProvider == nil) {
+        if(_callKitProvider == nil || !_callKitProvider!.containsCall(callId!)) {
             let err = _siprixModule.callAccept(Int32(callId!), withVideo:withVideo!)
             sendResult(err, result:result)
         }else{
@@ -889,7 +890,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
             return;
         }
 
-        if(_callKitProvider == nil) {
+        if(_callKitProvider == nil || !_callKitProvider!.containsCall(callId!)) {
             let err = _siprixModule.callHold(Int32(callId!))
             sendResult(err, result:result)
         }else{
@@ -937,7 +938,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
             return
         }
         
-        if(_callKitProvider == nil) {
+        if(_callKitProvider == nil || !_callKitProvider!.containsCall(callId!)) {
             let err = _siprixModule.callMuteMic(Int32(callId!), mute:mute!)
             sendResult(err, result:result)
         }else{
@@ -970,7 +971,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        if(_callKitProvider == nil) {
+        if(_callKitProvider == nil || !_callKitProvider!.containsCall(callId!)) {
             let m = (method! == DtmfMethod.rtp.rawValue) ? DtmfMethod.rtp : DtmfMethod.info
         
             let err = _siprixModule.callSendDtmf(Int32(callId!), dtmfs:dtmfs!,
@@ -1070,7 +1071,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        if(_callKitProvider == nil) {
+        if(_callKitProvider == nil || !_callKitProvider!.containsCall(callId!)) {
             let err = _siprixModule.callBye(Int32(callId!))
             sendResult(err, result:result)
         }else{
@@ -1189,7 +1190,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         }
         else {
             //Call exist update details
-            _callKitProvider?.onAppUpdateCallDetails(uuid!, callId:callId,
+            _callKitProvider?.sipAppUpdateCallDetails(uuid!, callId:callId,
                             localizedName:localizedName, genericHandle:genericHandle, withVideo:withVideo)
         }
     }
@@ -1413,7 +1414,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
 
         let exists = (FileManager.default.fileExists(atPath:assetPath!))
         if(exists) {
-            print("Ringtone path: '\(assetPath!)' - exists")
+            print("siprix: Ringtone path: '\(assetPath!)' - exists")
             _eventHandler.setRingTonePath(assetPath!)
             return;
         }
@@ -1421,7 +1422,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         let index = assetPath!.lastIndex(of: "/")
         if(index != nil) {
             let updatedPath = _siprixModule.homeFolder() + assetPath!.suffix(from: index!).dropFirst()
-            print("Ringtone path updated: '\(updatedPath)'")
+            print("siprix: Ringtone path updated: '\(updatedPath)'")
             _eventHandler.setRingTonePath(updatedPath)
         }
     }
@@ -1472,7 +1473,7 @@ class SiprixPushRegistry : NSObject, PKPushRegistryDelegate {
            
     public func pushRegistry(_ registry: PKPushRegistry, didReceiveIncomingPushWith payload:
                                 PKPushPayload, for type: PKPushType, completion: @escaping () -> Void) {
-        print("didReceiveIncomingPushWith \(type)")
+        print("siprix: PushRegistry: didReceiveIncomingPushWith \(type)")
         if(type == .voIP) {
             _eventHandler.didReceiveIncomingPush(payload.dictionaryPayload)
         }
@@ -1503,7 +1504,11 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
     //--------------------------------------------------------
     //Event handlers
         
-    func onCxActionProceeding(_ callId: Int) {
+    func containsCall(_ callId: Int) -> Bool {
+        return _callsList.contains(where: {$0.id == callId})
+    }
+        
+    func onSipProceeding(_ callId: Int) {
         DispatchQueue.main.async {
             let call = self._callsList.first(where: {$0.id == callId})
             if(call != nil) {
@@ -1512,30 +1517,36 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
         }
     }
     
-    func onCxActionTerminated(_ callId: Int) {
+    func onSipTerminated(_ callId: Int) {
         DispatchQueue.main.async {
             let callIdx = self._callsList.firstIndex(where: {$0.id == callId})
             if(callIdx == nil) { return }
 
             let call = self._callsList[callIdx!]
+            
+            call.cxEndAction?.fulfill()
+            call.cxEndAction = nil
+
             if(!call.endedByLocalSide) {
                 var reason : CXCallEndedReason = .failed
                 if(call.connectedSuccessfully || call.isIncoming) {  reason = .remoteEnded } else
                 if(!call.isIncoming) { reason = .unanswered }
             
                 self._cxProvider.reportCall(with:call.uuid, endedAt: nil, reason: reason)
-        
-                self._callsList.remove(at:callIdx!)
             }
+            //Remove call item from collection
+            self._callsList.remove(at:callIdx!)
+            print("siprix: CxProvider: onSipTerminated remove callId:\(call.id) <=> \(call.uuid)")
         }
     }
     
-    func onCxActionConnected(_ callId: Int, withVideo:Bool) {
+    func onSipConnected(_ callId: Int, withVideo:Bool) {
         DispatchQueue.main.async {
             let call = self._callsList.first(where: {$0.id == callId})
             if(call == nil) { return }
             
             call!.connectedSuccessfully = true
+            call!.cxAnswerAction?.fulfill()
             
             //Set 'connected' time of the outgoing call
             if(!call!.isIncoming) {
@@ -1557,14 +1568,28 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
         }
     }
         
-    func onCxActionNewIncomingCall(_ callId:Int, withVideo:Bool, hdrFrom:String, hdrTo:String) {
+    func onSipIncoming(_ callId:Int, withVideo:Bool, hdrFrom:String, hdrTo:String) {
         let call = CallModel(callId:callId, withVideo:withVideo, from:hdrFrom)
-        self._callsList.append(call)
-        onCxActionNewIncomingCall(call)
+        _callsList.append(call)
+    
+        DispatchQueue.main.async {
+            self.reportNewIncomingCall(call)
+        }
+
+        print("siprix: CxProvider: onSipIncoming - added new call with uuid:\(call.uuid)")
     }
     
-    func onCxActionNewIncomingCall(_ call : CallModel) {
-        DispatchQueue.main.async {
+    public func onPushIncoming() -> String {
+        let call = CallModel(callId:kInvalidId, withVideo:true, from:"SiprixPushKit")
+        _callsList.append(call)
+        
+        reportNewIncomingCall(call)
+        
+        print("siprix: CxProvider: onPushIncoming - added new call with uuid:\(call.uuid)")
+        return call.uuid.uuidString
+    }
+        
+    func reportNewIncomingCall(_ call : CallModel) {
                 let update = CXCallUpdate()
                 update.remoteHandle = CXHandle(type: .generic, value: call.fromTo)
                 update.hasVideo = call.withVideo
@@ -1573,46 +1598,59 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
                 update.supportsHolding = true
                 update.supportsDTMF = true
         
-            self._cxProvider.reportNewIncomingCall(with: call.uuid, update: update,
+        _cxProvider.reportNewIncomingCall(with: call.uuid, update: update,
                                          completion: { error in self.printResult("CXCallUpdate", err:error)
                 })
             }
-        }
     
-    public func didReceiveIncomingPush() -> String {
-        print("didReceiveIncomingPush")
+    func proceedCxAnswerAction(_ call: CallModel) {
+        let err = _siprixModule.callAccept(Int32(call.id), withVideo:call.withVideo)
+        if (err != kErrorCodeEOK) {
+            call.cxAnswerAction?.fail()
+        }
+        print("siprix: CxProvider: proceedCxAnswerAction err:\(err) sipCallId:\(call.id) uuid:\(call.uuid))")
+    }
+    
+    func proceedCxEndAction(_ call: CallModel) {
+        var err = kErrorCodeEOK
+        if(call.isIncoming && !call.connectedSuccessfully) {
+            err = _siprixModule.callReject(Int32(call.id), statusCode:486) }
+        else {
+            call.endedByLocalSide = true
+            err = _siprixModule.callBye(Int32(call.id))
+        }
         
-        //Create call, present UI and wait on INVITE
-        let call = CallModel(callId:kInvalidId, withVideo:true, from:"PushKit")
-        _callsList.append(call)
-        
-        onCxActionNewIncomingCall(call)
-        return call.uuid.uuidString.lowercased()
+        if (err != kErrorCodeEOK) {
+            call.cxEndAction?.fail()
+        }
+        print("siprix: CxProvider: proceedCxEndAction err:\(err) sipCallId:\(call.id) uuid:\(call.uuid))")
     }
 
-    public func onAppUpdateCallDetails(_ callKit_callUUID:UUID, callId:Int?,
+    public func sipAppUpdateCallDetails(_ callKit_callUUID:UUID, callId:Int?,
                                        localizedName:String?, genericHandle:String?, withVideo:Bool?) {
         DispatchQueue.main.async {
             let call = self.getCallByUUID(callKit_callUUID)
             if(call == nil) {
+                print("siprix: CxProvider: sipAppUpdateCallDetails uuid:\(callKit_callUUID) call not found")
                 return
             }
         
             if(callId != nil) {
                 //INVITE received - update SIP callId
-                call!.updateByInvite(callId: callId!, withVideo: withVideo)
+                print("siprix: CxProvider: sipAppUpdateCallDetails uuid:\(callKit_callUUID)) set sipCallId:\(callId!)")
+                call!.setSipCallId(callId: callId!, withVideo: withVideo)
    
-                //Answer call alredy answered by callkit
-                if(call!.cxAnswerAction != nil) {
-                    if (self._siprixModule.callAccept(Int32(call!.id), withVideo:call!.withVideo) == kErrorCodeEOK) {
-                        call!.cxAnswerAction?.fulfill()
-                    } else {
-                        call!.cxAnswerAction?.fail()
+                if(call!.rejectedByCallKit) {
+                    self.proceedCxEndAction(call!)
                     }
+                else if(call!.answeredByCallKit) {
+                    self.proceedCxAnswerAction(call!)
                 }
             }
         
             if((genericHandle != nil)||(localizedName != nil)||(withVideo != nil)) {
+                print("siprix: CxProvider: sipAppUpdateCallDetails uuid:\(callKit_callUUID) genericHandle:\(String(describing: genericHandle)) localizedName:\(String(describing: localizedName)) withVideo:\(String(describing: withVideo))")
+                
                 let update = CXCallUpdate()
                 if(genericHandle != nil) { update.remoteHandle = CXHandle(type: .generic, value: genericHandle!) }
                 if(localizedName != nil) { update.localizedCallerName = localizedName! }
@@ -1628,7 +1666,7 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
         }
     }
 
-    public func onCallRedirected(origCallId: Int, relatedCallId: Int, referTo: String) {
+    public func onSipRedirected(origCallId: Int, relatedCallId: Int, referTo: String) {
         DispatchQueue.main.async {            
             let origCall = self._callsList.first(where: {$0.id == origCallId})//Find 'origCallId'
             if(origCall != nil) {
@@ -1749,9 +1787,9 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
     }
     
     func printResult(_ name: String, err: Error?) {
-        let strErr = (err != nil) ? ("Error requesting \(name) :\(err!)") : ("\(name) requested successfully")
+        let strErr = (err != nil) ? ("Error requesting <\(name)> :\(err!)") : ("<\(name)> requested successfully")
         DispatchQueue.main.async {
-            print(strErr)
+            print("siprix: CxProvider: completion: '\(strErr)'")
         }
     }
 
@@ -1759,11 +1797,11 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
     ///CXProviderDelegate
     ///
     func providerDidReset(_ provider: CXProvider) {
-        print("providerDidReset")
+        print("siprix: CxProvider: providerDidReset")
     }
     
     func provider(_: CXProvider, perform action: CXStartCallAction) {
-        print("CXStartCall uuid:\(action.callUUID)")
+        print("siprix: CxProvider: CXStartCall uuid:\(action.callUUID)")
         //TODO Case starting call from NativeUI
         
         let call = getCallByUUID(action.callUUID)
@@ -1779,31 +1817,44 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
     func provider(_: CXProvider, perform action: CXEndCallAction) {
         let call = getCallByUUID(action.callUUID)
         if(call == nil) {
-            print("CXEndCall not found uuid:\(action.callUUID)")
+            print("siprix: CxProvider: CXEndCall uuid:\(action.callUUID) not found")
             action.fail()
             return
         }
         
-        if(call!.id == kInvalidId) {
-            //INVITE hasn't received yet
             call!.cxEndAction = action
-            print("CXEndCall uuid:\(action.callUUID) when SIP hasn't received yet")
-            return
-        }
 
-        print("CXEndCall uuid:\(action.callUUID)")
-        if(call!.isIncoming && !call!.connectedSuccessfully) {
-            _siprixModule.callReject(Int32(call!.id), statusCode:486) }
+        if(call!.id == kInvalidId) {
+            call!.rejectedByCallKit = true
+            print("siprix: CxProvider: CXEndCall uuid:\(action.callUUID) SIP hasn't received yet")
+        }
         else {
-            call!.endedByLocalSide = true
-            _siprixModule.callBye(Int32(call!.id))
+            print("siprix: CxProvider: CXEndCall uuid:\(action.callUUID) callId:\(call!.id)")
+            proceedCxEndAction(call!)
+        }
         }
         
-        action.fulfill()
+    func provider(_: CXProvider, perform action: CXAnswerCallAction) {
+        let call = getCallByUUID(action.callUUID)
+        if(call == nil) {
+            print("siprix: CxProvider: CXAnswer uuid:\(action.callUUID) not found")
+            action.fail()
+            return
+        }
+       
+        call!.cxAnswerAction = action
+        
+        if (call!.id == kInvalidId) {
+            call!.answeredByCallKit = true
+            print("siprix: CxProvider: CXAnswer uuid:\(action.callUUID) SIP hasn't received yet")
+        }else{
+            print("siprix: CxProvider: CXAnswer uuid:\(action.callUUID) callId:\(call!.id)")
+            proceedCxAnswerAction(call!)
+        }
     }
     
     func provider(_: CXProvider, perform action: CXPlayDTMFCallAction) {
-        print("CXPlayDTMF uuid:\(action.callUUID) dtmf:\(action.digits)")
+        print("siprix: CxProvider: CXPlayDTMF uuid:\(action.callUUID) dtmf:\(action.digits)")
        
         let call = getCallByUUID(action.callUUID)
         if((call != nil) && (_siprixModule.callSendDtmf(Int32(call!.id), dtmfs:action.digits) == kErrorCodeEOK)) {
@@ -1815,7 +1866,7 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
     }
 
     func provider(_: CXProvider, perform action: CXSetHeldCallAction) {
-        print("CXSetHeld uuid:\(action.callUUID) isOnHold:\(action.isOnHold)")
+        print("siprix: CxProvider: CXSetHeld uuid:\(action.callUUID) isOnHold:\(action.isOnHold)")
        
         let call = getCallByUUID(action.callUUID)
         if((call != nil) && (_siprixModule.callHold(Int32(call!.id)) == kErrorCodeEOK)) {
@@ -1828,7 +1879,8 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
     }
     
     func provider(_: CXProvider, perform action: CXSetMutedCallAction) {
-        print("CXSetMuted uuid:\(action.callUUID) muted:\(action.isMuted)")
+        print("siprix: CxProvider: CXSetMuted uuid:\(action.callUUID) muted:\(action.isMuted)")
+        //TODO fix case when callKit muted call, but flutter can't see that
        
         let call = getCallByUUID(action.callUUID)
         if((call != nil) && (_siprixModule.callMuteMic(Int32(call!.id), mute:action.isMuted)) == kErrorCodeEOK) {
@@ -1839,54 +1891,35 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
         }
     }
     
-    func provider(_: CXProvider, perform action: CXAnswerCallAction) {
-        let call = getCallByUUID(action.callUUID)
-        if(call == nil) {
-            print("CXAnswer not found uuid:\(action.callUUID)")
-            action.fail()
-            return
-        }
-       
-        print("CXAnswer uuid:\(action.callUUID) call id:\(call!.id)")
-        if (call!.id == kInvalidId) {
-            //INVITE hasn't received yet
-            call!.cxAnswerAction = action
-            return;
-        }
-            
-        if (_siprixModule.callAccept(Int32(call!.id), withVideo:call!.withVideo) == kErrorCodeEOK) {
-            action.fulfill()
-        } else {
-            action.fail()
-        }
-    }
-    
-    func provider(_: CXProvider, timedOutPerforming _: CXAction) {
+    func provider(_: CXProvider, timedOutPerforming action: CXAction) {
+        print("siprix: CxProvider: CXAction timedOutPerforming uuid:\(action.uuid)")
     }
     
     func provider(_: CXProvider, perform action: CXSetGroupCallAction) {
         let call = getCallByUUID(action.callUUID)
         if(call == nil) {
-            print("CXSetGroup not found uuid:\(action.callUUID)")
+            print("siprix: CxProvider: CXSetGroup not found uuid:\(action.callUUID)")
             action.fail()
             return
         }
         
         if (action.callUUIDToGroupWith != nil) {
-            print("CXSetGroup group uuid:\(action.callUUID) with:\(action.callUUIDToGroupWith!)")
+            print("siprix: CxProvider: CXSetGroup group uuid:\(action.callUUID) with:\(action.callUUIDToGroupWith!)")
             _siprixModule.mixerMakeConference()//TODO fix case when callKit started conf, but flutter can't see that
         } else {
-            print("CXSetGroup ungroup uuid:\(action.callUUID)")
+            print("siprix: CxProvider: CXSetGroup ungroup uuid:\(action.callUUID)")
             _siprixModule.mixerSwitchCall(Int32(call!.id))
         }
         action.fulfill()
     }
    
     func provider(_ provider: CXProvider, didActivate audioSession: AVAudioSession) {
+        print("siprix: CxProvider: didActivate")
         _siprixModule.activate(audioSession)
     }
 
     func provider(_: CXProvider, didDeactivate audioSession: AVAudioSession) {
+        print("siprix: CxProvider: didDeactivate")
         _siprixModule.deactivate(audioSession)
     }
 
@@ -1894,15 +1927,9 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
         return _callsList.first(where: {$0.uuid == uuid})
     }
 
-    //private func matchExistingCallCreatedByPush(from:String, to:String) -> CallModel? {
-    //    //TODO debug PushKit redesign depending on the data received in push
-    //    //return calls.first(where: {($0.from == from)&&($0.to == to)&&($0.id == 0) })
-    //    return nil
-    //}
-
     class CallModel : Identifiable, Equatable {        
         private(set) var uuid = UUID()
-        private(set) var myCallId : Int  //Assigned by Siprix module.
+        private(set) var mySipCallId : Int  //Assigned by Siprix module.
         //When this instance created by push - 'myCallId' will set to 'kInvalidId
         //  and proper value assigned only when received SIP INVITE
         //App has to match call by comparing data from push and SIP.
@@ -1911,6 +1938,8 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
         public let isIncoming : Bool
         public var isHeld : Bool = false
         public var connectedSuccessfully = false
+        public var answeredByCallKit = false
+        public var rejectedByCallKit = false
         public var endedByLocalSide = false
         public var fromTo : String
         
@@ -1918,7 +1947,7 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
         public var cxEndAction : CXEndCallAction?
                   
         init(_ destData:SiprixDestData) {
-            self.myCallId = Int(destData.myCallId)
+            self.mySipCallId = Int(destData.myCallId)
             self.isIncoming = false
 
             self.withVideo = (destData.withVideo != nil) ? destData.withVideo!.boolValue : false
@@ -1926,19 +1955,18 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
         }
 
         init(callId:Int, withVideo:Bool, from:String) {
-            self.myCallId = callId
+            self.mySipCallId = callId
             self.isIncoming = true
             self.withVideo = withVideo            
             self.fromTo = from
         }
 
-        public func updateByInvite(callId:Int, withVideo:Bool?) {
-            print("updateByInvite call id:\(myCallId) uuid:\(uuid))")
-            self.myCallId = callId
+        public func setSipCallId(callId:Int, withVideo:Bool?) {
+            self.mySipCallId = callId
             if(withVideo != nil) { self.withVideo = withVideo! }
         }
     
-        var id : Int { get { return myCallId } }
+        var id : Int { get { return mySipCallId } }
         
         static func ==(lhs: CallModel, rhs: CallModel) -> Bool {
             return lhs.uuid == rhs.uuid
