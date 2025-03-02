@@ -14,7 +14,7 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 - Create BLF/Presence subscriptions and monitor state of remote extension(s)
 - Send and receive text messages
 - Ready to use models for fast and easy UI creating
-- Embedded CallKit support in iOS version of plugin
+- Embedded PushKit+CallKit support in iOS version of plugin
 
 ## Usage
 
@@ -126,6 +126,10 @@ void showSnackBar(dynamic err) {
 Please contact [support@siprix-voip.com](mailto:support@siprix-voip.com) if you have technical questions.
 
 
+## How to integrate PushKit+CallKit support?
+[See detailed manual here](https://docs.siprix-voip.com/rst/ioscallkit.html#integrate-pushkit-callkit-into-flutter-application)
+
+
 ## How to use this library without provider?
 
 Library doesn't have any limitations related to provider.
@@ -151,7 +155,7 @@ Please contact [sales@siprix-voip.com](mailto:sales@siprix-voip.com) for more de
 
 ## More resources
 
-Product web site: [siprix-voip.com](https://siprix-voip.com)
+Product website: [siprix-voip.com](https://www.siprix-voip.com/product/)
 
 Manual: [docs.siprix-voip.com](https://docs.siprix-voip.com)
 
