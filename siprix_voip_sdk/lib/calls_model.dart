@@ -455,18 +455,6 @@ class CallModel extends ChangeNotifier {
 }//CallModel
 
 
-/// Helper class used to keep different ids of the same call
-class CallMatcher {
-  ///Id of the call assigned by CallKit
-  String callkit_CallUUID;
-  ///Id received with push notification (created by server which sent this push)
-  String push_CallId;
-  ///Id assigned by library when SIP INVITE received
-  int    sip_CallId;
-
-  CallMatcher(this.callkit_CallUUID, this.push_CallId, [this.sip_CallId=0]);
-}
-
 
 /// Callback function which is raised by model when it need to resolve contact name of the new callreceived
 typedef ResolveContactNameCallback = String Function(String phoneNumber);
@@ -480,7 +468,6 @@ typedef NewIncomingCallCallback = void Function();
 /// Calls list model (contains list of calls, methods for managing them, handlers of library events)
 class CallsModel extends ChangeNotifier {
   final List<CallModel> _callItems = [];
-  final List<CallMatcher> _callMatchers=[];
   final IAccountsModel _accountsModel;
   final CdrsModel? _cdrs;
   final ILogsModel? _logs;
@@ -625,27 +612,12 @@ class CallsModel extends ChangeNotifier {
     if(index != -1) _callItems[index].onProceeding(response);
   }
 
-  void _matchPushAndSipCall(int sip_callId) async {
-    //TODO//Get id from received SIP INVITE (added by remote server) or math this SIP-call with CallKit-call
-    //String? pushCallId = await SiprixVoipSdk().getSipHeader(sip_callId, "header_name");
 
-    //int index = _callMatchers.indexWhere((c) => c.push_CallId == pushCallId);
-    //if(index != -1) {
-    //  SiprixVoipSdk().updateCallKitCallDetails(_callMatchers[index].callkit_CallUUID, sip_callId, null, null, null);
-    //}
-  }
 
   /// Handle pushkit notification received by library (parse payload, update CallKit window, wait on SIP call)
   void onIncomingPush(String callkit_CallUUID, Map<String, dynamic> pushPayload) {
     _logs?.print('onIncomingPush callkit_CallUUID:$callkit_CallUUID $pushPayload');
-    //TODO //Get data from 'pushPayload' and update CallKit call details
-    //String push_CallId = pushPayload["callId"];
-    //String genericHandle = pushPayload["callerNumber"];
-    //String localizedCallerName = pushPayload["callerName"];
 
-    //_callMatchers.add(CallMatcher(callkit_CallUUID, push_CallId));
-
-    //SiprixVoipSdk().updateCallKitCallDetails(callkit_CallUUID, localizedCallerName, genericHandle, withVideo);
   }
 
   ///Handle incoming call event raised by library when received INVITE request
@@ -654,8 +626,6 @@ class CallsModel extends ChangeNotifier {
 
     int index = _callItems.indexWhere((c) => c.myCallId==callId);
     if(index != -1) return;//Call already exists, skip
-
-    _matchPushAndSipCall(callId);
 
     String accUri = _accountsModel.getUri(accId);
     bool hasSecureMedia = _accountsModel.hasSecureMedia(accId);
@@ -708,11 +678,6 @@ class CallsModel extends ChangeNotifier {
       }
 
       notifyListeners();
-    }
-
-    int matcherIdx =_callMatchers.indexWhere((c) => c.sip_CallId==callId);
-    if(matcherIdx != -1) {
-      _callMatchers.removeAt(matcherIdx);
     }
   }
 
