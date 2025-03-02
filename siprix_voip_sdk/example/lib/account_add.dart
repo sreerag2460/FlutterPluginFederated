@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:siprix_voip_sdk/accounts_model.dart';
 import 'package:siprix_voip_sdk/network_model.dart';
 
+import 'accouns_model_app.dart';
 import 'main.dart';
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -127,13 +128,13 @@ class AccountPageState extends State<AccountPage> {
 
     if(isAddMode()) {
       _account.ringTonePath = MyApp.getRingtonePath();
-      context.read<AccountsModel>().addAccount(_account)
+      context.read<AppAccountsModel>().addAccount(_account)
         .then((_) { Navigator.pop(context, true); })
         .catchError((error) {
           setState(() { _errText = error;  });
       });
     } else {
-      context.read<AccountsModel>().updateAccount(_account)
+      context.read<AppAccountsModel>().updateAccount(_account)
         .then((_) { Navigator.pop(context, true); })
         .catchError((error) {
           setState(() { _errText = error;  });

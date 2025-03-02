@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'package:siprix_voip_sdk/accounts_model.dart';
 import 'package:siprix_voip_sdk/messages_model.dart';
+
+import 'accouns_model_app.dart';
 
 enum MsgAction {delete, deleteAll}
 
@@ -34,12 +35,12 @@ class _MessagesListPagePageState extends State<MessagesListPage> {
         itemBuilder: (BuildContext context, int index) { return _messageListTileSelector(messages, index); },
         separatorBuilder: (BuildContext context, int index) => const Divider(height: 0,),
       )),
-      Padding(padding: EdgeInsets.all(10), child:
+      Padding(padding: const EdgeInsets.all(10), child:
         Form(key: _formKey, child:
           Column(children:[
             Row(crossAxisAlignment: CrossAxisAlignment.start, children:[
               Expanded(child: _buildAccountsMenu()),
-              SizedBox(width: 5),
+              const SizedBox(width: 5),
               Expanded(child: _buildPhoneNumberField())
             ]),
             _buildMessageBodyField()
@@ -66,8 +67,8 @@ class _MessagesListPagePageState extends State<MessagesListPage> {
         selectedColor: Colors.black,
         selectedTileColor: Theme.of(context).secondaryHeaderColor,
         leading:
-          msg.isIncoming ? Icon(Icons.call_received_rounded, color: Colors.green)
-          : Column(children:[Icon(Icons.call_made_rounded,color: Colors.lightGreen),
+          msg.isIncoming ? const Icon(Icons.call_received_rounded, color: Colors.green)
+          : Column(children:[const Icon(Icons.call_made_rounded,color: Colors.lightGreen),
               Icon(Icons.check, size: 14, color: msg.sentSuccess ? Colors.deepPurple : Colors.grey),
             ]),
         title: Text(msg.body,
@@ -111,7 +112,7 @@ class _MessagesListPagePageState extends State<MessagesListPage> {
   }
 
   Widget _buildAccountsMenu() {
-    final accounts = context.watch<AccountsModel>();
+    final accounts = context.watch<AppAccountsModel>();
     return
         DropdownButtonFormField<int>(
           isExpanded: true,
@@ -132,8 +133,8 @@ class _MessagesListPagePageState extends State<MessagesListPage> {
    Widget _buildPhoneNumberField() {
     return
       TextFormField(
-        decoration: InputDecoration(
-          border: const UnderlineInputBorder(),
+        decoration: const InputDecoration(
+          border: UnderlineInputBorder(),
           labelText: 'Destination phone number',
         ),
         controller: _phoneNumbCtrl,
@@ -160,7 +161,7 @@ class _MessagesListPagePageState extends State<MessagesListPage> {
     if (form == null || !form.validate()) return;
 
     //Check selected account
-    final accounts = context.read<AccountsModel>();
+    final accounts = context.read<AppAccountsModel>();
     if(accounts.selAccountId==null) return;
 
     //Send

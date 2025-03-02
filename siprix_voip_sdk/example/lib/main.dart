@@ -8,17 +8,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:siprix_voip_sdk/accounts_model.dart';
 import 'package:siprix_voip_sdk/messages_model.dart';
 import 'package:siprix_voip_sdk/network_model.dart';
-import 'package:siprix_voip_sdk/calls_model.dart';
 import 'package:siprix_voip_sdk/cdrs_model.dart';
 import 'package:siprix_voip_sdk/devices_model.dart';
 import 'package:siprix_voip_sdk/logs_model.dart';
 import 'package:siprix_voip_sdk/subscriptions_model.dart';
 import 'package:siprix_voip_sdk/siprix_voip_sdk.dart';
 
+import 'accouns_model_app.dart';
+import 'calls_model_app.dart';
+import 'subscr_model_app.dart';
+
 import 'account_add.dart';
 import 'call_add.dart';
 import 'subscr_add.dart';
-import 'subscr_model.dart';
 import 'settings.dart';
 import 'home.dart';
 
@@ -28,10 +30,10 @@ void main() async {
 
   DevicesModel devicesModel = DevicesModel(logsModel);//List of devices
   NetworkModel networkModel = NetworkModel(logsModel);//Network state details
-  AccountsModel accountsModel = AccountsModel(logsModel);//List of accounts
+  AppAccountsModel accountsModel = AppAccountsModel(logsModel);//List of accounts
   MessagesModel messagesModel = MessagesModel(accountsModel, logsModel);
-  CallsModel callsModel = CallsModel(accountsModel, logsModel, cdrsModel);//List of calls
-  SubscriptionsModel subscrModel = SubscriptionsModel<BlfSubscrModel>(accountsModel, BlfSubscrModel.fromJson, logsModel);//List of subscriptions
+  AppCallsModel callsModel = AppCallsModel(accountsModel, logsModel, cdrsModel);//List of calls
+  SubscriptionsModel subscrModel = SubscriptionsModel<AppBlfSubscrModel>(accountsModel, AppBlfSubscrModel.fromJson, logsModel);//List of subscriptions
 
   //Run app
   runApp(
@@ -127,6 +129,7 @@ class _MyAppState extends State<MyApp> {
     //iniData.singleCallMode = false;
     //iniData.tlsVerifyServer = false;
     //iniData.enableCallKit = true;
+    //iniData.enablePushKit = true;
     SiprixVoipSdk().initialize(iniData, logsModel);
 
     //Set video params (if required)
@@ -148,7 +151,7 @@ class _MyAppState extends State<MyApp> {
 
   void _loadModels(String accJsonStr, String cdrsJsonStr, String subsJsonStr, String msgsJsonStr) {
     //Accounts
-    AccountsModel accsModel = context.read<AccountsModel>();
+    AppAccountsModel accsModel = context.read<AppAccountsModel>();
     accsModel.onSaveChanges = _saveAccountChanges;
 
     //Subscriptions
@@ -170,7 +173,7 @@ class _MyAppState extends State<MyApp> {
     });
 
     //Assign contact name resolver
-    context.read<CallsModel>().onResolveContactName = _resolveContactName;
+    context.read<AppCallsModel>().onResolveContactName = _resolveContactName;
 
     //Load devices
     context.read<DevicesModel>().load();
@@ -260,8 +263,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Widget buildBody() {
-    final accounts = context.watch<AccountsModel>();
-    final calls = context.watch<CallsModel>();
+    final accounts = context.watch<AppAccountsModel>();
+    final calls = context.watch<AppCallsModel>();
     return Column(children: [
       ListView.separated(
         shrinkWrap: true,        
@@ -311,17 +314,17 @@ class _MyAppState extends State<MyApp> {
     account.sipExtension = "1016";
     account.sipPassword = "12345";
     account.expireTime = 300;
-    context.read<AccountsModel>().addAccount(account)
+    context.read<AppAccountsModel>().addAccount(account)
       .catchError(showSnackBar);
   }
 
   void _addCall() {
-    final accounts = context.read<AccountsModel>();
+    final accounts = context.read<AppAccountsModel>();
     if(accounts.selAccountId==null) return;
 
     CallDestination dest = CallDestination("1012", accounts.selAccountId!, false);
 
-    context.read<CallsModel>().invite(dest)
+    context.read<AppCallsModel>().invite(dest)
       .catchError(showSnackBar);
   }
 

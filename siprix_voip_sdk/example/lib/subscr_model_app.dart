@@ -4,12 +4,12 @@ import 'package:siprix_voip_sdk/subscriptions_model.dart';
 enum BLFState {trying, proceeding, early, terminated, confirmed, unknown}
 
 ////////////////////////////////////////////////////////////////////////////////////////
-//BlfSubscrModel
+//AppBlfSubscrModel
 
-class BlfSubscrModel extends SubscriptionModel {
-  BlfSubscrModel(String ext, int accId) : super(ext, accId, "dialog-info+xml", "dialog");
+class AppBlfSubscrModel extends SubscriptionModel {
+  AppBlfSubscrModel(String ext, int accId) : super(ext, accId, "dialog-info+xml", "dialog");
 
-  BlfSubscrModel.fromJson(Map<String, dynamic> jsonMap) : super.fromJson(jsonMap);
+  AppBlfSubscrModel.fromJson(Map<String, dynamic> jsonMap) : super.fromJson(jsonMap);
 
   BLFState blfState = BLFState.unknown;
  

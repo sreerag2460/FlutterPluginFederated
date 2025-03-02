@@ -5,6 +5,9 @@ import 'package:siprix_voip_sdk/accounts_model.dart';
 import 'package:siprix_voip_sdk/calls_model.dart';
 import 'package:siprix_voip_sdk/cdrs_model.dart';
 
+import 'accouns_model_app.dart';
+import 'calls_model_app.dart';
+
 enum CdrAction {delete, deleteAll}
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -27,7 +30,7 @@ class _CallAddPageState extends State<CallAddPage> {
 
   @override
   Widget build(BuildContext context) {
-    final accounts = context.read<AccountsModel>();
+    final accounts = context.read<AppAccountsModel>();
     return Scaffold(
         appBar: widget.popUpMode ? AppBar(title: const Text('Add Call'), backgroundColor: Theme.of(context).primaryColor.withOpacity(0.4)) : null,
         body: accounts.isEmpty ? _buildEmptyBody() : _buildBody(accounts),
@@ -107,7 +110,7 @@ class _CallAddPageState extends State<CallAddPage> {
           dense: true,
           onTap: () {
               setState(() {
-                context.read<AccountsModel>().setSelectedAccountByUri(cdr.accUri);
+                context.read<AppAccountsModel>().setSelectedAccountByUri(cdr.accUri);
                 _phoneNumbCtrl.text = cdr.remoteExt;
                 _selCdrRowIdx = index;
               });
@@ -173,7 +176,7 @@ class _CallAddPageState extends State<CallAddPage> {
     if (form == null || !form.validate()) return;
 
     //Check selected account
-    final accounts = context.read<AccountsModel>();
+    final accounts = context.read<AppAccountsModel>();
     if(accounts.selAccountId==null) {
       setState((){ _errText="Account not selected"; });
       return;
@@ -183,7 +186,7 @@ class _CallAddPageState extends State<CallAddPage> {
     CallDestination dest = CallDestination(_phoneNumbCtrl.text, accounts.selAccountId!, withVideo);
 
     //Invite
-    context.read<CallsModel>().invite(dest)
+    context.read<AppCallsModel>().invite(dest)
       .then((_) => setState((){ _errText=""; }))
       .catchError((error) {
         setState(() { _errText = error.toString();  });

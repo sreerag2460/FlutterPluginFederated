@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:siprix_voip_sdk/accounts_model.dart';
+import 'accouns_model_app.dart';
 import 'account_add.dart';
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -19,7 +20,7 @@ enum AccAction {delete, unregister, register, edit}
 class _AccountsListPageState extends State<AccountsListPage> {
   @override
   Widget build(BuildContext context) {
-    final accounts = context.watch<AccountsModel>();
+    final accounts = context.watch<AppAccountsModel>();
     return Column(children: [
       const ListTile(leading: Text('State'), title: Text('Name'), trailing: Text('Action')),
       const Divider(height: 0),
@@ -52,7 +53,7 @@ class _AccountsListPageState extends State<AccountsListPage> {
   }
   
   void onTapAccListTile(int accId) {
-    context.read<AccountsModel>().setSelectedAccountById(accId);
+    context.read<AppAccountsModel>().setSelectedAccountById(accId);
   }
 
   PopupMenuButton<AccAction> _accListTileMenu(AccountModel acc, int index) {
@@ -97,12 +98,12 @@ class _AccountsListPageState extends State<AccountsListPage> {
   }
 
   void _editAccount(int index) {
-    final accModel = context.read<AccountsModel>();
+    final accModel = context.read<AppAccountsModel>();
     Navigator.of(context).pushNamed(AccountPage.routeName, arguments: accModel[index]);
   }
 
   void _doAccountAction(AccAction action, int index) {
-    final accModel = context.read<AccountsModel>();
+    final accModel = context.read<AppAccountsModel>();      
     Future<void> f;
     switch(action) {
       case AccAction.delete:     f = accModel.deleteAccount(index);     break;

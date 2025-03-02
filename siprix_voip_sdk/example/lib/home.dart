@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 //import 'dart:io' show Platform;
 
-import 'package:siprix_voip_sdk/calls_model.dart';
 import 'package:siprix_voip_sdk/network_model.dart';
 import 'package:siprix_voip_sdk/logs_model.dart';
 
+import 'calls_model_app.dart';
 import 'messages.dart';
 import 'subscr_list.dart';
 import 'accounts_list.dart';
@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     //Switch tab when incoming call received
-    context.read<CallsModel>().onNewIncomingCall = (){ if(_selectedPageIndex != 1) _onTabTapped(1); };
+    context.read<AppCallsModel>().onNewIncomingCall = (){ if(_selectedPageIndex != 1) _onTabTapped(1); };
   }
 
   @override
@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _callsTabIcon() {
-    final calls = context.watch<CallsModel>();
+    final calls = context.watch<AppCallsModel>();
     const icon = Icon(Icons.phone_in_talk);
     return calls.isEmpty ? icon : Badge(label: Text('${calls.length}'), child:icon);
   }

@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 
 import 'package:siprix_voip_sdk/accounts_model.dart';
 import 'package:siprix_voip_sdk/subscriptions_model.dart';
-import 'subscr_model.dart';
+import 'accouns_model_app.dart';
+import 'subscr_model_app.dart';
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //SubscrAddPage - allows enter extension and account for creating BLF subscriptions
@@ -18,19 +19,19 @@ class SubscrAddPage extends StatefulWidget {
 
 class _SubscrAddPageState extends State<SubscrAddPage> {  
   final _formKey = GlobalKey<FormState>();
-  final BlfSubscrModel _subscr = BlfSubscrModel("", 0);
+  final AppBlfSubscrModel _subscr = AppBlfSubscrModel("", 0);
   String _errText="";
 
   @override
   void initState() {
     super.initState();
-     final accounts = context.read<AccountsModel>();    
+     final accounts = context.read<AppAccountsModel>();    
      if(accounts.selAccountId != null)  _subscr.fromAccId = accounts.selAccountId!;
   }
 
   @override
   Widget build(BuildContext context) {
-    final accounts = context.read<AccountsModel>();
+    final accounts = context.read<AppAccountsModel>();
     return Scaffold(
         appBar: AppBar(title: const Text('Add BLF subscription'), backgroundColor: Theme.of(context).primaryColor.withOpacity(0.4)),
         body: accounts.isEmpty ? _buildEmptyBody() : _buildBody(accounts),

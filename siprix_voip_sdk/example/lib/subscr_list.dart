@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:siprix_voip_sdk/subscriptions_model.dart';
 import 'subscr_add.dart';
-import 'subscr_model.dart';
+import 'subscr_model_app.dart';
 
 ////////////////////////////////////////////////////////////////////////////////////////
 //SubscrListPage - represents list of BLF subscriptions
@@ -38,11 +38,11 @@ class _SubscrListPageState extends State<SubscrListPage> {
   Widget _subscrListTile(SubscriptionsModel subscriptions, int index) {
     if(index >= subscriptions.length) return _addSubscriptionButton();
 
-    if(subscriptions[index] is! BlfSubscrModel) {
+    if(subscriptions[index] is! AppBlfSubscrModel) {
       SubscriptionModel subscr = subscriptions[index];
       return Text(subscr.label, style: Theme.of(context).textTheme.titleSmall);
     }else{
-      BlfSubscrModel blfSubscr = subscriptions[index] as BlfSubscrModel;
+      AppBlfSubscrModel blfSubscr = subscriptions[index] as AppBlfSubscrModel;
       return 
         ListenableBuilder(listenable: blfSubscr,
           builder: (BuildContext context, Widget? child) {

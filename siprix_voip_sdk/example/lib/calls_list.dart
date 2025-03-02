@@ -11,6 +11,7 @@ import 'package:siprix_voip_sdk/logs_model.dart';
 import 'package:siprix_voip_sdk/video.dart';
 
 import 'call_add.dart';
+import 'calls_model_app.dart';
 import 'main.dart';
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -42,7 +43,7 @@ class _CallsListPageState extends State<CallsListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final calls = context.watch<CallsModel>();
+    final calls = context.watch<AppCallsModel>();    
     CallModel? switchedCall = calls.switchedCall();
     _toggleDurationTimer(calls);
 
@@ -356,7 +357,7 @@ class _SwitchedCallWidgetState extends State<SwitchedCallWidget> {
   }
 
   void _makeConference() {
-    final calls = context.read<CallsModel>();
+    final calls = context.read<AppCallsModel>();
     calls.makeConference().catchError(showSnackBar);
   }
 
