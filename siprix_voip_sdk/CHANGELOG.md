@@ -1,3 +1,8 @@
+## 1.0.13
+- Android: Updated SiprixRinger implementation
+- Android: Redesigned plugin with ability to work in background isolate and handle push notif
+- Updated example app with Firebase push notification related functionality
+
 ## 1.0.12
 - iOS: Redesigned and improved CallKit+PushKit implementation
 - Updated example app with PushKit related functionality
