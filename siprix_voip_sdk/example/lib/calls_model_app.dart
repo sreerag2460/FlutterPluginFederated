@@ -1,10 +1,8 @@
+import 'dart:io';
+
 import 'package:siprix_voip_sdk/calls_model.dart';
 import 'package:siprix_voip_sdk/cdrs_model.dart';
 import 'package:siprix_voip_sdk/siprix_voip_sdk.dart';
-
-//When received PushKit notification app has imiidiately display CallKit window 
-// (even if SIP call hasn't received yet)
-//When the same 
 
 /// Helper class used to keep different ids of the same call
 class CallMatcher {
@@ -28,9 +26,9 @@ class AppCallsModel extends CallsModel {
     super(accounts, _logs, cdrs);
 
   final ILogsModel? _logs;
-  final List<CallMatcher> _callMatchers=[];
+  final List<CallMatcher> _callMatchers=[];//iOS PushKit specific impl
 
-   /// Handle pushkit notification received by library (parse payload, update CallKit window, wait on SIP call)
+   /// Handle iOS Pushkit notification received by library (parse payload, update CallKit window, store data from push payload)
   @override
   void onIncomingPush(String callkit_CallUUID, Map<String, dynamic> pushPayload) {
     _logs?.print('onIncomingPush callkit_CallUUID:$callkit_CallUUID $pushPayload');
@@ -58,18 +56,20 @@ class AppCallsModel extends CallsModel {
   void onIncomingSip(int callId, int accId, bool withVideo, String hdrFrom, String hdrTo) async {
     super.onIncomingSip(callId, accId, withVideo, hdrFrom, hdrTo);
 
-    //TODO Match push and sip calls using just received SIP INVITE and data from push (put to '_callMatchers')
-    //Get some hint from just received SIP INVITE (added by remote server) or math this SIP-call with CallKit-call
-    String? pushHintHeaderVal = await SiprixVoipSdk().getSipHeader(callId, "X-PushHint");
-    _logs?.print('onIncomingSip got pushHint:$pushHintHeaderVal');
+    if(Platform.isIOS) {
+      //TODO Match push and sip calls using just received SIP INVITE and data from push (put to '_callMatchers')
+      //Get some hint from just received SIP INVITE (added by remote server) or math this SIP-call with CallKit-call
+      String? pushHintHeaderVal = await SiprixVoipSdk().getSipHeader(callId, "X-PushHint");
+      _logs?.print('onIncomingSip got pushHint:$pushHintHeaderVal');
 
-    int index = _callMatchers.indexWhere((c) => c.push_Hint == pushHintHeaderVal);
-    if(index != -1) {
-      _logs?.print('onIncomingSip match call:${_callMatchers[index].callkit_CallUUID} <=> $callId');
+      int index = _callMatchers.indexWhere((c) => c.push_Hint == pushHintHeaderVal);
+      if(index != -1) {
+        _logs?.print('onIncomingSip match call:${_callMatchers[index].callkit_CallUUID} <=> $callId');
 
-      //Update CallKit with 'callId'
-      _callMatchers[index].sip_CallId = callId;
-      SiprixVoipSdk().updateCallKitCallDetails(_callMatchers[index].callkit_CallUUID, callId, null, null, null);
+        //Update CallKit with 'callId'
+        _callMatchers[index].sip_CallId = callId;
+        SiprixVoipSdk().updateCallKitCallDetails(_callMatchers[index].callkit_CallUUID, callId, null, null, null);
+      }
     }
   }
 
@@ -77,10 +77,12 @@ class AppCallsModel extends CallsModel {
   void onTerminated(int callId, int statusCode) {
     super.onTerminated(callId, statusCode);
 
-    int index =_callMatchers.indexWhere((c) => c.sip_CallId==callId);
-    if(index != -1) {
-      _logs?.print('onTerminated removed call:${_callMatchers[index].callkit_CallUUID}');
-      _callMatchers.removeAt(index);
+    if(Platform.isIOS) {
+      int index =_callMatchers.indexWhere((c) => c.sip_CallId==callId);
+      if(index != -1) {
+        _logs?.print('onTerminated removed call:${_callMatchers[index].callkit_CallUUID}');
+        _callMatchers.removeAt(index);
+      }
     }
   }
 }

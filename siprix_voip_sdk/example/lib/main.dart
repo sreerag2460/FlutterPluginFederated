@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+//import 'package:firebase_core/firebase_core.dart';
+//import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'package:siprix_voip_sdk/accounts_model.dart';
 import 'package:siprix_voip_sdk/messages_model.dart';
 import 'package:siprix_voip_sdk/network_model.dart';
@@ -25,6 +28,11 @@ import 'settings.dart';
 import 'home.dart';
 
 void main() async {
+  //Wait while Firebase initialized
+  //await _initializeFCM();
+  debugPrint('main');
+
+  //Create models
   LogsModel logsModel = LogsModel(true);//Set 'false' when logs won't rendering on UI
   CdrsModel cdrsModel = CdrsModel();//List of recent calls (Call Details Records)
 
@@ -50,6 +58,63 @@ void main() async {
     child: const MyApp(),
   ));
 }
+
+/*
+Future<void> _initializeFCM() async {
+  if(!Platform.isAndroid)  return;
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(//options: DefaultFirebaseOptions.currentPlatform,);
+    options: const FirebaseOptions(
+      apiKey: '...',            //Your apiKey here
+      appId: '...',             //Your appId here
+      messagingSenderId: '...', //Your senderId here
+      projectId: '...',         //Your projectId here
+      storageBucket: '...',     //Your storageBucket here
+    )
+  );
+  debugPrint('Firebase.initializeApp');
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+}
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+     options: const FirebaseOptions(
+      apiKey: '...',            //Your apiKey here
+      appId: '...',             //Your appId here
+      messagingSenderId: '...', //Your senderId here
+      projectId: '...',         //Your projectId here
+      storageBucket: '...',     //Your storageBucket here
+    )
+  );
+
+  //!!! This code is working in the background isolate!
+  //!!! When this method triggerer app is working in background (activity may not exist) or completely stopped
+  //!!! Code below initializes Siprix, adds saved accounts and refreshes registration (makes app ready to receive incoming call)
+
+  debugPrint("[!!!] Handling a background message id:'${message.messageId}' data:'${message.data}'");
+
+  try{
+    debugPrint("Initialize siprix");
+    _MyAppState._initializeSiprix();
+
+    debugPrint("Read and add accounts");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String accJsonStr = prefs.getString('accounts') ?? '';
+    if(accJsonStr.isNotEmpty) {
+      AppAccountsModel tmpAccsModel = AppAccountsModel();
+      tmpAccsModel.loadFromJson(accJsonStr);
+      tmpAccsModel.refreshRegistration();
+    }
+  } on Exception catch (err) {
+      debugPrint('Error: ${err.toString()}');
+  }
+}
+*/
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -119,7 +184,8 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  void _initializeSiprix(LogsModel? logsModel) async {
+  static void _initializeSiprix([LogsModel? logsModel]) async {
+    debugPrint('_initializeSiprix');
     InitData iniData = InitData();
     iniData.license  = "...license-credentials...";
     iniData.logLevelFile = LogLevel.debug;
@@ -130,7 +196,7 @@ class _MyAppState extends State<MyApp> {
     //iniData.tlsVerifyServer = false;
     //iniData.enableCallKit = true;
     //iniData.enablePushKit = true;
-    SiprixVoipSdk().initialize(iniData, logsModel);
+    await SiprixVoipSdk().initialize(iniData, logsModel);
 
     //Set video params (if required)
     //VideoData vdoData = VideoData();
@@ -140,6 +206,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _readSavedState() {
+    debugPrint('_readSavedState');
     SharedPreferences.getInstance().then((prefs) {
       String accJsonStr = prefs.getString('accounts') ?? '';
       String subsJsonStr = prefs.getString('subscriptions') ?? '';
