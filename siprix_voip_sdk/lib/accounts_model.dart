@@ -396,6 +396,8 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
   /// Returns account by its index in list
   AccountModel operator [](int i) => _accounts[i];
 
+  @protected List<AccountModel> get accounts => _accounts;
+
   /// Callback which model invokes when accounts changes should be saved
   SaveChangesCallback? onSaveChanges;
 
@@ -490,6 +492,20 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
   void _generateRandomLocalPort(AccountModel acc) {
     if((acc.port==null)||(acc.port==0)) {
       acc.port = Random().nextInt(65535-1024) + 1024;
+    }
+  }
+
+  /// Refresh registration of the all existing accounts (with default or specified regExpire>0)
+  Future<void> refreshRegistration() async {
+    try {
+      for(AccountModel acc in _accounts) {
+        final int expireSec = (acc.expireTime==null) ? 300 : acc.expireTime!;
+        if(expireSec != 0)
+          SiprixVoipSdk().registerAccount(acc.myAccId, expireSec);
+      }
+    } on PlatformException catch (err) {
+      _logs?.print('Can\'t refresh accounts registration: ${err.code} ${err.message}');
+      return Future.error((err.message==null) ? err.code : err.message!);
     }
   }
 
