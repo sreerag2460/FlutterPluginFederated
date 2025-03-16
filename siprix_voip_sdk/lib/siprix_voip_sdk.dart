@@ -511,7 +511,7 @@ class SiprixVoipSdk {
 
 
   /// Initialize siprix module
-  void initialize(InitData iniData, [ILogsModel? logsModel=null]) async {
+  Future<void> initialize(InitData iniData, [ILogsModel? logsModel=null]) async {
     _platform.setEventsHandler(_eventsHandler);
     String brand = iniData.brandName ?? "Siprix";
     try {
