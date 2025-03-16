@@ -1,6 +1,8 @@
+@file:Suppress("SpellCheckingInspection")
 package com.siprix.voip_sdk
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo
 import android.app.Notification
@@ -8,11 +10,13 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
+import android.os.Build.VERSION
 import android.os.Bundle
 import android.os.IBinder
 import android.os.PowerManager
@@ -20,34 +24,24 @@ import android.os.PowerManager.WakeLock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-//import com.google.android.gms.tasks.Task
-//import com.google.firebase.FirebaseApp
-//import com.google.firebase.messaging.FirebaseMessaging
-import com.siprix.AccData.RegState
-import com.siprix.SiprixCore
-import com.siprix.ISiprixServiceListener
 import com.siprix.ISiprixRinger
+import com.siprix.ISiprixServiceListener
+import com.siprix.SiprixCore
 import com.siprix.SiprixRinger
-import java.util.Arrays
 
 
 class CallNotifService : Service(), ISiprixServiceListener {
-    private val kMsgChannelId = "kSiprixSDKMsgChannelId"
-    private val kCallBaseNotifId = 555
-    private val kForegroundId = 777
-    //private var objModel_: ObjModel? = null
-    private var ringer_: ISiprixRinger? = null
-    private var wakeLock_: WakeLock? = null
-    private val binder: IBinder = LocalBinder()
-    private var foregroundModeStarted_: Boolean = false
-
-    private var activityClassName_: String = "ActivityClassName"
-    private var appContentLabel_: String = "Incoming call"
-    private var appRejectBtnLabel_: String = "Reject call"
-    private var appAcceptBtnLabel_: String = "Accept call"
-    private var appNameLabel_: String = "AppName"
-    private var appIconId_: Int = 0
-    private var requestCode_: Int = 1;
+    private var _ringer: ISiprixRinger? = null
+    private var _wakeLock: WakeLock? = null
+    private val _binder: IBinder = LocalBinder()
+    private var _foregroundModeStarted: Boolean = false
+    
+    private var _appContentLabel: String = "Incoming call"
+    private var _appRejectBtnLabel: String = "Reject call"
+    private var _appAcceptBtnLabel: String = "Accept call"
+    private var _appNameLabel: String = "AppName"
+    private var _appIconId: Int = 0
+    private var _requestCode: Int = 1
 
     inner class LocalBinder : Binder() {
         val service: CallNotifService
@@ -58,10 +52,7 @@ class CallNotifService : Service(), ISiprixServiceListener {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "onCreate")
-        ringer_ = SiprixRinger(this)
-
-        //getFirebasePushToken()
-        //TODO network state receiver
+        _ringer = SiprixRinger(this)
     }
 
     override fun onDestroy() {
@@ -70,7 +61,7 @@ class CallNotifService : Service(), ISiprixServiceListener {
         stopForegroundMode()
         notifMgr.cancelAll()
 
-        ringer_ = null
+        _ringer = null
 
         if(core != null) {
             core?.setServiceListener(null)
@@ -86,38 +77,40 @@ class CallNotifService : Service(), ISiprixServiceListener {
     }
 
     override fun onBind(intent: Intent): IBinder? {
-        return binder
+        return _binder
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Log.d(TAG, "onStartCommand")
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "onStartCommand $intent")
         val result = super.onStartCommand(intent, flags, startId)
-        if (kActionIncomingCallReject == intent.action) {
-            handleIncomingCallIntent(intent)
-        }
 
-        if((kActionAppStarted == intent.action)&&(intent.extras != null)) {
-            core?.setServiceListener(this)
-            getLabelsFromIntent(intent)
-            createNotifChannel()
-        }
+        if(intent != null) {
+            if (kActionIncomingCallReject == intent.action) {
+                handleIncomingCallIntent(intent)
+            }
 
-        if(kActionIncomingCallStopRinger == intent.action) {
-            ringer_?.stop()
-        }
+            if(kActionAppStarted == intent.action) {
+                core?.setServiceListener(this)
+                getLabelsFromResources()
+                createNotifChannel()
+            }
 
+            if(kActionIncomingCallStopRinger == intent.action) {
+                _ringer?.stop()
+            }
+        }
         return result
     }
 
     private fun createNotifChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             //NotificationChannel msgChannel = new NotificationChannel(kMsgChannelId,
             //        appName, NotificationManager.IMPORTANCE_DEFAULT);
             //msgChannel.enableLights(true);
             //notifMgr_.createNotificationChannel(msgChannel);
 
             val callChannel = NotificationChannel(
-                kCallChannelId, appNameLabel_, NotificationManager.IMPORTANCE_HIGH
+                kCallChannelId, _appNameLabel, NotificationManager.IMPORTANCE_HIGH
             )
             callChannel.lockscreenVisibility= Notification.VISIBILITY_PUBLIC
             callChannel.description = "Incoming calls notifications channel" //TODO resource
@@ -126,34 +119,17 @@ class CallNotifService : Service(), ISiprixServiceListener {
         }
     }
 
-    private fun getLabelsFromIntent(intent: Intent) {
-        val content = intent.getStringExtra(kAppContentLabel);
-        if (content != null) appContentLabel_ = content
-
-        val reject = intent.getStringExtra(kAppRejectBtnLabel);
-        if (reject != null) appRejectBtnLabel_ = reject
-
-        val accept = intent.getStringExtra(kAppAcceptBtnLabel);
-        if (accept != null) appAcceptBtnLabel_ = accept
-
-        val name = intent.getStringExtra(kAppNameLabel)
-        if (name != null) appNameLabel_ = name;
-
-        appIconId_ = intent.getIntExtra(kAppIcon, 0)
-    }
-
-
-    fun setActivityClassName(name: String) {
-        activityClassName_ = name
-    }
-
     private fun getIntentActivity(action: String?, bundle: Bundle): PendingIntent {
-        val activityIntent = Intent(action)
-        activityIntent.setClassName(this, activityClassName_)
-        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        activityIntent.putExtras(bundle)
+        val activityIntent = packageManager.getLaunchIntentForPackage(this.packageName)
+        if(activityIntent==null) {
+            Log.e(TAG, "Can't get launch intent!")
+        }
+        activityIntent?.action = action
+
+        activityIntent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        activityIntent?.putExtras(bundle)
         return PendingIntent.getActivity(
-            this, requestCode_++, activityIntent,
+            this, _requestCode++, activityIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
@@ -163,7 +139,7 @@ class CallNotifService : Service(), ISiprixServiceListener {
         srvIntent.setClassName(this, CallNotifService::class.java.name)
         srvIntent.putExtras(bundle)
         return PendingIntent.getService(
-            this, requestCode_++, srvIntent,
+            this, _requestCode++, srvIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
@@ -192,8 +168,8 @@ class CallNotifService : Service(), ISiprixServiceListener {
         callId: Int, accId: Int,
         withVideo: Boolean, hdrFrom: String?, hdrTo: String?
     ) {
-        Log.d(TAG, "displayIncomingCallNotification " + callId)
-        val bundle : Bundle = Bundle()
+        Log.d(TAG, "displayIncomingCallNotification $callId")
+        val bundle = Bundle()
         bundle.putInt(kExtraCallId, callId)
         bundle.putInt(kExtraAccId, accId)
         bundle.putBoolean(kExtraWithVideo, withVideo)
@@ -207,11 +183,11 @@ class CallNotifService : Service(), ISiprixServiceListener {
         //Popup style
         val bigTextStyle = NotificationCompat.BigTextStyle()
         bigTextStyle.bigText(hdrFrom)
-        bigTextStyle.setBigContentTitle(appContentLabel_)
+        bigTextStyle.setBigContentTitle(_appContentLabel)
 
         val builder: NotificationCompat.Builder = NotificationCompat.Builder(this, kCallChannelId)
-            .setSmallIcon(appIconId_)
-            .setContentTitle(appContentLabel_)
+            .setSmallIcon(_appIconId)
+            .setContentTitle(_appContentLabel)
             .setContentText(hdrFrom)
             .setAutoCancel(true)
             .setChannelId(kCallChannelId)
@@ -220,13 +196,13 @@ class CallNotifService : Service(), ISiprixServiceListener {
             .setFullScreenIntent(contentIntent, true)
             .setOngoing(true)
             .setStyle(bigTextStyle)
-            .addAction(0, appRejectBtnLabel_, pendingRejectCall)
-            .addAction(0, appAcceptBtnLabel_, pendingAcceptCall)
+            .addAction(0, _appRejectBtnLabel, pendingRejectCall)
+            .addAction(0, _appAcceptBtnLabel, pendingAcceptCall)
             .setDeleteIntent(getIntentService(kActionIncomingCallStopRinger, bundle))
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(Notification.PRIORITY_MAX)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
 
-        if (Build.VERSION.SDK_INT >= 21)
+        if (VERSION.SDK_INT >= 21)
             builder.setColor(-0x80ff01)
 
         notifMgr.notify(kCallBaseNotifId + callId, builder.build())
@@ -234,67 +210,71 @@ class CallNotifService : Service(), ISiprixServiceListener {
 
     fun stopForegroundMode() {
         releaseWakelock()
-        if (Build.VERSION.SDK_INT >= 33) stopForeground(STOP_FOREGROUND_REMOVE)
-        else stopForeground(true)
-        foregroundModeStarted_ = false;
+        if (VERSION.SDK_INT >= 33){
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        }else {
+            @Suppress("DEPRECATION")
+            stopForeground(true)
+        }
+        _foregroundModeStarted = false
     }
 
     fun startForegroundMode(): Boolean {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE)
-            != PackageManager.PERMISSION_GRANTED) return false;
+            != PackageManager.PERMISSION_GRANTED) return false
 
         acquireWakelock()
 
         val contentIntent = getIntentActivity(kActionForeground, Bundle())
-        val builder: Notification.Builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val builder: Notification.Builder = if (VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, kCallChannelId)
         } else {
+            @Suppress("DEPRECATION")
             Notification.Builder(this)
         }
 
-        builder.setSmallIcon(appIconId_)
-            .setContentTitle(appNameLabel_)
+        builder.setSmallIcon(_appIconId)
+            .setContentTitle(_appNameLabel)
             .setContentText("Siprix call notification service")
             .setContentIntent(contentIntent)
             .build() // getNotification()
 
-        if (Build.VERSION.SDK_INT >= 29) {
+        if (VERSION.SDK_INT >= 29) {
             startForeground(kForegroundId, builder.build(),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
             )
         } else {
             startForeground(kForegroundId, builder.build())
         }
-        foregroundModeStarted_ = true;
-        return true;
+        _foregroundModeStarted = true
+        return true
     }
 
     fun isForegroundMode() :Boolean {
-        return foregroundModeStarted_;
+        return _foregroundModeStarted
     }
 
     private fun acquireWakelock() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WAKE_LOCK)
-            != PackageManager.PERMISSION_GRANTED) return;
+            != PackageManager.PERMISSION_GRANTED) return
 
-        if (wakeLock_ == null) {
+        if (_wakeLock == null) {
             val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-            wakeLock_ = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Siprix:WakeLock.")
+            _wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Siprix:WakeLock.")
         }
-        if (wakeLock_ != null && !wakeLock_!!.isHeld) {
-            wakeLock_!!.acquire()
+        if (_wakeLock != null && !_wakeLock!!.isHeld) {
+            _wakeLock!!.acquire()
         }
     }
 
     private fun releaseWakelock() {
-        if (wakeLock_ != null && wakeLock_!!.isHeld) {
-            wakeLock_!!.release()
+        if (_wakeLock != null && _wakeLock!!.isHeld) {
+            _wakeLock!!.release()
         }
     }
 
-
     override fun onRingerState(start: Boolean) {
-        if (start) ringer_?.start() else ringer_?.stop()
+        if (start) _ringer?.start() else _ringer?.stop()
     }
 
     override fun onCallTerminated(callId: Int, statusCode: Int) {
@@ -311,7 +291,32 @@ class CallNotifService : Service(), ISiprixServiceListener {
         }
     }
 
+    private fun getLabelsFromResources() {
+        val content = getStrResource(kResourceContentLabel)
+        if (content != null) _appContentLabel = content //"Incoming call"
 
+        val reject = getStrResource(kResourceRejectBtnLabel)
+        if (reject != null) _appRejectBtnLabel = reject //"Reject call"
+
+        val accept = getStrResource(kResourceAcceptBtnLabel)
+        if (accept != null) _appAcceptBtnLabel = accept //"Accept call"
+
+        val name = getStrResource("app_name")
+        _appNameLabel = name ?: applicationInfo.nonLocalizedLabel.toString()
+
+        _appIconId = getMipmapResource("ic_launcher")
+    }
+
+    @SuppressLint("DiscouragedApi")
+    private fun getStrResource(resName: String): String? {
+        val stringRes = resources.getIdentifier(resName, "string", packageName)
+        return if(stringRes != 0) getString(stringRes) else null
+    }
+
+    @SuppressLint("DiscouragedApi")
+    private fun getMipmapResource(resName: String): Int {
+        return resources.getIdentifier(resName, "mipmap", packageName)
+    }
 
     private val isAppInForeground: Boolean
         get() {
@@ -319,36 +324,21 @@ class CallNotifService : Service(), ISiprixServiceListener {
             val appProcs = am.runningAppProcesses
             for (app in appProcs) {
                 if (app.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                    val found = Arrays.asList(*app.pkgList).contains(
-                        packageName
-                    )
+                    val found = listOf(*app.pkgList).contains(packageName)
                     if (found) return true
                 }
             }
             return false
         }
-/*
-    private fun getFirebasePushToken() {
-        FirebaseMessaging.getInstance().token
-            .addOnCompleteListener { task: Task<String?> ->
-                if (!task.isSuccessful) {
-                    Log.e(TAG,"Fetch FCM token failed: ", task.exception)
-                    return@addOnCompleteListener
-                }
-                Log.e(TAG,"Fetch FCM token success: $task.result")
-            }
-    }
-*/
 
     companion object {
         private const val TAG = "CallNotifService"
-
         const val kCallChannelId = "kSiprixCallChannelId_"
-        const val kParamToken = "kParamToken"
+        //const val kMsgChannelId = "kSiprixMsgChannelId"
+
         const val kActionAppStarted = "kActionAppStarted"
-        const val kActionPushToken = "kActionPushToken"
-        const val kActionPushNotif = "kActionPushNotif"
         const val kActionForeground = "kActionForeground"
+        
         const val kActionIncomingCall = "kActionIncomingCall"
         const val kActionIncomingCallAccept = "kActionIncomingCallAccept"
         const val kActionIncomingCallReject = "kActionIncomingCallReject"
@@ -360,17 +350,21 @@ class CallNotifService : Service(), ISiprixServiceListener {
         const val kExtraHdrFrom  = "kExtraHdrFrom"
         const val kExtraHdrTo    = "kExtraHdrTo"
 
-        const val kAppRejectBtnLabel = "kAppRejectBtnLabel"
-        const val kAppAcceptBtnLabel = "kAppAcceptBtnLabel"
-        const val kAppContentLabel = "kAppContentLabel"
-        const val kAppNameLabel="kAppNameLabel"
-        const val kAppIcon="kAppIcon"
+        const val kResourceRejectBtnLabel = "reject_btn_label"
+        const val kResourceAcceptBtnLabel = "accept_btn_label"
+        const val kResourceContentLabel = "content_label"
+
+        const val kCallBaseNotifId = 555
+        const val kForegroundId = 777
 
         //Single instance, provides access to calling functionality
-        //Created - when activity started
-        //Destroyed - when service destroyed
-        var core: SiprixCore? = null
-        var syncAccountsCount: Int = 0
+        private var core: SiprixCore? = null
+
+        fun createSiprixCore(appContext : Context): SiprixCore {
+            if(core == null) {
+                core = SiprixCore(appContext)
+            }
+            return core!!
+        }
     }
 }
-

@@ -10,6 +10,12 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Uncomment if required to use bluetooth audio devices
+    <uses-permission android:name="android.permission.BLUETOOTH" /> -->
+
+    <!-- Uncomment if required to mute SIP call when GSM call received
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" /> -->
+
     <!-- Foreground mode permission -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 

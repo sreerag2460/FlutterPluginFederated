@@ -1,4 +1,4 @@
-@file:Suppress("SpellCheckingInspection")
+@file:Suppress("SpellCheckingInspection", "UNUSED_PARAMETER", "UNCHECKED_CAST", "DEPRECATION")
 package com.siprix.voip_sdk
 
 //import io.flutter.embedding.android.FlutterActivity
@@ -100,6 +100,7 @@ const val kMethodSubscriptionDelete  = "Subscription_Delete"
 
 const val kMethodDvcSetForegroundMode= "Dvc_SetForegroundMode"
 const val kMethodDvcIsForegroundMode = "Dvc_IsForegroundMode"
+
 const val kMethodDvcGetPlayoutNumber = "Dvc_GetPlayoutDevices"
 const val kMethodDvcGetRecordNumber  = "Dvc_GetRecordingDevices"
 const val kMethodDvcGetVideoNumber   = "Dvc_GetVideoDevices"
@@ -536,155 +537,125 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   companion object {
     private var permissionRequestCode = 1
     private const val TAG = "SiprixVoipSdkPlugin"
-    private var pluginBinding: FlutterPlugin.FlutterPluginBinding? = null
-    private var channel : MethodChannel? = null
   }
 
-  private lateinit var eventListener : EventListener
-  private lateinit var appContext : Context
+  private lateinit var _appContext : Context
+  private lateinit var _messenger: BinaryMessenger
+  private lateinit var _textures: TextureRegistry
+  private lateinit var _channel : MethodChannel
 
-  private lateinit var messenger: BinaryMessenger
-  private lateinit var textures: TextureRegistry
+  private lateinit var _eventListener : EventListener
+  private lateinit var _core : SiprixCore
 
-  private var activity: Activity? = null
-  private var core : SiprixCore? = null
-  private var bgService: CallNotifService? = null
-  private var serviceBound = false
-
-  private var syncAccountsCount = 0
-  private var pendingIntents : MutableList<Intent> = mutableListOf()
+  private var _activity: Activity? = null
+  private var _bgService: CallNotifService? = null
 
   private val renderAdapters = HashMap<Long, FlutterRendererAdapter>()
 
+  private var _pendingIntents : MutableList<Intent> = mutableListOf()
+  private var _accountsIds: MutableSet<Int> = mutableSetOf()
+
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    Log.i(TAG, "onAttachedToEngine " + this.hashCode())
-    pluginBinding = flutterPluginBinding
+    Log.i(TAG, "onAttachedToEngine this:${this.hashCode()} binding:${flutterPluginBinding.hashCode()}")
 
-    textures = flutterPluginBinding.textureRegistry
-    messenger = flutterPluginBinding.binaryMessenger
+    _textures = flutterPluginBinding.textureRegistry
+    _messenger = flutterPluginBinding.binaryMessenger
+    _appContext = flutterPluginBinding.applicationContext
 
-    if(channel == null) {
-      createMethodChannel(messenger)
-    }
+    _channel = MethodChannel(_messenger, kChannelName)
+    _channel.setMethodCallHandler(this)
 
-    if(core != null) return//already initialized
+    _eventListener = EventListener()
+    _eventListener.setMethodChannel(_channel)
 
-    eventListener = EventListener()
-    eventListener.setMethodChannel(channel)
-
-    //Create instance when hasn't created yet
-    if (CallNotifService.core == null) {
-      CallNotifService.core = SiprixCore(flutterPluginBinding.applicationContext)
-      Log.i(TAG, "SiprixCore created")
-    }else{
-      syncAccountsCount = CallNotifService.syncAccountsCount//Actual count of existing accounts
-      Log.i(TAG, "SiprixCore already exist")
-    }
-    core = CallNotifService.core
-    core?.setModelListener(eventListener)
-
-    //Start service
-    appContext = flutterPluginBinding.applicationContext
-    val srvIntent = Intent(appContext, CallNotifService::class.java)
-    srvIntent.setAction(CallNotifService.kActionAppStarted)
-    srvIntent.putExtra(CallNotifService.kAppNameLabel, getStrResource(appContext, "app_name"))
-    srvIntent.putExtra(CallNotifService.kAppIcon, getMipmapResource(appContext, "ic_launcher"))
-    appContext.startService(srvIntent)
+    //Get core instance (create when hasn't created yet)
+    _core = CallNotifService.createSiprixCore(_appContext)
   }
 
   override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-    Log.i(TAG, "onDetachedFromEngine " + this.hashCode())
+    Log.i(TAG, "onDetachedFromEngine this:${this.hashCode()} binding:${binding.hashCode()}")
   }
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-    Log.i(TAG, "onAttachedToActivity " + this.hashCode())
-    activity = binding.activity
+    Log.i(TAG, "onAttachedToActivity this:${this.hashCode()}")
     binding.addOnNewIntentListener(this)
-    binding.addRequestPermissionsResultListener(this)
+    _activity = binding.activity
+    _core.setModelListener(_eventListener)
 
-    pluginBinding?.binaryMessenger?.let {
-      // Reinitialize MethodChannel Forcefully from MainIsolate
-      createMethodChannel(it)
-      eventListener.setMethodChannel(channel)
+    if(_activity != null) {
+      setActivityFlags(_activity!!)
+
+      _activity!!.bindService(Intent(_activity!!, CallNotifService::class.java),
+        serviceConnection, Context.BIND_AUTO_CREATE)
     }
-
-    if(activity!=null) {
-      setActivityFlags(activity!!)
-
-      activity!!.bindService(Intent(activity!!, CallNotifService::class.java),
-        serviceConnection, Context.BIND_AUTO_CREATE
-      )
-    }
-
+    startNotifService()
     requestsPermissions()
   }
 
   override fun onDetachedFromActivityForConfigChanges() {
-    Log.i(TAG, "onDetachedFromActivityForConfigChanges " + this.hashCode())
+    Log.i(TAG, "onDetachedFromActivityForConfigChanges this:${this.hashCode()}")
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-    activity = binding.activity
-    Log.i(TAG, "onReattachedToActivityForConfigChanges " + this.hashCode())
+    Log.i(TAG, "onReattachedToActivityForConfigChanges this:${this.hashCode()}")
+    binding.addOnNewIntentListener(this)
+    _activity = binding.activity
+    _core.setModelListener(_eventListener)
   }
 
   override fun onDetachedFromActivity() {
-    Log.i(TAG, "onDetachedFromActivity " + this.hashCode())
-    eventListener.setMethodChannel(null)
-    channel?.setMethodCallHandler(null)
-    channel = null
+    Log.i(TAG, "onDetachedFromActivity this:${this.hashCode()}")
+    _eventListener.setMethodChannel(null)
+    _channel.setMethodCallHandler(null)
 
-    if (serviceBound) {
-      core?.setModelListener(null)
-      core = null
+    if (_bgService != null) {
+      _core.setModelListener(null)
 
-      activity?.unbindService(serviceConnection)
-      serviceBound = false
+      _activity?.unbindService(serviceConnection)
+      _bgService = null
     }
   }
 
-  private fun createMethodChannel(messenger: BinaryMessenger) {
-    Log.w(TAG, "createMethodChannel " + this.hashCode() + " channel:" + channel)
-    channel = MethodChannel(messenger, kChannelName)
-    channel?.setMethodCallHandler(this)
+  private fun startNotifService() {
+    try{
+      val srvIntent = Intent(_appContext, CallNotifService::class.java)
+      srvIntent.setAction(CallNotifService.kActionAppStarted)
+      _appContext.startService(srvIntent)
+    }catch (exception: IllegalStateException) {
+      Log.d(TAG, "Can't start service: '${exception}'")
+    }
   }
 
   private val serviceConnection: ServiceConnection = object : ServiceConnection {
     override fun onServiceConnected(className: ComponentName, service: IBinder) {
       // Service is running in our own process we can directly access it.
       val binder: CallNotifService.LocalBinder = service as CallNotifService.LocalBinder
-      bgService = binder.service
-      serviceBound = true
-      if(activity!=null) {
-        Log.i(TAG, "onServiceConnected")
-        bgService?.setActivityClassName(activity!!.javaClass.name) //!!!
+      _bgService = binder.service
 
-        raiseIncomingCallEvent(activity!!.intent)
-        bgService?.handleIncomingCallIntent(activity!!.intent)
+      if(_activity != null) {
+        handleIntent("onServiceConnected", _activity!!.intent)
       }
     }
 
     // Called when the connection with the service disconnects unexpectedly.
     override fun onServiceDisconnected(className: ComponentName) {
-      Log.i(TAG, "onServiceDisconnected")
-      serviceBound = false
-      bgService = null
+      _bgService = null
     }
   }
 
   override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
     val args : HashMap<String, Any?>? = call.arguments as? HashMap<String, Any?>
-    if ((args==null)||(core==null)) {
+    if (args==null) {
       result.error( "-", kBadArgumentsError, null)
       return
     }
-    if(!core!!.isInitialized) {
+    if(!_core.isInitialized) {
+      startNotifService()
       if(call.method==kMethodModuleInitialize) { handleModuleInitialize(args, result); }
       else { result.error("UNAVAILABLE", kModuleNotInitializedError, null); }
       return
     }
     
     when(call.method){
-      //"getPlatformVersion" ->    {  result.success("Android ${android.os.Build.VERSION.RELEASE}")  }
       kMethodModuleInitialize   ->  handleModuleInitialize(args, result)
       kMethodModuleUnInitialize ->  handleModuleUnInitialize(args, result)
       kMethodModuleHomeFolder   ->  handleModuleHomeFolder(args, result)
@@ -725,6 +696,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
       kMethodDvcSetForegroundMode->  handleDvcSetForegroundMode(args, result)
       kMethodDvcIsForegroundMode->   handleDvcIsForegroundMode(args, result)
+
       kMethodDvcGetPlayoutNumber->   handleDvcGetPlayoutNumber(args, result)
       kMethodDvcGetRecordNumber ->   handleDvcGetRecordNumber(args, result)
       kMethodDvcGetVideoNumber  ->   handleDvcGetVideoNumber(args, result)
@@ -747,7 +719,8 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
   private fun handleModuleInitialize(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     //Check already created
-    if (core!!.isInitialized) {
+    if (_core.isInitialized) {
+      Log.i(TAG, "handleModuleInitialize - already initialized")
       result.success("Already initialized")
       return
     }
@@ -783,31 +756,28 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     if(listenTelState != null) { iniData.setUseTelState(listenTelState); }
 
     iniData.setUseExternalRinger(true)
-    val err = core!!.initialize(iniData)
+    val err = _core.initialize(iniData)
     sendResult(err, result)
+    Log.i(TAG, "handleModuleInitialize err:${err}")
   }
 
-  @Suppress("UNUSED_PARAMETER")
   private fun handleModuleUnInitialize(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    val err = core!!.unInitialize()
+    val err = _core.unInitialize()
     sendResult(err, result)
   }
 
-  @Suppress("UNUSED_PARAMETER")
   private fun handleModuleHomeFolder(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    val path : String = core!!.homeFolder
+    val path : String = _core.homeFolder
     result.success(path)
   }
 
-  @Suppress("UNUSED_PARAMETER")
   private fun handleModuleVersionCode(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    val versionCode : Int = core!!.versionCode
+    val versionCode : Int = _core.versionCode
     result.success(versionCode)
   }
 
-  @Suppress("UNUSED_PARAMETER")
   private fun handleModuleVersion(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    val version: String = core!!.version
+    val version: String = _core.version
     result.success(version)
   }
 
@@ -917,14 +887,16 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   private fun handleAccountAdd(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     val accData = parseAccData(args)
     val accIdArg = SiprixCore.IdOutArg()
-    val err = core!!.accountAdd(accData, accIdArg)
+    val err = _core.accountAdd(accData, accIdArg)
     if(err == kErrorCodeEOK){
       result.success(accIdArg.value)
-      CallNotifService.syncAccountsCount += 1
     }else{
-      result.error(err.toString(), core!!.getErrText(err), accIdArg.value)
-      syncAccountsWithApp(err)
+      result.error(err.toString(), _core.getErrText(err), accIdArg.value)
     }
+
+    _accountsIds.add(accIdArg.value)
+    Log.i(TAG, "handleAccountAdd id:${accIdArg.value} err:${err}/${_core.getErrText(err)}")
+    raiseIncomingCallWhenAccountsRestored()
   }
 
   private fun handleAccountUpdate(args : HashMap<String, Any?>, result: MethodChannel.Result) {
@@ -932,7 +904,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val accId : Int? = args[kArgAccId] as? Int
 
     if(accId != null) {
-      val err = core!!.accountUpdate(accData, accId)
+      val err = _core.accountUpdate(accData, accId)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -944,7 +916,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val expireTime: Int? = args[kArgExpireTime] as? Int
 
     if((accId != null) && ( expireTime != null)) {
-      val err = core!!.accountRegister(accId, expireTime)
+      val err = _core.accountRegister(accId, expireTime)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -955,7 +927,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val accId : Int? = args[kArgAccId] as? Int
 
     if(accId != null) {
-      val err = core!!.accountUnregister(accId)
+      val err = _core.accountUnregister(accId)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -965,17 +937,17 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   private fun handleAccountDelete(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     val accId : Int? = args[kArgAccId] as? Int
 
-    if(accId != null) {
-      val err = core!!.accountDelete(accId)
-      sendResult(err, result)
-      CallNotifService.syncAccountsCount -= 1
-    }else{
+    if(accId == null) {
       sendBadArguments(result)
+    }else{
+      val err = _core.accountDelete(accId)
+      sendResult(err, result)
+      if(err == kErrorCodeEOK) _accountsIds.remove(accId)
     }
   }
 
   private fun handleAccountGenInstId(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    result.success(core!!.accountGenInstId())
+    result.success(_core.accountGenInstId())
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1015,11 +987,11 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     }
 
     val callIdArg = SiprixCore.IdOutArg()
-    val err = core!!.callInvite(destData, callIdArg)
+    val err = _core.callInvite(destData, callIdArg)
     if(err == kErrorCodeEOK) {
       result.success(callIdArg.value)
     }else{
-      result.error(err.toString(), core!!.getErrText(err), null)
+      result.error(err.toString(), _core.getErrText(err), null)
     }
   }
   
@@ -1028,7 +1000,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val statusCode: Int? = args[kArgStatusCode] as? Int
 
     if((callId != null) && ( statusCode != null)) {
-      val err = core!!.callReject(callId, statusCode)
+      val err = _core.callReject(callId, statusCode)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1045,7 +1017,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val withVideo :Boolean? = args[kArgWithVideo] as? Boolean
 
     if((callId != null)&&(withVideo != null)) {
-      val err = core!!.callAccept(callId, withVideo)
+      val err = _core.callAccept(callId, withVideo)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1056,7 +1028,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val callId : Int? = args[kArgCallId] as? Int
 
     if(callId != null) {
-      val err = core!!.callHold(callId)
+      val err = _core.callHold(callId)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1072,11 +1044,11 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     }
 
     val state = SiprixCore.IdOutArg()
-    val err = core!!.callGetHoldState(callId, state)
+    val err = _core.callGetHoldState(callId, state)
     if(err == kErrorCodeEOK){
       result.success(state.value)
     }else{
-      result.error(err.toString(), core!!.getErrText(err), null)
+      result.error(err.toString(), _core.getErrText(err), null)
     }
   }
   
@@ -1089,7 +1061,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       return
     }
 
-    result.success(core!!.callGetSipHeader(callId, hdrName))
+    result.success(_core.callGetSipHeader(callId, hdrName))
   }
 
   private fun handleCallMuteMic(args : HashMap<String, Any?>, result: MethodChannel.Result) {
@@ -1100,7 +1072,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       sendBadArguments(result)
       return
     }
-    val err = core!!.callMuteMic(callId, mute)
+    val err = _core.callMuteMic(callId, mute)
     sendResult(err, result)
   }
   
@@ -1112,7 +1084,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       sendBadArguments(result)
       return
     }
-    val err = core!!.callMuteCam(callId, mute)
+    val err = _core.callMuteCam(callId, mute)
     sendResult(err, result)
   }
 
@@ -1128,7 +1100,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       return
     }
 
-    val err = core!!.callSendDtmf(callId, dtmfs,
+    val err = _core.callSendDtmf(callId, dtmfs,
       durationMs, interToneGapMs, SiprixCore.DtmfMethod.fromInt(method))
     sendResult(err, result)
   }
@@ -1144,11 +1116,11 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     }
 
     val playerIdArg = SiprixCore.IdOutArg()
-    val err = core!!.callPlayFile(callId, pathToMp3File, loop, playerIdArg)
+    val err = _core.callPlayFile(callId, pathToMp3File, loop, playerIdArg)
     if(err == kErrorCodeEOK) {
       result.success(playerIdArg.value)
     }else{
-      result.error(err.toString(), core!!.getErrText(err), null)
+      result.error(err.toString(), _core.getErrText(err), null)
     }
   }
 
@@ -1156,7 +1128,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val playerId : Int? = args[kArgPlayerId] as? Int
 
     if(playerId != null) {
-      val err = core!!.callStopPlayFile(playerId)
+      val err = _core.callStopPlayFile(playerId)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1168,7 +1140,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val pathToMp3File :String? = args["pathToMp3File"] as? String
     
     if((callId != null)&&((pathToMp3File!=null))) {
-      val err = core!!.callRecordFile(callId, pathToMp3File)
+      val err = _core.callRecordFile(callId, pathToMp3File)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1179,7 +1151,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val callId : Int? = args[kArgCallId] as? Int
 
     if(callId != null) {
-      val err = core!!.callStopRecordFile(callId)
+      val err = _core.callStopRecordFile(callId)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1191,7 +1163,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val toExt  = args[kArgToExt] as? String
 
     if((callId != null) && ( toExt != null)) {
-      val err = core!!.callTransferBlind(callId, toExt)
+      val err = _core.callTransferBlind(callId, toExt)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1203,7 +1175,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val toCallId   = args[kArgToCallId] as? Int
 
     if((fromCallId != null) && ( toCallId != null)) {
-      val err = core!!.callTransferAttended(fromCallId, toCallId)
+      val err = _core.callTransferAttended(fromCallId, toCallId)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1214,7 +1186,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val callId = args[kArgCallId] as? Int
 
     if(callId != null) {
-      val err = core!!.callBye(callId)
+      val err = _core.callBye(callId)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1228,7 +1200,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val callId = args[kArgCallId] as? Int
 
     if(callId != null) {
-      val err = core!!.mixerSwitchToCall(callId)
+      val err = _core.mixerSwitchToCall(callId)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1237,7 +1209,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
   @Suppress("UNUSED_PARAMETER")
   private fun handleMixerMakeConference(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    val err = core!!.mixerMakeConference()
+    val err = _core.mixerMakeConference()
     sendResult(err, result)
   }
 
@@ -1258,11 +1230,11 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     if(body != null) { msgData.setBody(body); }
 
     val msgIdArg = SiprixCore.IdOutArg()
-    val err = core!!.messageSend(msgData, msgIdArg)
+    val err = _core.messageSend(msgData, msgIdArg)
     if(err == kErrorCodeEOK) {
       result.success(msgIdArg.value)
     }else{
-      result.error(err.toString(), core!!.getErrText(err), null)
+      result.error(err.toString(), _core.getErrText(err), null)
     }
   }
 
@@ -1290,11 +1262,11 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     if(eventType != null) { subscrData.setEventType(eventType); }
 
     val subscrIdArg = SiprixCore.IdOutArg()
-    val err = core!!.subscrCreate(subscrData, subscrIdArg)
+    val err = _core.subscrCreate(subscrData, subscrIdArg)
     if(err == kErrorCodeEOK) {
       result.success(subscrIdArg.value)
     }else{
-      result.error(err.toString(), core!!.getErrText(err), subscrIdArg.value)
+      result.error(err.toString(), _core.getErrText(err), subscrIdArg.value)
     }
   }
 
@@ -1302,7 +1274,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val subscrId : Int? = args[kArgSubscrId] as? Int
 
     if(subscrId != null) {
-      val err = core!!.subscrDestroy(subscrId)
+      val err = _core.subscrDestroy(subscrId)
       sendResult(err, result)
     }else{
       sendBadArguments(result)
@@ -1320,32 +1292,34 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       return
     }
 
-    if(bgService == null) {
+    if(_bgService == null) {
       result.error("-", "Service has not bound yet", null)
       return
     }
 
     if(foregroundEnable) {
-      val success = bgService!!.startForegroundMode()
+      val success = _bgService!!.startForegroundMode()
       if(success) result.success("Foreground mode started")
       else        result.error( "-", "Missed permissions", null)
     }
     else {
-      bgService!!.stopForegroundMode()
+      _bgService!!.stopForegroundMode()
       result.success("Foreground mode stopped")
     }
   }
-  private fun handleDvcIsForegroundMode(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    result.success(if(bgService!=null) bgService!!.isForegroundMode() else false)
-  }
 
+  private fun handleDvcIsForegroundMode(args : HashMap<String, Any?>, result: MethodChannel.Result) {
+    result.success(if(_bgService!=null) _bgService!!.isForegroundMode() else false)
+  }
 
   private fun handleDvcGetPlayoutNumber(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    result.success(core!!.dvcGetAudioDevices())
+    result.success(_core.dvcGetAudioDevices())
   }
+
   private fun handleDvcGetRecordNumber(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     result.success(0)//TODO add impl
   }
+
   private fun handleDvcGetVideoNumber(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     result.success(0)//TODO add impl
   }
@@ -1355,16 +1329,18 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
     if(dvcIndex != null) {
       val argsMap = HashMap<String, Any?> ()
-      argsMap[kArgDvcName] = core!!.dvcGetAudioDevice(dvcIndex).name
+      argsMap[kArgDvcName] = _core.dvcGetAudioDevice(dvcIndex).name
       argsMap[kArgDvcGuid] = dvcIndex.toString()
       result.success(argsMap)
     }else{
       sendBadArguments(result)
     }
   }
+
   private fun handleDvcGetRecording(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     result.success("")//TODO add impl
   }
+
   private fun handleDvcGetVideo(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     result.success("")//TODO add impl
   }
@@ -1372,9 +1348,9 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   private fun handleDvcSetPlayout(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     val dvcIndex :Int? = args[kArgDvcIndex] as? Int
     if(dvcIndex != null) {
-      val dvc = core!!.dvcGetAudioDevice(dvcIndex)
+      val dvc = _core.dvcGetAudioDevice(dvcIndex)
       if(!dvc.equals(SiprixCore.AudioDevice.None)) {
-        core!!.dvcSetAudioDevice(dvc)
+        _core.dvcSetAudioDevice(dvc)
         result.success("Success")
       }else{
         result.error( "-", "Bad device index", null)
@@ -1383,11 +1359,13 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       sendBadArguments(result)
     }
   }
+
   private fun handleDvcSetRecording(args : HashMap<String, Any?>, result: MethodChannel.Result) {
     result.success("Success")
   }
+
   private fun handleDvcSetVideo(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    core!!.dvcSwitchCamera()
+    _core.dvcSwitchCamera()
     result.success("Success")
   }
 
@@ -1409,7 +1387,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val width : Int? = args["width"] as? Int
     if(width != null) { vdoData.setWidth(width); }
 
-    val err = core!!.dvcSetVideoParams(vdoData)
+    val err = _core.dvcSetVideoParams(vdoData)
     sendResult(err, result)
   }
 
@@ -1419,7 +1397,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   //Siprix video renderers
 
   private fun handleVideoRendererCreate(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    val renderAdapter = FlutterRendererAdapter(textures, messenger)
+    val renderAdapter = FlutterRendererAdapter(_textures, _messenger)
     val textureId = renderAdapter.getTextureId()
 
     renderAdapters[textureId] = renderAdapter
@@ -1440,7 +1418,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val renderAdapter: FlutterRendererAdapter? = renderAdapters[textureId]
     if(renderAdapter != null) {
       renderAdapter.srcCallId = callId
-      val err = core!!.callSetVideoRenderer(callId, renderAdapter.getRenderer())
+      val err = _core.callSetVideoRenderer(callId, renderAdapter.getRenderer())
       sendResult(err, result)
     }
   }
@@ -1453,7 +1431,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val renderAdapter: FlutterRendererAdapter? = renderAdapters[textureId]
     if(renderAdapter != null) {
       val nullRenderer : EglRenderer? = null
-      core!!.callSetVideoRenderer(renderAdapter.srcCallId, nullRenderer)
+      _core.callSetVideoRenderer(renderAdapter.srcCallId, nullRenderer)
       renderAdapter.dispose()
       renderAdapters.remove(textureId)
     }
@@ -1467,7 +1445,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       result.success("Success")
     }
     else{
-      result.error(err.toString(), core!!.getErrText(err), null)
+      result.error(err.toString(), _core.getErrText(err), null)
     }
   }
 
@@ -1476,8 +1454,8 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   }
 
   private fun hasPermission(permission: String): Boolean {
-    return ((activity == null) ||
-            ContextCompat.checkSelfPermission(activity!!, permission) == PackageManager.PERMISSION_GRANTED)
+    return ((_activity == null) ||
+            ContextCompat.checkSelfPermission(_activity!!, permission) == PackageManager.PERMISSION_GRANTED)
   }
 
   private fun requestsPermissions() {
@@ -1486,21 +1464,21 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
         arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
       else
         arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
-    ActivityCompat.requestPermissions(activity!!, permissions, permissionRequestCode)
+    ActivityCompat.requestPermissions(_activity!!, permissions, permissionRequestCode)
   }
 
   override fun onRequestPermissionsResult(requestCode: Int,
                                           permissions: Array<String?>, grantResults: IntArray
   ): Boolean {
     if((requestCode != permissionRequestCode) ||
-      (permissions.size == 0 && grantResults.size == 0)) return false
+      (permissions.isEmpty() && grantResults.isEmpty())) return false
 
     val firstRun: Boolean = isRunningFirstTime()
     for(index in permissions.indices) {
       if (grantResults[index] == PackageManager.PERMISSION_GRANTED) continue
 
       val permission = permissions[index]
-      if (ActivityCompat.shouldShowRequestPermissionRationale(activity!!, permission!!)) {
+      if (ActivityCompat.shouldShowRequestPermissionRationale(_activity!!, permission!!)) {
         displayPermissionAlert(permission, false)
       } else if (firstRun) {
         requestPermissionAgain(permission, false)
@@ -1511,7 +1489,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     return true
   }
 
-  fun displayPermissionAlert(permission: String, openAppSettings: Boolean) {
+  private fun displayPermissionAlert(permission: String, openAppSettings: Boolean) {
     if (openAppSettings && permission.equals(Manifest.permission.CAMERA)) return
     val message = when (permission) {
       Manifest.permission.CAMERA -> "Permission 'Camera' is required for video calls."
@@ -1520,7 +1498,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       else -> "$permission is required [?]" //shouldn't happen
     }
 
-    AlertDialog.Builder(activity!!)
+    AlertDialog.Builder(_activity!!)
       .setTitle("Permission required")
       .setMessage(message)
       .setNegativeButton("Cancel"
@@ -1532,71 +1510,85 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       .show()
   }
 
-  fun requestPermissionAgain(permission: String, openAppSettings: Boolean) {
+  private fun requestPermissionAgain(permission: String, openAppSettings: Boolean) {
     if (openAppSettings) {
       val intent: Intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-      intent.data = Uri.fromParts("package", activity!!.getPackageName(), null)
-      activity!!.startActivity(intent)
+      intent.data = Uri.fromParts("package", _activity!!.packageName, null)
+      _activity!!.startActivity(intent)
     } else {
-      ActivityCompat.requestPermissions(activity!!, arrayOf<String>(permission), permissionRequestCode)
+      ActivityCompat.requestPermissions(_activity!!, arrayOf(permission), permissionRequestCode)
     }
   }
 
-  fun isRunningFirstTime(): Boolean {
-    val pref: SharedPreferences = activity!!.getSharedPreferences(TAG, Context.MODE_PRIVATE)
+  private fun isRunningFirstTime(): Boolean {
+    val pref: SharedPreferences = _activity!!.getSharedPreferences(TAG, Context.MODE_PRIVATE)
     val firstRun = pref.getBoolean("firstRun", true)
     if (firstRun) pref.edit().putBoolean("firstRun", false).apply()
     return firstRun
   }
 
   override fun onNewIntent(intent: Intent): Boolean {
-    //Raised when activity exist, but in background
-    Log.i(TAG, "onNewIntent action:" + intent.action)
-    bgService?.handleIncomingCallIntent(intent)
-    return raiseIncomingCallEvent(intent)
+    return handleIntent("onNewIntent", intent)
   }
 
-  private fun raiseIncomingCallEvent(intent: Intent):Boolean {
-    Log.i(TAG, "raiseIncomingCallEvent action:" + intent.action + " extras:" + intent.extras)
+  private fun handleIntent(method: String, intent: Intent) : Boolean {
+    Log.i(TAG, "handleIntent '${method}' ${intent}")
 
+    _bgService?.handleIncomingCallIntent(intent)
+
+    if(canHandleIntent(intent)) {
+      raiseIncomingCallEvent(intent)
+      return true
+    }
+    return false
+  }
+
+  private fun canHandleIntent(intent: Intent):Boolean {
     //Skip intent if extra is null or action not expected
     val isCallIncomingAction = (CallNotifService.kActionIncomingCall == intent.action)//tap on notification
     val isCallAcceptAction = (CallNotifService.kActionIncomingCallAccept == intent.action)//tap on 'Accept'
-    if((intent.extras == null) ||
-      (!isCallIncomingAction && !isCallAcceptAction)) {
-      return false
-    }
+    return (intent.extras != null) && (isCallIncomingAction || isCallAcceptAction)
+  }
 
-    //Store intent and send later
-    if(syncAccountsCount > 0) {
-      Log.w(TAG, "skip as not sync with app")
-      pendingIntents.add(intent)
-      return true
-    }
+  private fun raiseIncomingCallEvent(intent: Intent) : Boolean {
+    Log.i(TAG, "raiseIncomingCallEvent: ${intent}")
+    if(intent.extras == null) return true
 
-    //Send events
+    //Get accId from intent
     val args = intent.extras!!
-    val callId = args.getInt(CallNotifService.kExtraCallId)
     val accId = args.getInt(CallNotifService.kExtraAccId)
+
+    //When this instance of plugin doesn't have accId yet - store intent and raise it later
+    if(!_accountsIds.contains(accId)) {
+        Log.w(TAG, "skip as accounts from previous session hasn't restored yet")
+      _pendingIntents.add(intent)
+        return false
+    }
+
+    //Get rest of the data from intent
+    val callId = args.getInt(CallNotifService.kExtraCallId)
     val video = args.getBoolean(CallNotifService.kExtraWithVideo)
     val from = args.getString(CallNotifService.kExtraHdrFrom)
     val to = args.getString(CallNotifService.kExtraHdrTo)
 
-    Log.i(TAG, "raise onCallIncoming " + callId)
-    eventListener.onCallIncoming(callId, accId, video, from, to)
+    Log.i(TAG, "raise onCallIncoming $callId")
+    _eventListener.onCallIncoming(callId, accId, video, from, to)
 
+    val isCallAcceptAction = (CallNotifService.kActionIncomingCallAccept == intent.action)//tap on 'Accept'
     if(isCallAcceptAction) {
-      Log.i(TAG, "raise onCallAcceptNotif " + callId)
-      eventListener.onCallAcceptNotif(callId, video)
+      Log.i(TAG, "raise onCallAcceptNotif $callId")
+      _eventListener.onCallAcceptNotif(callId, video)
     }
     return true
   }
 
-  private fun syncAccountsWithApp(accAddErr : Int) {
-    if((accAddErr == kErrorDuplicateAccount) && (--syncAccountsCount == 0)) {
-      //Accounts sync with app - send and clear pending intents
-      pendingIntents.forEach{ raiseIncomingCallEvent(it) }
-      pendingIntents.clear()
+  private fun raiseIncomingCallWhenAccountsRestored() {
+    val intentsIterator = _pendingIntents.iterator()
+    while (intentsIterator.hasNext()) {
+      val intent = intentsIterator.next()
+      if(raiseIncomingCallEvent(intent)) {
+        intentsIterator.remove()
+      }
     }
   }
 
@@ -1611,14 +1603,4 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       activity.setShowWhenLocked(true)
     }
   }
-
-  private fun getStrResource(context: Context, resName: String): String {
-    val stringRes = context.resources.getIdentifier(resName, "string", context.packageName)
-    return if(stringRes != 0) context.getString(stringRes)
-    else context.applicationInfo.nonLocalizedLabel.toString()
-  }
-  private fun getMipmapResource(context: Context, resName: String): Int {
-    return context.resources.getIdentifier(resName, "mipmap", context.packageName)
-  }
-
 }

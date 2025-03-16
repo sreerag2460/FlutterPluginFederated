@@ -1,3 +1,6 @@
+## 1.0.7
+- Updated SiprixRinger implementation (don't set audioManager mode; modified vibraror)
+
 ## 1.0.6
 - Added ability to send and receive text messages (SIP MESSAGE request)
 - Added ability to override DisplayName in outgoing call (method 'Dest_SetDisplayName')
