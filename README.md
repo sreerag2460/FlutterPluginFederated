@@ -1,6 +1,6 @@
 # siprix_voip_sdk
 
-Siprix VoIP SDK plugin for embedding voice and video communication (based on SIP/RTP protocols) into Flutter applications.
+Siprix VoIP SDK plugin for embedding voice-over-IP (VoIP) audio/video calls based on SIP/RTP protocols into Flutter applications.
 It contains native SIP client implementations for 5 platforms: Android, iOS, MacOS, Windows, Linux and unified API for all them. 
 
 Plugin implements ready to use SIP VoIP Client with ability to:
@@ -12,16 +12,16 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 - Detect network changes and automatically update registration/switch and restore call(s) media
 - Echo cancelation and noise suppression
 - Create BLF/Presence subscriptions and monitor state of remote extension(s)
-- Send/receive text messages
+- Send and receive text messages
 - Ready to use models for fast and easy UI creating
-- Embedded CallKit/PushKit support in iOS version of plugin
+- Embedded PushKit+CallKit support in iOS version of plugin
 
 ## Usage
 
 ### Add dependency in pubspec.yaml
 ```
 dependencies:
-  siprix_voip_sdk: ^1.0.11
+  siprix_voip_sdk: ^1.0.13
   provider: ^6.1.1
 ```
 
@@ -66,6 +66,9 @@ class _MyAppState extends State<MyApp> {
     InitData iniData = InitData();
     iniData.license  = "...license-credentials...";
     iniData.logLevelFile = LogLevel.info;
+    //- uncomment if required -//
+    //iniData.enableCallKit = true;
+    //iniData.enablePushKit = true;
     SiprixVoipSdk().initialize(iniData, logsModel);
   }
 ```
@@ -114,10 +117,20 @@ void _addCall() {
       .catchError(showSnackBar);
 }
   
+void showSnackBar(dynamic err) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+}
   
 ```
 
 [More detailed integration guide](https://docs.siprix-voip.com/rst/flutter.html#integration-into-flutter-application)
+
+Please contact [support@siprix-voip.com](mailto:support@siprix-voip.com) if you have technical questions.
+
+
+## How to integrate PushKit+CallKit support?
+[See detailed manual here](https://docs.siprix-voip.com/rst/ioscallkit.html#integrate-pushkit-callkit-into-flutter-application)
+
 
 ## How to use this library without provider?
 
@@ -129,8 +142,6 @@ Also you can create own classes and directly invoke library's methods like:\
 
 The same is true for listening events - add own class as listener which will handles events:\
 `SiprixVoipSdk().accListener = MyAccStateListener(regStateChanged : onRegStateChanged);`
-
-Use source code of existing models as implementation hint or ask support@siprix-voip.com in case of difficulties.
 
 
 ## Limitations
@@ -146,7 +157,7 @@ Please contact [sales@siprix-voip.com](mailto:sales@siprix-voip.com) for more de
 
 ## More resources
 
-Product web site: [siprix-voip.com](https://siprix-voip.com)
+Product website: [siprix-voip.com](https://www.siprix-voip.com/product/)
 
 Manual: [docs.siprix-voip.com](https://docs.siprix-voip.com)
 
@@ -163,6 +174,8 @@ Manual: [docs.siprix-voip.com](https://docs.siprix-voip.com)
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_CallsDtmf_Mini.png" width="50"></a>
 <a href="https://docs.siprix-voip.com/screenshots/Flutter_BLF.png"  title="BLF subscription Android">
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_BLF_Mini.png" width="50"></a>
+<a href="https://docs.siprix-voip.com/screenshots/Flutter_Messages.png"  title="Messages Android">
+<img src="https://docs.siprix-voip.com/screenshots/Flutter_Messages_Mini.png" width="50"></a>
 <a href="https://docs.siprix-voip.com/screenshots/Flutter_Logs.png"  title="Logs Android">
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_Logs_Mini.png" width="50"></a>
 
@@ -174,5 +187,7 @@ Manual: [docs.siprix-voip.com](https://docs.siprix-voip.com)
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_CallsDtmf_Win_Mini.png" width="50"></a>
 <a href="https://docs.siprix-voip.com/screenshots/Flutter_BLF_Win.png"  title="BLF subscription Windows">
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_BLF_Win_Mini.png" width="50"></a>
+<a href="https://docs.siprix-voip.com/screenshots/Flutter_Messages_Win.png"  title="Messages Windows">
+<img src="https://docs.siprix-voip.com/screenshots/Flutter_Messages_Win_Mini.png" width="50"></a>
 <a href="https://docs.siprix-voip.com/screenshots/Flutter_Logs_Win.png"  title="Logs Windows">
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_Logs_Win_Mini.png" width="50"></a>

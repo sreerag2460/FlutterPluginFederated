@@ -21,7 +21,7 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 ### Add dependency in pubspec.yaml
 ```
 dependencies:
-  siprix_voip_sdk: ^1.0.11
+  siprix_voip_sdk: ^1.0.13
   provider: ^6.1.1
 ```
 
@@ -66,7 +66,9 @@ class _MyAppState extends State<MyApp> {
     InitData iniData = InitData();
     iniData.license  = "...license-credentials...";
     iniData.logLevelFile = LogLevel.info;
-    //iniData.enableCallKit = true; <- uncomment if required
+    //- uncomment if required -//
+    //iniData.enableCallKit = true;
+    //iniData.enablePushKit = true;
     SiprixVoipSdk().initialize(iniData, logsModel);
   }
 ```
@@ -172,6 +174,8 @@ Manual: [docs.siprix-voip.com](https://docs.siprix-voip.com)
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_CallsDtmf_Mini.png" width="50"></a>
 <a href="https://docs.siprix-voip.com/screenshots/Flutter_BLF.png"  title="BLF subscription Android">
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_BLF_Mini.png" width="50"></a>
+<a href="https://docs.siprix-voip.com/screenshots/Flutter_Messages.png"  title="Messages Android">
+<img src="https://docs.siprix-voip.com/screenshots/Flutter_Messages_Mini.png" width="50"></a>
 <a href="https://docs.siprix-voip.com/screenshots/Flutter_Logs.png"  title="Logs Android">
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_Logs_Mini.png" width="50"></a>
 
@@ -183,5 +187,7 @@ Manual: [docs.siprix-voip.com](https://docs.siprix-voip.com)
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_CallsDtmf_Win_Mini.png" width="50"></a>
 <a href="https://docs.siprix-voip.com/screenshots/Flutter_BLF_Win.png"  title="BLF subscription Windows">
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_BLF_Win_Mini.png" width="50"></a>
+<a href="https://docs.siprix-voip.com/screenshots/Flutter_Messages_Win.png"  title="Messages Windows">
+<img src="https://docs.siprix-voip.com/screenshots/Flutter_Messages_Win_Mini.png" width="50"></a>
 <a href="https://docs.siprix-voip.com/screenshots/Flutter_Logs_Win.png"  title="Logs Windows">
 <img src="https://docs.siprix-voip.com/screenshots/Flutter_Logs_Win_Mini.png" width="50"></a>
