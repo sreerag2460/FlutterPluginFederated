@@ -1,3 +1,15 @@
+## 1.0.8
+- Added new ini property 'UnregOnDestroy'
+- Set compileSdk version to 35
+- Notifications:
+  * Set notification style 'CallStyle.forIncomingCall' on devices with SDK_INT>=31
+  * Added ability to set notification icon in app resources
+  * Added ability to customize notification using own native class
+- Permissions:
+  * Request permission 'BLUETOOTH_CONNECT' in runtime, prevent crash when it missed
+  * Request camera permission only when manifest contains it
+- Fix vibrate in background
+
 ## 1.0.7
 - Updated SiprixRinger implementation (don't set audioManager mode; modified vibraror)
 
