@@ -1,3 +1,17 @@
+## 1.0.14
+- Added new ini property 'UnregOnDestroy'
+- Updated 'CdrsModel' with ability to set MaxNumber of items and access items from inherited class
+- Android: Set compileSdk version to 35
+- Android.Notifications:
+  * Set notification style 'CallStyle.forIncomingCall' on devices with SDK_INT>=31
+  * Added ability to set notification icon in app resources
+  * Added ability to customize notification using own native class
+- Android.Permissions:
+  * Request permission 'BLUETOOTH_CONNECT' in runtime, prevent crash when it missed
+  * Request camera permission only when manifest contains it
+- Android: Fix vibrate in background
+- iOS: Send events from library to the app using UI thread
+
 ## 1.0.13
 - Android: Updated SiprixRinger implementation
 - Android: Redesigned plugin with ability to work in background isolate and handle push notif

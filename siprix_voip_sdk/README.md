@@ -21,7 +21,7 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 ### Add dependency in pubspec.yaml
 ```
 dependencies:
-  siprix_voip_sdk: ^1.0.13
+  siprix_voip_sdk: ^1.0.14
   provider: ^6.1.1
 ```
 
@@ -69,6 +69,7 @@ class _MyAppState extends State<MyApp> {
     //- uncomment if required -//
     //iniData.enableCallKit = true;
     //iniData.enablePushKit = true;
+    //iniData.unregOnDestroy = false;
     SiprixVoipSdk().initialize(iniData, logsModel);
   }
 ```
@@ -130,6 +131,10 @@ Please contact [support@siprix-voip.com](mailto:support@siprix-voip.com) if you 
 
 ## How to integrate PushKit+CallKit support?
 [See detailed manual here](https://docs.siprix-voip.com/rst/ioscallkit.html#integrate-pushkit-callkit-into-flutter-application)
+
+
+## How to integrate Android FCM?
+[See detailed manual here](https://docs.siprix-voip.com/rst/flutter.html#android-add-firebase-push-notifications)
 
 
 ## How to use this library without provider?
