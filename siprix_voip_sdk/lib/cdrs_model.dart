@@ -10,17 +10,17 @@ class CdrModel extends ChangeNotifier {
   CdrModel.fromCall(this.myCallId, this.accUri, this.remoteExt, this.incoming, this.hasVideo);
   CdrModel();
   static final _fmt = DateFormat('MMM dd, HH:mm a');
-  
+
   /// Id if the CallModel, generated this record
   int myCallId=0;
-  
+
   /// Display name (Contact name if resolved)
   String displName="";
   /// Phone number(extension) of remote side
   String remoteExt="";
   /// Account URI
   String accUri="";
-  
+
   /// Duration of the call
   String duration="";
   /// Has call video
@@ -29,10 +29,13 @@ class CdrModel extends ChangeNotifier {
   bool incoming = false;
   /// Was call connected
   bool connected = false;
-  /// Time when call has been initiated
-  String madeAtDate = _fmt.format(DateTime.now());
+  /// DateTime when call has been initiated/received
+  DateTime madeAt = DateTime.now();
   /// Status code assigned when call ended
   int statusCode=0;
+
+  /// Formatted string with date/time when call has been initiated/received
+  String get madeAtDate => _fmt.format(madeAt);
 
  ///Store model to json string
   Map<String, dynamic> toJson() {
@@ -44,7 +47,7 @@ class CdrModel extends ChangeNotifier {
       'incoming' : incoming,
       'connected': connected,
       'duration': duration,
-      'madeAt': madeAtDate,
+      'madeAt': madeAt.millisecondsSinceEpoch,
       'hasVideo': hasVideo
     };
     return ret;
@@ -61,7 +64,10 @@ class CdrModel extends ChangeNotifier {
       if((key == 'incoming')&&(value is bool))     { cdr.incoming  = value; } else
       if((key == 'connected')&&(value is bool))    { cdr.connected = value; } else
       if((key == 'duration')&&(value is String))   { cdr.duration  = value; } else
-      if((key == 'madeAt')&&(value is String))     { cdr.madeAtDate= value; }
+      if(key == 'madeAt') {
+        if(value is int)    { cdr.madeAt = DateTime.fromMillisecondsSinceEpoch(value) ; }
+        if(value is String) { cdr.madeAt = _fmt.parse(value); }//for backward compatibility
+      }
     });
     return cdr;
   }
@@ -74,8 +80,9 @@ typedef SaveChangesCallback = void Function(String jsonStr);
 
 /// CDRs list model (contains list of recent calls, methods for managing them)
 class CdrsModel extends ChangeNotifier {
+  CdrsModel({maxItems=10}) : kMaxItems = maxItems;
   final List<CdrModel> _cdrItems = [];
-  static const int kMaxItems=10;
+  final int kMaxItems;
 
   /// Returns true when list of recent calls is empty
   bool get isEmpty => _cdrItems.isEmpty;
@@ -83,6 +90,9 @@ class CdrsModel extends ChangeNotifier {
   int get length => _cdrItems.length;
   /// Returns recent call by its index in list
   CdrModel operator [](int i) => _cdrItems[i];
+
+  /// Returns list of items
+  @protected List<CdrModel> get cdrItems => _cdrItems;
 
   /// Callback which model invokes when recent calls changes should be saved
   SaveChangesCallback? onSaveChanges;
@@ -92,7 +102,7 @@ class CdrsModel extends ChangeNotifier {
     CdrModel cdr = CdrModel.fromCall(c.myCallId, c.accUri, c.remoteExt, c.isIncoming, c.hasVideo);
     _cdrItems.insert(0, cdr);
 
-    if(_cdrItems.length > kMaxItems) {
+    if((kMaxItems > 0) && (_cdrItems.length > kMaxItems)) {
       _cdrItems.removeLast();
     }
     notifyListeners();
@@ -113,12 +123,12 @@ class CdrsModel extends ChangeNotifier {
   void setTerminated(int callId, int statusCode, String displName, String duration) {
     int index = _cdrItems.indexWhere((c) => c.myCallId==callId);
     if(index == -1) return;
-    
+
     CdrModel cdr = _cdrItems[index];
     cdr.displName = displName;
     cdr.statusCode = statusCode;
     cdr.duration = duration;
-    
+
     notifyListeners();
 
     _raiseSaveChanges();
@@ -136,23 +146,23 @@ class CdrsModel extends ChangeNotifier {
   bool loadFromJson(String cdrsJsonStr) {
     try {
       if(cdrsJsonStr.isEmpty) return false;
-      
+
       _cdrItems.clear();
 
       final List<dynamic> parsedList = jsonDecode(cdrsJsonStr);
       for (var parsedCdr in parsedList) {
         _cdrItems.add(CdrModel.fromJson(parsedCdr));
       }
-      
+
       notifyListeners();
 
       return parsedList.isNotEmpty;
-    }catch (e) {      
+    }catch (e) {
       return false;
     }
   }
 
-  void _raiseSaveChanges() {    
+  void _raiseSaveChanges() {
     if(onSaveChanges != null) {
       Future.delayed(Duration.zero, () {
           onSaveChanges?.call(storeToJson());
