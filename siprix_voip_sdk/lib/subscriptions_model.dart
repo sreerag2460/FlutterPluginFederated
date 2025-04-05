@@ -1,5 +1,5 @@
 import 'package:siprix_voip_sdk_platform_interface/siprix_voip_sdk_platform_interface.dart';
-import 'package:flutter/services.dart'; 
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 
 import 'dart:convert';
@@ -88,10 +88,10 @@ typedef SaveChangesCallback = void Function(String jsonStr);
 /// Subscriptions list model ((contains list of subscriptions, methods for managing them, handlers of library event)
 class SubscriptionsModel<T extends SubscriptionModel> extends ChangeNotifier {
   final T Function(Map<String, dynamic>) _itemCreateFunc;
-  final List<T> _subscriptions = [];  
+  final List<T> _subscriptions = [];
   final IAccountsModel _accountsModel;
-  final ILogsModel? _logs;  
-    
+  final ILogsModel? _logs;
+
   SubscriptionsModel(this._accountsModel, this._itemCreateFunc, [this._logs]) {
     SiprixVoipSdk().subscrListener = SubscrStateListener(
       subscrStateChanged : onSubscrStateChanged
@@ -119,9 +119,9 @@ class SubscriptionsModel<T extends SubscriptionModel> extends ChangeNotifier {
 
       //Add
       sub.mySubscrId  = await SiprixVoipSdk().addSubscription(sub) ?? 0;
-      
+
       _integrateAddedSubscription(sub, saveChanges);
-      
+
     } on PlatformException catch (err) {
       if(err.code == SiprixVoipSdk.eSubscrAlreadyExist.toString()) {
         int existingSubscrId = err.details;
@@ -153,13 +153,13 @@ class SubscriptionsModel<T extends SubscriptionModel> extends ChangeNotifier {
     _logs?.print('Added successfully with id: ${sub.mySubscrId}');
     if(saveChanges) _raiseSaveChanges();
   }
-  
+
   ///Delete subscription by index (sends SUBSCRIBE request with expire=0)
   Future<void> deleteSubscription(int index) async {
     try {
       int subscrId = _subscriptions[index].mySubscrId;
       await SiprixVoipSdk().deleteSubscription(subscrId);
-      
+
       _subscriptions.removeAt(index);
 
       notifyListeners();
@@ -193,7 +193,7 @@ class SubscriptionsModel<T extends SubscriptionModel> extends ChangeNotifier {
   String storeToJson() {
     return jsonEncode(_subscriptions);
   }
- 
+
   /// Load list of subscriptions from json string (app should invoke it after loading accounts)
   bool loadFromJson(String subscrJsonStr) {
     try {

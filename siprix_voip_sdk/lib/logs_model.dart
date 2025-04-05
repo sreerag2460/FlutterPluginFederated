@@ -27,10 +27,10 @@ enum LogLevel {
 
 
 /// Contains log string which can be displayed on UI. App can replace it with the own class or don't use
-class LogsModel extends ChangeNotifier implements ILogsModel {  
+class LogsModel extends ChangeNotifier implements ILogsModel {
   String _logStr = "";
   final bool _uiLog;
-  
+
   /// Cummulative log string
   String get logStr => _logStr;
 
@@ -46,7 +46,7 @@ class LogsModel extends ChangeNotifier implements ILogsModel {
     debugPrint(str);
 
     if(_uiLog) {
-      DateTime now = DateTime.now();    
+      DateTime now = DateTime.now();
       _logStr += DateFormat('kk:mm:ss ').format(now);
       _logStr += str;
       _logStr += '\n';
@@ -57,5 +57,5 @@ class LogsModel extends ChangeNotifier implements ILogsModel {
   /// Handle trial mode notification raised by library when license not set or wrong
   void onTrialModeNotified() {
     print("--- SIPRIX SDK is working in TRIAL mode ---");
-  }  
+  }
 }

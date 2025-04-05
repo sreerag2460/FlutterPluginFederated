@@ -7,7 +7,7 @@ import 'siprix_voip_sdk.dart';
 
 
 /// Devices list model (contains list of avaialable audio/video devices)
-class DevicesModel extends ChangeNotifier {  
+class DevicesModel extends ChangeNotifier {
   final List<MediaDevice> _playout = [];
   final List<MediaDevice> _recording = [];
   final List<MediaDevice> _video = [];
@@ -19,7 +19,7 @@ class DevicesModel extends ChangeNotifier {
 
   final ILogsModel? _logs;
   bool _loaded = false;
-  
+
   /// Create instance and set event handler
   DevicesModel([this._logs]) {
     SiprixVoipSdk().dvcListener = DevicesStateListener(
@@ -50,16 +50,16 @@ class DevicesModel extends ChangeNotifier {
     _loadPlayoutDevices();
     _loadRecordingDevices();
     _loadVideoDevices();
-    _loadForegroundMode();    
+    _loadForegroundMode();
     _loaded = true;
   }
-  
+
   void _loadPlayoutDevices() async {
     try {
       _playout.clear();
       int dvcsNumber = await SiprixVoipSdk().getPlayoutDevices() ?? 0;
       for(int index=0; index < dvcsNumber; ++index) {
-        MediaDevice? dvc = await SiprixVoipSdk().getPlayoutDevice(index);        
+        MediaDevice? dvc = await SiprixVoipSdk().getPlayoutDevice(index);
         if((dvc != null) && (_playout.indexWhere((p) => p.guid==dvc.guid) ==-1))   _playout.add(dvc);
       }
       _selPlayoutIndex = -1;
@@ -69,7 +69,7 @@ class DevicesModel extends ChangeNotifier {
     }
   }
 
-  void _loadRecordingDevices() async {    
+  void _loadRecordingDevices() async {
     try {
       _recording.clear();
       int dvcsNumber = await SiprixVoipSdk().getRecordingDevices() ?? 0;
@@ -83,8 +83,8 @@ class DevicesModel extends ChangeNotifier {
       _logs?.print('Can\'t load recordingDevices. Err: ${err.code} ${err.message}');
     }
   }
-  
-  void _loadVideoDevices() async {    
+
+  void _loadVideoDevices() async {
     try {
       _video.clear();
       int dvcsNumber = await SiprixVoipSdk().getVideoDevices() ?? 0;
@@ -140,7 +140,7 @@ class DevicesModel extends ChangeNotifier {
 
     try {
       await SiprixVoipSdk().setVideoDevice(index);
-      _selVideoIndex = index;      
+      _selVideoIndex = index;
     } on PlatformException catch (err) {
       _logs?.print('Can\'t set videoDevice. Err: ${err.code} ${err.message}');
       return Future.error((err.message==null) ? err.code : err.message!);
@@ -179,7 +179,7 @@ class DevicesModel extends ChangeNotifier {
         _logs?.print('Can\'t load videoDevices. Err: ${err.code} ${err.message}');
       }
     }
-  }   
+  }
 
   
 

@@ -13,7 +13,7 @@ class RTCVideoValue {
     this.rotation = 0,
     this.hasTexture = false,
   });
-  
+
   ///Width of the video frame
   final double width;
   ///Height of the video frame
@@ -54,7 +54,7 @@ class RTCVideoValue {
 /// SiprixVideoRenderer - holds texture, created by native plugins, and listening video frame events raised by native plugins
 class SiprixVideoRenderer extends ValueNotifier<RTCVideoValue> {
   SiprixVideoRenderer() : super(RTCVideoValue.empty);
-  StreamSubscription<dynamic>? _eventSubscription;  
+  StreamSubscription<dynamic>? _eventSubscription;
   /// Invalid texture id constant
   static const int kInvalidTextureId = -1;
   /// Invalid call id constant
@@ -68,12 +68,12 @@ class SiprixVideoRenderer extends ValueNotifier<RTCVideoValue> {
   int get videoHeight => value.height.toInt();
   /// AspectRatio of the received video frame
   double get aspectRatio => value.aspectRatio;
-  
+
   /// TextureId created for rendering
   int  get textureId => _textureId;
   /// Is created texture
   bool get hasTexture=> _textureId != kInvalidTextureId;
-  
+
   /// Frame resize handler
   Function? onResize;
 
@@ -85,9 +85,9 @@ class SiprixVideoRenderer extends ValueNotifier<RTCVideoValue> {
     try{
       _textureId = await SiprixVoipSdk().videoRendererCreate() ?? 0;
     } on PlatformException catch (err) {
-      _logs?.print('Cant create renderer Err: ${err.code} ${err.message}');     
+      _logs?.print('Cant create renderer Err: ${err.code} ${err.message}');
     }
-        
+
     if(_textureId != kInvalidTextureId) {
       _logs?.print('Created textureId: $textureId');
       _eventSubscription = EventChannel('Siprix/Texture$textureId')
@@ -135,7 +135,7 @@ class SiprixVideoRenderer extends ValueNotifier<RTCVideoValue> {
             height: 0.0 + map['height'],
             hasTexture: hasTexture);
         onResize?.call();
-        break;      
+        break;
     }
   }
 
@@ -155,14 +155,14 @@ class SiprixVideoView extends StatelessWidget {
   const SiprixVideoView(this._renderer, {Key? key,}) : super(key: key);
 
   final SiprixVideoRenderer _renderer;
-  
+
   /// Set texture quality
-  final FilterQuality filterQuality = FilterQuality.low; 
+  final FilterQuality filterQuality = FilterQuality.low;
 
   @override
   Widget build(BuildContext context) {
     return _renderer.hasTexture
-                    ? AspectRatio(aspectRatio: _renderer.aspectRatio, 
+                    ? AspectRatio(aspectRatio: _renderer.aspectRatio,
                         child: Texture(textureId: _renderer.textureId, filterQuality: filterQuality))
                     : const Placeholder();
   }

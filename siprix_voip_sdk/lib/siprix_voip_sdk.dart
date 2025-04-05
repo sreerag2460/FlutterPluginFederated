@@ -256,10 +256,10 @@ class PushIncomingArg {
   bool fromMap(Map<dynamic, dynamic> argsMap) {
     int argsCounter=0;
     argsMap.forEach((key, value) {
-      if((key == SiprixVoipSdkPlatform.kArgCallKitUuid)&&(value is String)) { 
+      if((key == SiprixVoipSdkPlatform.kArgCallKitUuid)&&(value is String)) {
         callUUID = value; argsCounter+=1; }
-      if((key == SiprixVoipSdkPlatform.kArgPushPayload)) { 
-        pushPayload = Map<String, dynamic>.from(value as Map); 
+      if((key == SiprixVoipSdkPlatform.kArgPushPayload)) {
+        pushPayload = Map<String, dynamic>.from(value as Map);
         argsCounter+=1; }
     });
     return (argsCounter==2);

@@ -8,7 +8,7 @@ enum SipTransport {
   ///Send SIP over UDP transport
   udp(SiprixVoipSdk.kSipTransportUdp, "UDP"),
   ///Send SIP over TCP transport
-  tcp(SiprixVoipSdk.kSipTransportTcp, "TCP"), 
+  tcp(SiprixVoipSdk.kSipTransportTcp, "TCP"),
   ///Send SIP over TLS transport
   tls(SiprixVoipSdk.kSipTransportTls, "TLS");
 
@@ -22,7 +22,7 @@ enum SipTransport {
   static SipTransport from(int val) {
     switch(val) {
       case SiprixVoipSdk.kSipTransportTcp: return SipTransport.tcp;
-      case SiprixVoipSdk.kSipTransportTls: return SipTransport.tls;      
+      case SiprixVoipSdk.kSipTransportTls: return SipTransport.tls;
       default:  return SipTransport.udp;
     }
   }
@@ -34,7 +34,7 @@ enum NetState {
   /// Network connection lost
   lost(SiprixVoipSdk.kNetStateLost, "Lost"),
   /// Network connection restored
-  restored(SiprixVoipSdk.kNetStateRestored, "Restored"), 
+  restored(SiprixVoipSdk.kNetStateRestored, "Restored"),
   /// Network connection switched (from Wifi to Wifi or from Wifi to LTE)
   switched(SiprixVoipSdk.kNetStateSwitched, "Switched");
 
@@ -46,7 +46,7 @@ enum NetState {
 
   ///Create enum item from int value
   static NetState from(int val) {
-    switch(val) {      
+    switch(val) {
       case SiprixVoipSdk.kNetStateRestored:  return NetState.restored;
       case SiprixVoipSdk.kNetStateSwitched:  return NetState.switched;
       default: return  NetState.lost;
@@ -55,7 +55,7 @@ enum NetState {
 }
 
 
-/// NetworkModel - contains network 
+/// NetworkModel - contains network
 class NetworkModel extends ChangeNotifier {
   bool _networkLost = false;
   final ILogsModel? _logs;
