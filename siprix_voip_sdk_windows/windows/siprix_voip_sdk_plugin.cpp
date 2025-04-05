@@ -360,7 +360,8 @@ void SiprixVoipSdkPlugin::handleModuleInitialize(const flutter::EncodableMap& ar
         if(boolVal) {
           if(valName->compare("tlsVerifyServer") == 0)   Siprix::Ini_SetTlsVerifyServer(iniData, *boolVal); else
           if(valName->compare("singleCallMode") == 0)    Siprix::Ini_SetSingleCallMode(iniData, *boolVal); else
-          if(valName->compare("shareUdpTransport") == 0) Siprix::Ini_SetShareUdpTransport(iniData, *boolVal);
+          if(valName->compare("shareUdpTransport") == 0) Siprix::Ini_SetShareUdpTransport(iniData, *boolVal); else
+          if(valName->compare("unregOnDestroy") == 0)    Siprix::Ini_SetUnregOnDestroy(iniData, *boolVal);
           continue;
         }  
     

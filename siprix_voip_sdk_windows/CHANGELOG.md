@@ -1,3 +1,6 @@
+## 1.0.4
+- Added new ini property 'UnregOnDestroy'
+
 ## 1.0.3
 - Added ability to send and receive text messages (SIP MESSAGE request)
 - Added ability to override DisplayName in outgoing call (method 'Dest_SetDisplayName')
