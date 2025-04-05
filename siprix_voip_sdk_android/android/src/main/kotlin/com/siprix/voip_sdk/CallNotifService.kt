@@ -9,6 +9,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.Person
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -30,17 +31,15 @@ import com.siprix.SiprixCore
 import com.siprix.SiprixRinger
 
 
-class CallNotifService : Service(), ISiprixServiceListener {
-    private var _ringer: ISiprixRinger? = null
+open class CallNotifService : Service() {
+    private lateinit var _ringer: ISiprixRinger
+    private lateinit var _appResources : LabelResources
+    private lateinit var _eventsListener : CoreEventsListener
+
     private var _wakeLock: WakeLock? = null
     private val _binder: IBinder = LocalBinder()
+
     private var _foregroundModeStarted: Boolean = false
-    
-    private var _appContentLabel: String = "Incoming call"
-    private var _appRejectBtnLabel: String = "Reject call"
-    private var _appAcceptBtnLabel: String = "Accept call"
-    private var _appNameLabel: String = "AppName"
-    private var _appIconId: Int = 0
     private var _requestCode: Int = 1
 
     inner class LocalBinder : Binder() {
@@ -52,7 +51,10 @@ class CallNotifService : Service(), ISiprixServiceListener {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "onCreate")
+        _eventsListener = CoreEventsListener(this)
+        _appResources = LabelResources(this)
         _ringer = SiprixRinger(this)
+        createNotifChannel()
     }
 
     override fun onDestroy() {
@@ -60,8 +62,6 @@ class CallNotifService : Service(), ISiprixServiceListener {
         Log.d(TAG, "onDestroy")
         stopForegroundMode()
         notifMgr.cancelAll()
-
-        _ringer = null
 
         if(core != null) {
             core?.setServiceListener(null)
@@ -90,13 +90,11 @@ class CallNotifService : Service(), ISiprixServiceListener {
             }
 
             if(kActionAppStarted == intent.action) {
-                core?.setServiceListener(this)
-                getLabelsFromResources()
-                createNotifChannel()
+                core?.setServiceListener(_eventsListener)
             }
 
             if(kActionIncomingCallStopRinger == intent.action) {
-                _ringer?.stop()
+                _ringer.stop()
             }
         }
         return result
@@ -110,16 +108,16 @@ class CallNotifService : Service(), ISiprixServiceListener {
             //notifMgr_.createNotificationChannel(msgChannel);
 
             val callChannel = NotificationChannel(
-                kCallChannelId, _appNameLabel, NotificationManager.IMPORTANCE_HIGH
+                kCallChannelId, _appResources.appName, NotificationManager.IMPORTANCE_HIGH
             )
-            callChannel.lockscreenVisibility= Notification.VISIBILITY_PUBLIC
-            callChannel.description = "Incoming calls notifications channel" //TODO resource
+            callChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            callChannel.description = _appResources.channelDescr
             //callChannel.enableLights(true);
             notifMgr.createNotificationChannel(callChannel)
         }
     }
 
-    private fun getIntentActivity(action: String?, bundle: Bundle): PendingIntent {
+    protected fun getIntentActivity(action: String?, bundle: Bundle): PendingIntent {
         val activityIntent = packageManager.getLaunchIntentForPackage(this.packageName)
         if(activityIntent==null) {
             Log.e(TAG, "Can't get launch intent!")
@@ -134,7 +132,7 @@ class CallNotifService : Service(), ISiprixServiceListener {
         )
     }
 
-    private fun getIntentService(action: String?, bundle: Bundle): PendingIntent {
+    protected fun getIntentService(action: String?, bundle: Bundle): PendingIntent {
         val srvIntent = Intent(action)
         srvIntent.setClassName(this, CallNotifService::class.java.name)
         srvIntent.putExtras(bundle)
@@ -157,55 +155,73 @@ class CallNotifService : Service(), ISiprixServiceListener {
         cancelNotification(callId)
     }
 
-    private fun cancelNotification(callId: Int) {
-        notifMgr.cancel(kCallBaseNotifId + callId)
+    protected fun cancelNotification(callId: Int) {
+        notifMgr.cancel(getNotifId(callId))
     }
 
-    private val notifMgr: NotificationManager
+    protected val appResources: LabelResources
+        get() = _appResources
+
+    protected val notifMgr: NotificationManager
         get() = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-    private fun displayIncomingCallNotification(
-        callId: Int, accId: Int,
-        withVideo: Boolean, hdrFrom: String?, hdrTo: String?
-    ) {
-        Log.d(TAG, "displayIncomingCallNotification $callId")
+    protected fun getNotifId(callId: Int) : Int{
+        return kCallBaseNotifId + callId
+    }
+
+    fun buildBundle(callId: Int, accId: Int,
+                     withVideo: Boolean, hdrFrom: String?, hdrTo: String?) : Bundle{
         val bundle = Bundle()
         bundle.putInt(kExtraCallId, callId)
         bundle.putInt(kExtraAccId, accId)
         bundle.putBoolean(kExtraWithVideo, withVideo)
         bundle.putString(kExtraHdrFrom, hdrFrom)
         bundle.putString(kExtraHdrTo, hdrTo)
+        return bundle
+    }
+
+    open fun displayIncomingCallNotification(
+        callId: Int, accId: Int,
+        withVideo: Boolean, hdrFrom: String?, hdrTo: String?
+    ) {
+        Log.d(TAG, "displayIncomingCallNotification $callId")
+        val bundle = buildBundle(callId, accId, withVideo, hdrFrom, hdrTo)
 
         val contentIntent = getIntentActivity(kActionIncomingCall, bundle)
         val pendingAcceptCall = getIntentActivity(kActionIncomingCallAccept, bundle)
         val pendingRejectCall = getIntentService(kActionIncomingCallReject, bundle)
+        val contentStr = buildContentString(hdrFrom)
 
-        //Popup style
-        val bigTextStyle = NotificationCompat.BigTextStyle()
-        bigTextStyle.bigText(hdrFrom)
-        bigTextStyle.setBigContentTitle(_appContentLabel)
+        if (VERSION.SDK_INT >= 31) {
+            val caller = Person.Builder().setName(contentStr).setImportant(true).build()
+            val builder: Notification.Builder = Notification.Builder(this, kCallChannelId)
+                .setSmallIcon(_appResources.iconId)
+                .setAutoCancel(true)
+                .setContentIntent(contentIntent)
+                .setFullScreenIntent(contentIntent, true)
+                .setOngoing(true)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setStyle(Notification.CallStyle.forIncomingCall(caller, pendingRejectCall, pendingAcceptCall))
 
-        val builder: NotificationCompat.Builder = NotificationCompat.Builder(this, kCallChannelId)
-            .setSmallIcon(_appIconId)
-            .setContentTitle(_appContentLabel)
-            .setContentText(hdrFrom)
-            .setAutoCancel(true)
-            .setChannelId(kCallChannelId)
-            .setDefaults(Notification.DEFAULT_ALL)
-            .setContentIntent(contentIntent)
-            .setFullScreenIntent(contentIntent, true)
-            .setOngoing(true)
-            .setStyle(bigTextStyle)
-            .addAction(0, _appRejectBtnLabel, pendingRejectCall)
-            .addAction(0, _appAcceptBtnLabel, pendingAcceptCall)
-            .setDeleteIntent(getIntentService(kActionIncomingCallStopRinger, bundle))
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            notifMgr.notify(getNotifId(callId), builder.build())
+        } else {
+            val builder: NotificationCompat.Builder = NotificationCompat.Builder(this, kCallChannelId)
+                .setSmallIcon(_appResources.iconId)
+                .setContentTitle(_appResources.contentLabel)
+                .setContentText(contentStr)
+                .setAutoCancel(true)
+                .setDefaults(Notification.DEFAULT_ALL)
+                .setContentIntent(contentIntent)
+                .setFullScreenIntent(contentIntent, true)
+                .setOngoing(true)
+                .addAction(0, _appResources.rejectBtnLabel, pendingRejectCall)
+                .addAction(0, _appResources.acceptBtnLabel, pendingAcceptCall)
+                .setDeleteIntent(getIntentService(kActionIncomingCallStopRinger, bundle))
+                .setCategory(NotificationCompat.CATEGORY_CALL)
 
-        if (VERSION.SDK_INT >= 21)
-            builder.setColor(-0x80ff01)
-
-        notifMgr.notify(kCallBaseNotifId + callId, builder.build())
+            notifMgr.notify(getNotifId(callId), builder.build())
+        }
     }
 
     fun stopForegroundMode() {
@@ -233,9 +249,9 @@ class CallNotifService : Service(), ISiprixServiceListener {
             Notification.Builder(this)
         }
 
-        builder.setSmallIcon(_appIconId)
-            .setContentTitle(_appNameLabel)
-            .setContentText("Siprix call notification service")
+        builder.setSmallIcon(_appResources.iconId)
+            .setContentTitle(_appResources.appName)
+            .setContentText(_appResources.foregroundDescr)
             .setContentIntent(contentIntent)
             .build() // getNotification()
 
@@ -273,63 +289,110 @@ class CallNotifService : Service(), ISiprixServiceListener {
         }
     }
 
-    override fun onRingerState(start: Boolean) {
-        if (start) _ringer?.start() else _ringer?.stop()
-    }
+    //Handle core events
+    class CoreEventsListener(service : CallNotifService) : ISiprixServiceListener {
+        private val _service = service
 
-    override fun onCallTerminated(callId: Int, statusCode: Int) {
-        cancelNotification(callId)
-    }
-
-    override fun onCallIncoming(
-        callId: Int, accId: Int, withVideo: Boolean,
-        hdrFrom: String, hdrTo: String
-    ) {
-        Log.i(TAG, "onCallIncoming "+callId)
-        if (!isAppInForeground) {
-            displayIncomingCallNotification(callId, accId, withVideo, hdrFrom, hdrTo)
+        override fun onRingerState(start: Boolean) {
+            if (start) _service._ringer.start()
+            else       _service._ringer.stop()
         }
-    }
 
-    private fun getLabelsFromResources() {
-        val content = getStrResource(kResourceContentLabel)
-        if (content != null) _appContentLabel = content //"Incoming call"
+        override fun onCallTerminated(callId: Int, statusCode: Int) {
+            _service.cancelNotification(callId)
+        }
 
-        val reject = getStrResource(kResourceRejectBtnLabel)
-        if (reject != null) _appRejectBtnLabel = reject //"Reject call"
-
-        val accept = getStrResource(kResourceAcceptBtnLabel)
-        if (accept != null) _appAcceptBtnLabel = accept //"Accept call"
-
-        val name = getStrResource("app_name")
-        _appNameLabel = name ?: applicationInfo.nonLocalizedLabel.toString()
-
-        _appIconId = getMipmapResource("ic_launcher")
-    }
-
-    @SuppressLint("DiscouragedApi")
-    private fun getStrResource(resName: String): String? {
-        val stringRes = resources.getIdentifier(resName, "string", packageName)
-        return if(stringRes != 0) getString(stringRes) else null
-    }
-
-    @SuppressLint("DiscouragedApi")
-    private fun getMipmapResource(resName: String): Int {
-        return resources.getIdentifier(resName, "mipmap", packageName)
-    }
-
-    private val isAppInForeground: Boolean
-        get() {
-            val am = this.getSystemService(ACTIVITY_SERVICE) as ActivityManager
-            val appProcs = am.runningAppProcesses
-            for (app in appProcs) {
-                if (app.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                    val found = listOf(*app.pkgList).contains(packageName)
-                    if (found) return true
-                }
+        override fun onCallIncoming(
+            callId: Int, accId: Int, withVideo: Boolean,
+            hdrFrom: String, hdrTo: String
+        ) {
+            Log.i(TAG, "onCallIncoming $callId")
+            if (!_service.isAppInForeground()) {
+                _service.displayIncomingCallNotification(callId, accId, withVideo, hdrFrom, hdrTo)
             }
-            return false
         }
+    }
+
+    private fun isAppInForeground(): Boolean {
+        val am = this.getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        val appProcs = am.runningAppProcesses
+        for (app in appProcs) {
+            if (app.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                val found = listOf(*app.pkgList).contains(packageName)
+                if (found) return true
+            }
+        }
+        return false
+    }
+
+    protected fun parseDisplayName(hdrFrom: String?)  : String {
+        if(hdrFrom == null) return "?"
+        val startIndex = hdrFrom.indexOf("\"")
+        val endIndex = if(startIndex == -1) -1 else hdrFrom.indexOf("\"", startIndex + 1)
+        return if(endIndex==-1) "?" else hdrFrom.substring(startIndex+1, endIndex)
+    }
+
+    protected fun parseExt(hdrFrom: String?)  : String {
+        if(hdrFrom == null) return "?"
+        val startIndex = hdrFrom.indexOf(':')
+        val endIndex = if(startIndex == -1) -1 else hdrFrom.indexOf("@", startIndex + 1)
+        return if(endIndex==-1) "?" else hdrFrom.substring(startIndex+1, endIndex)
+    }
+
+    protected fun buildContentString(hdrFrom: String?) : String {
+        //hdrFrom has format: "displName" <sip:ext@domain:port>
+        if(hdrFrom==null) return "???"
+
+        //Return string same as uses flutter app in 'CallModel.nameAndExt'
+        val displName = parseDisplayName(hdrFrom)
+        val sipExt = parseExt(hdrFrom)
+        return if(displName.isEmpty()) sipExt else "$displName ($sipExt)"
+    }
+
+    class LabelResources (service : CallNotifService) {
+        private val _service = service
+        val appName: String
+        val channelDescr: String
+        val foregroundDescr: String
+
+        val contentLabel: String
+        val rejectBtnLabel: String
+        val acceptBtnLabel: String
+        val iconId: Int
+
+        init {
+            appName = getStrResource("app_name") ?: service.applicationInfo.nonLocalizedLabel.toString()
+            channelDescr = getStrResource(kResourceChannelDescrLabel)?: "Incoming calls notifications channel"
+            foregroundDescr = getStrResource(kResourceForegroundDescrLabel)?: "Siprix call notification service"
+
+            contentLabel = getStrResource(kResourceContentLabel) ?: "Incoming call"
+            rejectBtnLabel = getStrResource(kResourceRejectBtnLabel)?: "Reject call"
+            acceptBtnLabel = getStrResource(kResourceAcceptBtnLabel)?: "Accept call"
+
+            val res = getResource(kResourceNotifIcon, "drawable")
+            iconId = if(res != 0) res else getResource("ic_launcher", "mipmap")
+        }
+
+        companion object {
+            const val kResourceForegroundDescrLabel = "foreground_descr_label"
+            const val kResourceChannelDescrLabel = "channel_descr_label"
+            const val kResourceRejectBtnLabel = "reject_btn_label"
+            const val kResourceAcceptBtnLabel = "accept_btn_label"
+            const val kResourceContentLabel = "content_label"
+            const val kResourceNotifIcon = "ic_notif_icon"
+        }
+
+        @SuppressLint("DiscouragedApi")
+        private fun getStrResource(resName: String): String? {
+            val stringRes = _service.resources.getIdentifier(resName, "string", _service.packageName)
+            return if(stringRes != 0) _service.getString(stringRes) else null
+        }
+
+        @SuppressLint("DiscouragedApi")
+        private fun getResource(resName: String, defType: String): Int {
+            return _service.resources.getIdentifier(resName, defType, _service.packageName)
+        }
+    }
 
     companion object {
         private const val TAG = "CallNotifService"
@@ -349,10 +412,6 @@ class CallNotifService : Service(), ISiprixServiceListener {
         const val kExtraWithVideo= "kExtraWithVideo"
         const val kExtraHdrFrom  = "kExtraHdrFrom"
         const val kExtraHdrTo    = "kExtraHdrTo"
-
-        const val kResourceRejectBtnLabel = "reject_btn_label"
-        const val kResourceAcceptBtnLabel = "accept_btn_label"
-        const val kResourceContentLabel = "content_label"
 
         const val kCallBaseNotifId = 555
         const val kForegroundId = 777

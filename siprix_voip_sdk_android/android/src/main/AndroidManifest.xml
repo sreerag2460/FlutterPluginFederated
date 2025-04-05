@@ -4,6 +4,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- Comment if app makes audio only calls -->
     <uses-permission android:name="android.permission.CAMERA" android:required="false"/>
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -11,7 +12,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <!-- Uncomment if required to use bluetooth audio devices
-    <uses-permission android:name="android.permission.BLUETOOTH" /> -->
+    <uses-permission android:name="android.permission.BLUETOOTH" /> 
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> -->
 
     <!-- Uncomment if required to mute SIP call when GSM call received
     <uses-permission android:name="android.permission.READ_PHONE_STATE" /> -->

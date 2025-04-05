@@ -581,13 +581,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     _activity = binding.activity
     _core.setModelListener(_eventListener)
 
-    if(_activity != null) {
-      setActivityFlags(_activity!!)
-
-      _activity!!.bindService(Intent(_activity!!, CallNotifService::class.java),
-        serviceConnection, Context.BIND_AUTO_CREATE)
-    }
-    startNotifService()
+    setActivityFlags(_activity)
     requestsPermissions()
   }
 
@@ -610,22 +604,27 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     if (_bgService != null) {
       _core.setModelListener(null)
 
-      _activity?.unbindService(serviceConnection)
+      _activity?.unbindService(_serviceConnection)
       _bgService = null
     }
   }
 
-  private fun startNotifService() {
+  private fun startAndBindNotifService(serviceClassName : String?) : Boolean{
     try{
-      val srvIntent = Intent(_appContext, CallNotifService::class.java)
+      val srvClass = if(serviceClassName!=null) Class.forName(serviceClassName) else CallNotifService::class.java
+      val srvIntent = Intent(_appContext, srvClass)
+      _activity?.bindService(srvIntent, _serviceConnection, Context.BIND_AUTO_CREATE)
+
       srvIntent.setAction(CallNotifService.kActionAppStarted)
       _appContext.startService(srvIntent)
-    }catch (exception: IllegalStateException) {
-      Log.d(TAG, "Can't start service: '${exception}'")
+      return true
+    }catch (ex: Exception) {
+      Log.e(TAG, "Can't start service: '${ex}'")
+      return false
     }
   }
 
-  private val serviceConnection: ServiceConnection = object : ServiceConnection {
+  private val _serviceConnection: ServiceConnection = object : ServiceConnection {
     override fun onServiceConnected(className: ComponentName, service: IBinder) {
       // Service is running in our own process we can directly access it.
       val binder: CallNotifService.LocalBinder = service as CallNotifService.LocalBinder
@@ -648,8 +647,8 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       result.error( "-", kBadArgumentsError, null)
       return
     }
+
     if(!_core.isInitialized) {
-      startNotifService()
       if(call.method==kMethodModuleInitialize) { handleModuleInitialize(args, result); }
       else { result.error("UNAVAILABLE", kModuleNotInitializedError, null); }
       return
@@ -752,13 +751,22 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val shareUdpTransport : Boolean? = args["shareUdpTransport"] as? Boolean
     if(shareUdpTransport != null) { iniData.setShareUdpTransport(shareUdpTransport); }
 
+    val unregOnDestroy : Boolean? = args["unregOnDestroy"] as? Boolean
+    if(unregOnDestroy != null) { iniData.setUnregOnDestroy(unregOnDestroy); }
+
     val listenTelState : Boolean? = args["listenTelState"] as? Boolean
     if(listenTelState != null) { iniData.setUseTelState(listenTelState); }
 
+    //Init core
     iniData.setUseExternalRinger(true)
     val err = _core.initialize(iniData)
     sendResult(err, result)
     Log.i(TAG, "handleModuleInitialize err:${err}")
+
+    //Bind and start service
+    val serviceClassName = args["serviceClassName"] as? String
+    if(!startAndBindNotifService(serviceClassName))
+      result.error("-", "Can't start service. Check specified 'serviceClassName'", null)
   }
 
   private fun handleModuleUnInitialize(args : HashMap<String, Any?>, result: MethodChannel.Result) {
@@ -1459,12 +1467,24 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
   }
 
   private fun requestsPermissions() {
-    val permissions =
-      if (Build.VERSION.SDK_INT >= 33)
-        arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.POST_NOTIFICATIONS)
-      else
-        arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
-    ActivityCompat.requestPermissions(_activity!!, permissions, permissionRequestCode)
+    val permissions = mutableListOf(Manifest.permission.RECORD_AUDIO)
+
+    //Add 'CAMERA' if manifest contains it
+    var info =_activity!!.packageManager.getPackageInfo(_activity!!.getPackageName(), PackageManager.GET_PERMISSIONS)
+    if(info.requestedPermissions.contains(Manifest.permission.CAMERA))
+      permissions.add(Manifest.permission.CAMERA)
+
+    //Add 'POST_NOTIFICATIONS'
+    if (Build.VERSION.SDK_INT >= 33)
+      permissions.add(Manifest.permission.POST_NOTIFICATIONS)
+
+    //Add 'BLUETOOTH_CONNECT' if manifest contains it
+    if((Build.VERSION.SDK_INT >= 31) &&
+      (info.requestedPermissions.contains(Manifest.permission.BLUETOOTH_CONNECT))) {
+      permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
+    }
+
+    ActivityCompat.requestPermissions(_activity!!, permissions.toTypedArray(), permissionRequestCode)
   }
 
   override fun onRequestPermissionsResult(requestCode: Int,
@@ -1592,15 +1612,17 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     }
   }
 
-  private fun setActivityFlags(activity: Activity) {
-    if (Build.VERSION.SDK_INT < 27) {
-      activity.window.addFlags(
-        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-              WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-      )
-    } else {
-      activity.setTurnScreenOn(true)
-      activity.setShowWhenLocked(true)
+  private fun setActivityFlags(activity: Activity?) {
+    if(activity != null) {
+      if (Build.VERSION.SDK_INT < 27) {
+        activity.window.addFlags(
+          WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+        )
+      } else {
+        activity.setTurnScreenOn(true)
+        activity.setShowWhenLocked(true)
+      }
     }
   }
 }
