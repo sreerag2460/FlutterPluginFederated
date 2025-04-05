@@ -8,6 +8,15 @@
         android:label="Siprix VoIP app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- Uncomment if required to use own service and notification implementation.
+             Don't forget to set `iniData.serviceClassName` in the Flutter part of the project
+        <service
+            android:name=".MyNotifService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="phoneCall" /> -->
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
