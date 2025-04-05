@@ -509,6 +509,9 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         let shareUdpTransport = args["shareUdpTransport"] as? Bool
         if(shareUdpTransport != nil) { iniData.shareUdpTransport = NSNumber(value: shareUdpTransport!) }
 
+        let unregOnDestroy = args["unregOnDestroy"] as? Bool
+        if(unregOnDestroy != nil) { iniData.unregOnDestroy = NSNumber(value: unregOnDestroy!) }
+
         let err = _siprixModule.initialize(_eventHandler, iniData:iniData)
         _initialized = (err == kErrorCodeEOK)
         sendResult(err, result:result)
