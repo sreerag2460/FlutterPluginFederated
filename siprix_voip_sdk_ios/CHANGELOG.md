@@ -1,3 +1,7 @@
+## 1.0.13
+- Added new ini property 'UnregOnDestroy'
+- Send events from library to the app using UI thread
+
 ## 1.0.12
 - iOS: Redesigned and improved CallKit+PushKit implementation
 
