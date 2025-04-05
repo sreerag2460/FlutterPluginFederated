@@ -32,7 +32,7 @@ class _CallAddPageState extends State<CallAddPage> {
   Widget build(BuildContext context) {
     final accounts = context.read<AppAccountsModel>();
     return Scaffold(
-        appBar: widget.popUpMode ? AppBar(title: const Text('Add Call'), backgroundColor: Theme.of(context).primaryColor.withOpacity(0.4)) : null,
+        appBar: widget.popUpMode ? AppBar(title: const Text('Add Call'), backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.4)) : null,
         body: accounts.isEmpty ? _buildEmptyBody() : _buildBody(accounts),
     );
   }

@@ -51,7 +51,7 @@ class _AccountsListPageState extends State<AccountsListPage> {
         dense: true,
       );
   }
-  
+
   void onTapAccListTile(int accId) {
     context.read<AppAccountsModel>().setSelectedAccountById(accId);
   }
@@ -103,7 +103,7 @@ class _AccountsListPageState extends State<AccountsListPage> {
   }
 
   void _doAccountAction(AccAction action, int index) {
-    final accModel = context.read<AppAccountsModel>();      
+    final accModel = context.read<AppAccountsModel>();
     Future<void> f;
     switch(action) {
       case AccAction.delete:     f = accModel.deleteAccount(index);     break;

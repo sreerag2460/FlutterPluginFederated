@@ -38,7 +38,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return
       Scaffold(
-        appBar: AppBar(backgroundColor: Theme.of(context).primaryColor.withOpacity(0.4),
+        appBar: AppBar(backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.4), 
           titleSpacing: 0,
           title: ListTile(
             title:Text('Siprix VoIP SDK', style: Theme.of(context).textTheme.headlineSmall, overflow: TextOverflow.ellipsis),

@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:io';
 
 import 'package:siprix_voip_sdk/calls_model.dart';
@@ -38,7 +40,7 @@ class AppCallsModel extends CallsModel {
       apsPayload = Map<String, dynamic>.from(pushPayload["aps"]);
     } catch (err) {
       _logs?.print('onIncomingPush get payload err: $err');
-    }   
+    }
 
     String pushHint = apsPayload?["pushHint"] ?? "pushHint";
     String genericHandle =  apsPayload?["callerNumber"] ?? "genericHandle";
@@ -51,7 +53,6 @@ class AppCallsModel extends CallsModel {
     SiprixVoipSdk().updateCallKitCallDetails(callkit_CallUUID, null, localizedCallerName, genericHandle, withVideo);
   }
 
-  
   @override
   void onIncomingSip(int callId, int accId, bool withVideo, String hdrFrom, String hdrTo) async {
     super.onIncomingSip(callId, accId, withVideo, hdrFrom, hdrTo);
@@ -86,3 +87,60 @@ class AppCallsModel extends CallsModel {
     }
   }
 }
+
+/*
+class AppCdrsModel extends CdrsModel {
+  AppCdrsModel() : super(maxItems:0);
+
+  @override
+  void add(CallModel c) {
+    CdrModel cdr = CdrModel.fromCall(c.myCallId, c.accUri, c.remoteExt, c.isIncoming, c.hasVideo);
+    cdrItems.insert(0, cdr);
+
+    notifyListeners();
+  }
+
+  @override
+  void setConnected(int callId, String from, String to, bool hasVideo) {
+    int index = cdrItems.indexWhere((c) => c.myCallId==callId);
+    if(index == -1) return;
+
+    CdrModel cdr = cdrItems[index];
+    cdr.hasVideo = hasVideo;
+    cdr.connected = true;
+    notifyListeners();
+  }
+
+  @override
+  void setTerminated(int callId, int statusCode, String displName, String duration) {
+    int index = cdrItems.indexWhere((c) => c.myCallId==callId);
+    if(index == -1) return;
+
+    CdrModel cdr = cdrItems[index];
+    cdr.displName = displName;
+    cdr.statusCode = statusCode;
+    cdr.duration = duration;
+
+    notifyListeners();
+
+    Future.delayed(Duration.zero, () {
+      storeData();
+    });
+  }
+
+  @override
+  void remove(int index) {
+    if((index>=0)&&(index < length)) {
+      cdrItems.removeAt(index);
+      notifyListeners();
+    }
+  }
+
+  void loadSavedData() {
+    //TODO own impl here
+  }
+
+  void storeData() {
+    //TODO own impl here
+  }
+}*/

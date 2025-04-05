@@ -34,7 +34,7 @@ class AccountPageState extends State<AccountPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor.withOpacity(0.4),
+        backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.4), 
         title: Text(isAddMode() ? 'Add Account' : 'Edit Account')
       ),
       body: SingleChildScrollView(scrollDirection: Axis.vertical,
@@ -126,21 +126,18 @@ class AccountPageState extends State<AccountPage> {
     final form = _formKey.currentState;
     if (form == null || !form.validate()) return;
 
+    Future<void> action;
     if(isAddMode()) {
       _account.ringTonePath = MyApp.getRingtonePath();
-      context.read<AppAccountsModel>().addAccount(_account)
-        .then((_) { Navigator.pop(context, true); })
-        .catchError((error) {
-          setState(() { _errText = error;  });
-      });
+      action = context.read<AppAccountsModel>().addAccount(_account);
     } else {
-      context.read<AppAccountsModel>().updateAccount(_account)
-        .then((_) { Navigator.pop(context, true); })
-        .catchError((error) {
-          setState(() { _errText = error;  });
-      });
+      action = context.read<AppAccountsModel>().updateAccount(_account);
     }
 
+    action.then((_) { Navigator.pop(context, true); })
+      .catchError((error) {
+        setState(() { _errText = error;  });
+    });
   }//_submit
 
 }//AccountPageState

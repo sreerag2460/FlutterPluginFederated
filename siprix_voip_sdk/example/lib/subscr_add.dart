@@ -33,7 +33,7 @@ class _SubscrAddPageState extends State<SubscrAddPage> {
   Widget build(BuildContext context) {
     final accounts = context.read<AppAccountsModel>();
     return Scaffold(
-        appBar: AppBar(title: const Text('Add BLF subscription'), backgroundColor: Theme.of(context).primaryColor.withOpacity(0.4)),
+        appBar: AppBar(title: const Text('Add BLF subscription'), backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.4)),
         body: accounts.isEmpty ? _buildEmptyBody() : _buildBody(accounts),
     );
   }

@@ -43,7 +43,7 @@ class _CallsListPageState extends State<CallsListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final calls = context.watch<AppCallsModel>();    
+    final calls = context.watch<AppCallsModel>();
     CallModel? switchedCall = calls.switchedCall();
     _toggleDurationTimer(calls);
 
@@ -138,8 +138,8 @@ class _SwitchedCallWidgetState extends State<SwitchedCallWidget> {
               Center(child:
                 Column(children: [
                   const Spacer(),
-                  _buildCallStateText(),
-                  _buildFromToText(),
+                  _buildNameExtText(),
+                  _buildStateAccCallIdText(),
                   _buildCallDuration(),
                   const Spacer(),
                   ... _buildCallControls(),
@@ -154,11 +154,11 @@ class _SwitchedCallWidgetState extends State<SwitchedCallWidget> {
         );
   }//build
 
-  Text _buildCallStateText() {
+  Text _buildNameExtText() {
     return Text(widget.myCall.nameAndExt, style: Theme.of(context).textTheme.titleLarge);
   }
 
-  Widget _buildFromToText() {
+  Widget _buildStateAccCallIdText() {
     return
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('State: ${widget.myCall.state.name}', style: Theme.of(context).textTheme.titleMedium),

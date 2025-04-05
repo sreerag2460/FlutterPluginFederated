@@ -27,7 +27,7 @@ class _SettingsPageState extends State<SettingsPage> {
       Scaffold(
         appBar: AppBar(
           title: const Text('Settings'), 
-          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.4)),
+          backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.4)),
         body: Padding(padding: const EdgeInsets.fromLTRB(10, 0, 10, 10), 
           child:Column(crossAxisAlignment: CrossAxisAlignment.stretch,
             children: _buildBody(devices)
