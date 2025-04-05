@@ -1,5 +1,5 @@
 import 'package:siprix_voip_sdk_platform_interface/siprix_voip_sdk_platform_interface.dart';
-import 'package:flutter/services.dart'; 
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 
 import 'dart:math';
@@ -14,7 +14,7 @@ class InitData implements ISiprixData {
   /// License credentials. When missed - library works in trial mode
   String? license;
 
-  /// Allows replace default product name string in logs, version
+  /// Replaces default product name string in logs and version
   String? brandName;
 
   /// Log level for file output (default level .info)
@@ -35,17 +35,23 @@ class InitData implements ISiprixData {
   /// Use same UDP transport for all accounts (by default enabled)
   bool? shareUdpTransport;
 
-  ///Enable TelStateListener which holds SIP calls when GSM call started (Valid only for Android, disabled by default, requires permission 'READ_PHONE_STATE')
+  ///Android only. Enable TelStateListener which holds SIP calls when GSM call started (Valid only for Android, disabled by default, requires permission 'READ_PHONE_STATE')
   bool? listenTelState;
 
-  ///Enable PushKit support for iOS
+  /// iOS only. Enable PushKit support
   bool? enablePushKit;
 
-  ///Enable CallKit support for iOS
+  /// iOS only. Enable CallKit support
   bool? enableCallKit;
 
-  ///Enable include a call in the system’s Recents list after the call ends.
+  /// iOS only. Enable include a call in the system's Recents list after the call ends
   bool? enableCallKitRecents;
+
+  /// Android only. Class name of the service which allows to customize notifications and implemented as part of the android app. Example: `com.siprix.siprix_voip_sdk_example.MyNotifService`
+  String? serviceClassName;
+
+  /// Unregister accounts on destroy library instance (by default `true`). Set to `false` when PushNotif is using
+  bool? unregOnDestroy;
 
   @override
   Map<String, dynamic> toJson() {
@@ -62,7 +68,8 @@ class InitData implements ISiprixData {
     if(enablePushKit!=null)     ret['enablePushKit'] = enablePushKit;
     if(enableCallKit!=null)     ret['enableCallKit'] = enableCallKit;
     if(enableCallKitRecents!=null) ret['enableCallKitRecents'] = enableCallKitRecents;
-
+    if(serviceClassName!=null)  ret['serviceClassName'] = serviceClassName;
+    if(unregOnDestroy!=null)    ret['unregOnDestroy'] = unregOnDestroy;
     return ret;
   }
 }//InitData
@@ -479,14 +486,12 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
 
   void _integrateAddedAccount(AccountModel acc, bool saveChanges) {
     _accounts.add(acc);
-      // ignore: prefer_conditional_assignment
-      if(_selAccountIndex==null) {
-        _selAccountIndex = 0;//modify only if null
-      }
-      notifyListeners();
-
       _logs?.print('Added successfully with id: ${acc.myAccId}');
-      if(saveChanges) _raiseSaveChanges();
+    if(saveChanges) {
+      _selAccountIndex ??= 0;
+      _raiseSaveChanges();
+      notifyListeners();
+    }
   }
 
   void _generateRandomLocalPort(AccountModel acc) {
@@ -601,7 +606,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     return SiprixVoipSdk().genAccInstId();
   }
 
-  void _raiseSaveChanges() {    
+  void _raiseSaveChanges() {
     if(onSaveChanges != null) {
       Future.delayed(Duration.zero, () {
           onSaveChanges?.call(storeToJson());
@@ -628,18 +633,15 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
       if(accJsonStr.isEmpty) return false;
 
       Map<String, dynamic> map = jsonDecode(accJsonStr);
-      if(map.containsKey('selAccIndex')) {
-        _selAccountIndex = map['selAccIndex'];
-      }
+      if(!map.containsKey('accList')) return false;
 
-      if(map.containsKey('accList')) {
         final parsedList = map['accList'];
         for (var parsedAcc in parsedList) {
           await addAccount(AccountModel.fromJson(parsedAcc), saveChanges:false);
         }
+
+      _selAccountIndex = map['selAccIndex']?? 0;
         return parsedList.isNotEmpty;
-      }
-      return false;
     }catch (e) {
       _logs?.print('Can\'t load accounts from json. Err: $e');
       return false;
@@ -651,7 +653,7 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     Map<String, dynamic> ret = {
       'selAccIndex': _selAccountIndex,
       'accList': _accounts};
-    
+
     return jsonEncode(ret);
   }
 
