@@ -27,10 +27,17 @@ import 'subscr_add.dart';
 import 'settings.dart';
 import 'home.dart';
 
+//const FirebaseOptions gFCMOptions = FirebaseOptions(
+//      apiKey: '...',            //Copy from `google-services.json` - `client.api_key.current_key`
+//      appId: '...',             //Copy from `google-services.json` - `client.client_info.mobilesdk_app_id`
+//      messagingSenderId: '...', //Copy from `google-services.json` - `project_info.project_number`
+//      projectId: '...',         //Copy from `google-services.json` - `project_info.project_id`
+//      storageBucket: '...'      //Copy from `google-services.json` - `project_info.storage_bucket`
+//);
+
 void main() async {
   //Wait while Firebase initialized
   //await _initializeFCM();
-  debugPrint('main');
 
   //Create models
   LogsModel logsModel = LogsModel(true);//Set 'false' when logs won't rendering on UI
@@ -61,39 +68,20 @@ void main() async {
 
 /*
 Future<void> _initializeFCM() async {
-  if(!Platform.isAndroid)  return;
-
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(//options: DefaultFirebaseOptions.currentPlatform,);
-    options: const FirebaseOptions(
-      apiKey: '...',            //Your apiKey here
-      appId: '...',             //Your appId here
-      messagingSenderId: '...', //Your senderId here
-      projectId: '...',         //Your projectId here
-      storageBucket: '...',     //Your storageBucket here
-    )
-  );
-  debugPrint('Firebase.initializeApp');
-
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  if(Platform.isAndroid) {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(options: gFCMOptions);
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
 }
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: gFCMOptions);
 
-  await Firebase.initializeApp(
-     options: const FirebaseOptions(
-      apiKey: '...',            //Your apiKey here
-      appId: '...',             //Your appId here
-      messagingSenderId: '...', //Your senderId here
-      projectId: '...',         //Your projectId here
-      storageBucket: '...',     //Your storageBucket here
-    )
-  );
-
-  //!!! This code is working in the background isolate!
-  //!!! When this method triggerer app is working in background (activity may not exist) or completely stopped
+  //!!! Method is working in the background isolate!
+  //!!! At this moment Activity may not exist or whole App could be completely stopped
   //!!! Code below initializes Siprix, adds saved accounts and refreshes registration (makes app ready to receive incoming call)
 
   debugPrint("[!!!] Handling a background message id:'${message.messageId}' data:'${message.data}'");
@@ -191,11 +179,17 @@ class _MyAppState extends State<MyApp> {
     iniData.logLevelFile = LogLevel.debug;
     iniData.logLevelIde = LogLevel.info;
     //- uncomment if required -//
-    //iniData.listenTelState = true;
     //iniData.singleCallMode = false;
     //iniData.tlsVerifyServer = false;
-    //iniData.enableCallKit = true;
-    //iniData.enablePushKit = true;
+    //if(Platform.isIOS) {
+    //  iniData.enableCallKit = true;
+    //  iniData.enablePushKit = true;
+    //  iniData.unregOnDestroy = false;
+    //}
+    //if(Platform.isAndroid) {
+    //  iniData.listenTelState = true;
+    //  iniData.serviceClassName = "com.siprix.voip_sdk_example.MyNotifService";
+    //}
     await SiprixVoipSdk().initialize(iniData, logsModel);
 
     //Set video params (if required)
@@ -291,20 +285,20 @@ import 'package:siprix_voip_sdk/calls_model.dart';
 import 'package:siprix_voip_sdk/logs_model.dart';
 import 'package:siprix_voip_sdk/siprix_voip_sdk.dart';
 
-void main() async {  
+void main() async {
   AccountsModel accountsModel = AccountsModel();
   CallsModel callsModel = CallsModel(accountsModel);
   runApp(
     MultiProvider(providers:[
-      ChangeNotifierProvider(create: (context) => accountsModel),      
-      ChangeNotifierProvider(create: (context) => callsModel),      
+      ChangeNotifierProvider(create: (context) => accountsModel),
+      ChangeNotifierProvider(create: (context) => callsModel),
     ],
     child: const MyApp(),
   ));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});  
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -323,7 +317,7 @@ class _MyAppState extends State<MyApp> {
       title: 'Siprix VoIP app',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-        visualDensity: VisualDensity.adaptivePlatformDensity,        
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: Scaffold(body:buildBody())
     );
@@ -334,27 +328,27 @@ class _MyAppState extends State<MyApp> {
     final calls = context.watch<AppCallsModel>();
     return Column(children: [
       ListView.separated(
-        shrinkWrap: true,        
+        shrinkWrap: true,
         itemCount: accounts.length,
         separatorBuilder: (BuildContext context, int index) => const Divider(height: 1),
         itemBuilder: (BuildContext context, int index) {
           AccountModel acc = accounts[index];
-          return 
+          return
             ListTile(title: Text(acc.uri, style: Theme.of(context).textTheme.titleSmall),
                 subtitle: Text(acc.regText),
                 tileColor: Colors.blue
-            ); 
+            );
         },
       ),
       ElevatedButton(onPressed: _addAccount, child: const Icon(Icons.add_card)),
       const Divider(height: 1),
       ListView.separated(
         shrinkWrap: true,
-        itemCount: calls.length,        
+        itemCount: calls.length,
         separatorBuilder: (BuildContext context, int index) => const Divider(height: 1),
         itemBuilder: (BuildContext context, int index) {
           CallModel call = calls[index];
-          return 
+          return
             ListTile(title: Text(call.nameAndExt, style: Theme.of(context).textTheme.titleSmall),
               subtitle: Text(call.state.name), tileColor: Colors.amber,
               trailing: IconButton(
@@ -371,7 +365,7 @@ class _MyAppState extends State<MyApp> {
   void _initializeSiprix([LogsModel? logsModel]) async {
     InitData iniData = InitData();
     iniData.license  = "...license-credentials...";
-    iniData.logLevelFile = LogLevel.info;    
+    iniData.logLevelFile = LogLevel.info;
     SiprixVoipSdk().initialize(iniData, logsModel);
   }
 
