@@ -139,6 +139,7 @@ EXPORT
 @property(nonatomic, retain) NSNumber * _Nullable tlsVerifyServer;
 @property(nonatomic, retain) NSNumber * _Nullable singleCallMode;
 @property(nonatomic, retain) NSNumber * _Nullable shareUdpTransport;
+@property(nonatomic, retain) NSNumber * _Nullable unregOnDestroy;
 @property(nonatomic, retain) NSArray  * _Nullable dnsServers;
 @property(nonatomic, retain) NSString * _Nullable brandName;
 @end
