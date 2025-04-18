@@ -21,7 +21,7 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 ### Add dependency in pubspec.yaml
 ```
 dependencies:
-  siprix_voip_sdk: ^1.0.14
+  siprix_voip_sdk: ^1.0.15
   provider: ^6.1.1
 ```
 
