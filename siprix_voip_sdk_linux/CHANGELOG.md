@@ -1,3 +1,7 @@
+## 1.0.5
+- Fixed bug with sending statusCode in the 'onTerminated' callback
+- Added ability to switch calls automatically after call un-held, connected
+
 ## 1.0.4
 - Added new ini property 'UnregOnDestroy'
 
