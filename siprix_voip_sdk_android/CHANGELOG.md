@@ -1,3 +1,7 @@
+## 1.0.9
+- Fixed bug with sending statusCode in the 'onTerminated' callback
+- Added ability to switch calls automatically after call un-held, connected
+
 ## 1.0.8
 - Added new ini property 'UnregOnDestroy'
 - Set compileSdk version to 35
