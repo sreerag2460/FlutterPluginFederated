@@ -1,3 +1,8 @@
+## 1.0.14
+- Fixed bug with sending statusCode in the 'onTerminated' callback
+- Added ability to switch calls automatically after call un-held, connected
+- Fixed switching between calls and join calls to conference when enabled CallKit
+
 ## 1.0.13
 - Added new ini property 'UnregOnDestroy'
 - Send events from library to the app using UI thread
