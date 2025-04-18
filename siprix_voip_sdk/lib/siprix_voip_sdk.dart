@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:siprix_voip_sdk_platform_interface/siprix_voip_sdk_platform_interface.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -511,7 +513,7 @@ class SiprixVoipSdk {
 
 
   /// Initialize siprix module
-  Future<void> initialize(InitData iniData, [ILogsModel? logsModel=null]) async {
+  Future<void> initialize(InitData iniData, [ILogsModel? logsModel]) async {
     _platform.setEventsHandler(_eventsHandler);
     String brand = iniData.brandName ?? "Siprix";
     try {
@@ -797,7 +799,7 @@ class SiprixVoipSdk {
   ///Update CallKit call details (app can invoke it twice:
   /// - first when got and extracted some data from push payload and second - when received INVITE and got 'sip_callId')
   Future<void>? updateCallKitCallDetails(String callkit_CallUUID, int? sip_callId,
-                      [String? localizedCallerName=null, String? genericHandle=null, bool? withVideo=null]) {
+                      [String? localizedCallerName, String? genericHandle, bool? withVideo]) {
     return _platform.updateCallKitCallDetails(callkit_CallUUID, sip_callId, localizedCallerName, genericHandle, withVideo);
   }
 

@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:siprix_voip_sdk_platform_interface/siprix_voip_sdk_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -189,6 +191,12 @@ class CallModel extends ChangeNotifier {
 
   /// Duration of this call as string representation
   String get durationStr => formatDuration(_duration);
+  /// Duration of this call
+  Duration get duration => _duration;
+
+  /// Timestamp when call has been connected (accepted by local or remeote side)
+  DateTime get startTime => _startTime;
+
   /// List of received DTMFs
   String get receivedDtmf => _receivedDtmf;
   /// Status line of the 1xx SIP response received from remote side when app makes outgoing call
@@ -204,6 +212,9 @@ class CallModel extends ChangeNotifier {
   bool get isLocalHold => (_holdState==HoldState.local)||(_holdState==HoldState.localAndRemote);
   /// Returns true if call put on hold by remote side
   bool get isRemoteHold => (_holdState==HoldState.remote)||(_holdState==HoldState.localAndRemote);
+
+  /// Returns true if call state is `connected`
+  bool get isConnected => (_state==CallState.connected);
 
   /// Format call duration as 'hh:mm:ss' or 'mm:ss'
   static String formatDuration(Duration duration) {
@@ -526,11 +537,11 @@ class CallsModel extends ChangeNotifier {
 
   /// Returns true if conference mode started
   bool get confModeStarted => _confModeStarted;
-  /// Returns true if present at least 2 calls in connected state
+  /// Returns true if present at least 2 calls in connected/held state
   bool hasConnectedFewCalls() {
     int counter = 0;
     for(CallModel m in _callItems) {
-      counter += (m.state == CallState.connected) ? 1 : 0;
+      counter += (m.state == CallState.connected)||(m.state==CallState.held) ? 1 : 0;
     }
     return counter > 1;
   }
@@ -619,7 +630,6 @@ class CallsModel extends ChangeNotifier {
   /// Handle pushkit notification received by library (parse payload, update CallKit window, wait on SIP call)
   void onIncomingPush(String callkit_CallUUID, Map<String, dynamic> pushPayload) {
     _logs?.print('onIncomingPush callkit_CallUUID:$callkit_CallUUID $pushPayload');
-
   }
 
   ///Handle incoming call event raised by library when received INVITE request

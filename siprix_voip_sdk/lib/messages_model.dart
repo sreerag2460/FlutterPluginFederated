@@ -31,10 +31,10 @@ class MessageDestination implements ISiprixData {
 /// Holds properties of sent/received SIP message item
 class MessageModel extends ChangeNotifier {
   MessageModel.outgoing(int id, String accUri, MessageDestination dest)
-    : _myMessageId=id, _isIncoming=false, _ext=dest.toExt, _accUri=accUri, _body=dest.body {}
+    : _myMessageId=id, _isIncoming=false, _ext=dest.toExt, _accUri=accUri, _body=dest.body;
 
   MessageModel.incoming(String accUri, String fromExt, String body)
-    : _myMessageId=0, _isIncoming = true, _ext=fromExt, _accUri=accUri, _body=body {}
+    : _myMessageId=0, _isIncoming = true, _ext=fromExt, _accUri=accUri, _body=body;
 
   ///Unique id assigned by library (allows get message sent status)
   int _myMessageId=0;
@@ -103,7 +103,7 @@ class MessagesModel extends ChangeNotifier {
   final ILogsModel? _logs;
   static const int kMaxItems=25;
 
-  MessagesModel(this._accountsModel, [this._logs = null]) {
+  MessagesModel(this._accountsModel, [this._logs]) {
     SiprixVoipSdk().messagesListener = MessagesStateListener(
       sentState: onMessageSentState,
       incoming : onMessageIncoming
@@ -137,7 +137,7 @@ class MessagesModel extends ChangeNotifier {
       notifyListeners();
 
       //Log and save changes
-      _logs?.print('Message post successfully with id: ${myMessageId}');
+      _logs?.print('Message post successfully with id: $myMessageId');
       if(saveChanges) _raiseSaveChanges();
 
     } on PlatformException catch (err) {

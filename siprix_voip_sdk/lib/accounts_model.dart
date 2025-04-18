@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'package:siprix_voip_sdk_platform_interface/siprix_voip_sdk_platform_interface.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
@@ -370,7 +372,7 @@ class AccountModel implements ISiprixData {
       if((key == 'xContactUriParams')&&(value is Map)) { acc.xContactUriParams = Map<String, String>.from(value); } else
       if((key == 'xheaders')&&(value is Map))         { acc.xheaders = Map<String, String>.from(value); } else
       if((key == 'aCodecs')&&(value is List))         { acc.aCodecs = List<int>.from(value); } else
-      if((key == 'vCodecs')&&(value is List))         { acc.vCodecs = List<int>.from(value); } 
+      if((key == 'vCodecs')&&(value is List))         { acc.vCodecs = List<int>.from(value); }
     });
     return acc;
   }
@@ -490,8 +492,8 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     if(saveChanges) {
       _selAccountIndex ??= 0;
       _raiseSaveChanges();
-      notifyListeners();
     }
+    notifyListeners();
   }
 
   void _generateRandomLocalPort(AccountModel acc) {
@@ -505,8 +507,9 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
     try {
       for(AccountModel acc in _accounts) {
         final int expireSec = (acc.expireTime==null) ? 300 : acc.expireTime!;
-        if(expireSec != 0)
+        if(expireSec != 0) {
           SiprixVoipSdk().registerAccount(acc.myAccId, expireSec);
+        }
       }
     } on PlatformException catch (err) {
       _logs?.print('Can\'t refresh accounts registration: ${err.code} ${err.message}');
@@ -635,13 +638,13 @@ class AccountsModel extends ChangeNotifier implements IAccountsModel {
       Map<String, dynamic> map = jsonDecode(accJsonStr);
       if(!map.containsKey('accList')) return false;
 
-        final parsedList = map['accList'];
-        for (var parsedAcc in parsedList) {
-          await addAccount(AccountModel.fromJson(parsedAcc), saveChanges:false);
-        }
+      final parsedList = map['accList'];
+      for (var parsedAcc in parsedList) {
+        await addAccount(AccountModel.fromJson(parsedAcc), saveChanges:false);
+      }
 
       _selAccountIndex = map['selAccIndex']?? 0;
-        return parsedList.isNotEmpty;
+      return parsedList.isNotEmpty;
     }catch (e) {
       _logs?.print('Can\'t load accounts from json. Err: $e');
       return false;

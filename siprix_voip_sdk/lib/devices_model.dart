@@ -147,7 +147,7 @@ class DevicesModel extends ChangeNotifier {
     }
   }
 
-  /// Set running mode of android service (Android only!)
+  /// Set foreground mode of the CallNotifService service (Android only)
   Future<void> setForegroundMode(bool enabled) async{
     if(Platform.isAndroid) {
       if(_foregroundModeEnabled==enabled) return;
@@ -167,6 +167,7 @@ class DevicesModel extends ChangeNotifier {
     }
   }
 
+  /// Retrives mode of the CallNotifService service (Android only)
   void _loadForegroundMode() async {
     if(Platform.isAndroid) {
       try {
@@ -176,11 +177,9 @@ class DevicesModel extends ChangeNotifier {
           notifyListeners();
         }
       } on PlatformException catch (err) {
-        _logs?.print('Can\'t load videoDevices. Err: ${err.code} ${err.message}');
+        _logs?.print('Can\'t load foreground mode. Err: ${err.code} ${err.message}');
       }
     }
   }
-
-  
 
 }//DevicesModel

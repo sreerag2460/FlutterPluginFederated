@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:siprix_voip_sdk_platform_interface/siprix_voip_sdk_platform_interface.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
@@ -58,13 +60,11 @@ class SubscriptionModel extends ChangeNotifier implements ISiprixData {
     });
   }
 
-  // ignore: non_constant_identifier_names
   ///Create BLF subscription
   factory SubscriptionModel.BLF(String ext, int accId) {
     return SubscriptionModel(ext, accId, "dialog-info+xml", "dialog");
   }
 
-  // ignore: non_constant_identifier_names
   ///Create Presence subscription
   factory SubscriptionModel.Presence(String ext, int accId) {
     return SubscriptionModel(ext, accId, "pidf+xml", "presence");
