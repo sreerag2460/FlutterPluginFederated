@@ -609,18 +609,18 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     }
   }
 
-  private fun startAndBindNotifService(serviceClassName : String?) : Boolean{
+  private fun startAndBindNotifService(serviceClassName : String?) {
     try{
+      if(_bgService != null) return//already bound
+
       val srvClass = if(serviceClassName!=null) Class.forName(serviceClassName) else CallNotifService::class.java
       val srvIntent = Intent(_appContext, srvClass)
       _activity?.bindService(srvIntent, _serviceConnection, Context.BIND_AUTO_CREATE)
 
       srvIntent.setAction(CallNotifService.kActionAppStarted)
       _appContext.startService(srvIntent)
-      return true
     }catch (ex: Exception) {
       Log.e(TAG, "Can't start service: '${ex}'")
-      return false
     }
   }
 
@@ -717,8 +717,9 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
 
   private fun handleModuleInitialize(args : HashMap<String, Any?>, result: MethodChannel.Result) {
-    //Check already created
     if (_core.isInitialized) {
+      startAndBindNotifService(args["serviceClassName"] as? String)
+
       Log.i(TAG, "handleModuleInitialize - already initialized")
       result.success("Already initialized")
       return
@@ -754,6 +755,12 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val unregOnDestroy : Boolean? = args["unregOnDestroy"] as? Boolean
     if(unregOnDestroy != null) { iniData.setUnregOnDestroy(unregOnDestroy); }
 
+    val useDnsSrv : Boolean? = args["useDnsSrv"] as? Boolean
+    if(useDnsSrv != null) { iniData.setUseDnsSrv(useDnsSrv); }
+
+    val recordStereo : Boolean? = args["recordStereo"] as? Boolean
+    if(recordStereo != null) { iniData.setRecordStereo(recordStereo); }
+
     val listenTelState : Boolean? = args["listenTelState"] as? Boolean
     if(listenTelState != null) { iniData.setUseTelState(listenTelState); }
 
@@ -764,9 +771,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     Log.i(TAG, "handleModuleInitialize err:${err}")
 
     //Bind and start service
-    val serviceClassName = args["serviceClassName"] as? String
-    if(!startAndBindNotifService(serviceClassName))
-      result.error("-", "Can't start service. Check specified 'serviceClassName'", null)
+    startAndBindNotifService(args["serviceClassName"] as? String)
   }
 
   private fun handleModuleUnInitialize(args : HashMap<String, Any?>, result: MethodChannel.Result) {

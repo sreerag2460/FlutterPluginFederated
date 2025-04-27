@@ -1,3 +1,10 @@
+## 1.0.10
+- Improved CallRecording (capture local+remote sound, use mp3 encoder, write mono or stereo)
+- Added new ini properties 'recordStereo', 'useDnsSrv'
+- Fixed bug which prevents stop foreground service after re-create Activity
+- Fixed crash when library instance has been destroyed and re-initialized in the same process
+- Fixed crash on create service and resolve app name
+
 ## 1.0.9
 - Fixed bug with sending statusCode in the 'onTerminated' callback
 - Added ability to switch calls automatically after call un-held, connected
