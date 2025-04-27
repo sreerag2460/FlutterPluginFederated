@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -135,10 +136,11 @@ class MyApp extends StatefulWidget {
     return filePath;
   }
 
-  ///returns path to folder when app stores recorded files
-  static Future<String> getRecFilePath(String recFileName) async {
+  /// Returns path and file name for recorded file
+  static Future<String> getRecFilePathName(int callId) async {
+    String dateTime = DateFormat('yyyyMMdd_HHmmss_').format(DateTime.now());
     var homeFolder = await SiprixVoipSdk().homeFolder();
-    var filePath = '$homeFolder$recFileName';
+    var filePath = '$homeFolder$dateTime$callId.mp3';
     return filePath;
   }
 }

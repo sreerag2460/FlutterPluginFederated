@@ -73,7 +73,7 @@ class _CallsListPageState extends State<CallsListPage> {
 
   ListTile _callModelRowTile(CallsModel calls, int index) {
     final call = calls[index];
-    final bool isSwitched = (calls.switchedCallId == call.myCallId);
+    final bool isSwitched = (calls.switchedCallId == call.myCallId)||calls.confModeStarted;
 
     return
       ListTile(
@@ -242,9 +242,13 @@ class _SwitchedCallWidgetState extends State<SwitchedCallWidget> {
           },);
         },
         menuChildren: [
-          MenuItemButton(leadingIcon: const Icon(Icons.play_arrow),
+          MenuItemButton(leadingIcon: Icon(widget.myCall.isFilePlaying ? Icons.stop : Icons.play_arrow),
             onPressed: isCallConnected ? _playFile : null,
-            child: const Text('Play file')),
+            child: Text(widget.myCall.isFilePlaying ? "Stop playing" : 'Play file')),
+
+          MenuItemButton(leadingIcon: Icon(Icons.radio_button_checked, color: widget.myCall.isRecStarted ? Colors.red : null),
+            onPressed: isCallConnected ? _recordFile : null,
+            child: Text(widget.myCall.isRecStarted ? 'Stop record': 'Record')),
         ]
       ),
     ]));
@@ -344,16 +348,23 @@ class _SwitchedCallWidgetState extends State<SwitchedCallWidget> {
         .catchError(showSnackBar);
     }
     else {
-      String pathToFile = await MyApp.getRecFilePath("rec.wav");//record to temp folder
+      String pathToFile = await MyApp.getRecFilePathName(widget.myCall.myCallId);
         widget.myCall.recordFile(pathToFile)
           .catchError(showSnackBar);
     }
   }
 
   void _playFile() async{
-    String pathToFile = await MyApp.writeAssetAndGetFilePath("music.mp3");//write 'asset/music.mp3' to temp folder
-      widget.myCall.playFile(pathToFile)
+    if(widget.myCall.isFilePlaying) {
+      widget.myCall.stopPlayFile()
         .catchError(showSnackBar);
+    }
+    else {
+      //write 'asset/music.mp3' to temp folder
+      String pathToFile = await MyApp.writeAssetAndGetFilePath("music.mp3");
+        widget.myCall.playFile(pathToFile)
+          .catchError(showSnackBar);
+    }
   }
 
   void _makeConference() {
