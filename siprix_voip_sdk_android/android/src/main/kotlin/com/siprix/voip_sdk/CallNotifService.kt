@@ -361,7 +361,10 @@ open class CallNotifService : Service() {
         val iconId: Int
 
         init {
-            appName = getStrResource("app_name") ?: service.applicationInfo.nonLocalizedLabel.toString()
+            appName = getStrResource("app_name") ?:
+                        if(service.applicationInfo!=null) service.applicationInfo.loadLabel(service.packageManager).toString()
+                        else _service.packageName
+
             channelDescr = getStrResource(kResourceChannelDescrLabel)?: "Incoming calls notifications channel"
             foregroundDescr = getStrResource(kResourceForegroundDescrLabel)?: "Siprix call notification service"
 
