@@ -5,8 +5,9 @@ It contains native SIP client implementations for 5 platforms: Android, iOS, Mac
 
 Plugin implements ready to use SIP VoIP Client with ability to:
 - Add multiple SIP accounts
-- Send/receive multiple calls (Audio and Video)
-- Manage calls with: hold, mute microphone/camera, play sound to call from file, send/receive DTMF,...
+- Make/receive multiple calls (Audio and Video)
+- Manage calls with: hold, mute microphone/camera, send/receive DTMF, ...
+- Record sound of call to mp3 file/play sound to call from mp3 file
 - Join calls to conference, blind and attended transfer
 - Secure SIP signaling (using TLS) and call media (using SRTP)
 - Detect network changes and automatically update registration/switch and restore call(s) media
@@ -15,13 +16,14 @@ Plugin implements ready to use SIP VoIP Client with ability to:
 - Send and receive text messages
 - Ready to use models for fast and easy UI creating
 - Embedded PushKit+CallKit support in iOS version of plugin
+- Embedded FCM support for Android version of plugin
 
 ## Usage
 
 ### Add dependency in pubspec.yaml
 ```
 dependencies:
-  siprix_voip_sdk: ^1.0.15
+  siprix_voip_sdk: ^1.0.16
   provider: ^6.1.1
 ```
 
@@ -69,6 +71,7 @@ class _MyAppState extends State<MyApp> {
     //- uncomment if required -//
     //iniData.enableCallKit = true;
     //iniData.enablePushKit = true;
+    //iniData.unregOnDestroy = false;
     SiprixVoipSdk().initialize(iniData, logsModel);
   }
 ```
@@ -130,6 +133,10 @@ Please contact [support@siprix-voip.com](mailto:support@siprix-voip.com) if you 
 
 ## How to integrate PushKit+CallKit support?
 [See detailed manual here](https://docs.siprix-voip.com/rst/ioscallkit.html#integrate-pushkit-callkit-into-flutter-application)
+
+
+## How to integrate Android FCM?
+[See detailed manual here](https://docs.siprix-voip.com/rst/flutter.html#android-add-firebase-push-notifications)
 
 
 ## How to use this library without provider?
