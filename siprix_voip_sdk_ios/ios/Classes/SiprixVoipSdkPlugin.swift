@@ -661,6 +661,12 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
       
         let unregOnDestroy = args["unregOnDestroy"] as? Bool
         if(unregOnDestroy != nil) { iniData.unregOnDestroy = NSNumber(value: unregOnDestroy!) }
+
+        let useDnsSrv = args["useDnsSrv"] as? Bool
+        if(useDnsSrv != nil) { iniData.useDnsSrv = NSNumber(value: useDnsSrv!) }
+
+        let recordStereo = args["recordStereo"] as? Bool
+        if(recordStereo != nil) { iniData.recordStereo = NSNumber(value: recordStereo!) }
       
         let enablePushKit = args["enablePushKit"] as? Bool
         let enableCallKit = args["enableCallKit"] as? Bool

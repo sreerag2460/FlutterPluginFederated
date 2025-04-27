@@ -1,3 +1,7 @@
+## 1.0.15
+- Improved CallRecording (capture local+remote sound, use mp3 encoder, write mono or stereo)
+- Added new ini properties 'recordStereo', 'useDnsSrv'
+
 ## 1.0.14
 - Fixed bug with sending statusCode in the 'onTerminated' callback
 - Added ability to switch calls automatically after call un-held, connected
