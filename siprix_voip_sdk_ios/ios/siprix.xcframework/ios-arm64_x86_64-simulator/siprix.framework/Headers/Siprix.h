@@ -141,6 +141,8 @@ EXPORT
 @property(nonatomic, retain) NSNumber * _Nullable shareUdpTransport;
 @property(nonatomic, retain) NSNumber * _Nullable unregOnDestroy;
 @property(nonatomic, retain) NSArray  * _Nullable dnsServers;
+@property(nonatomic, retain) NSNumber * _Nullable useDnsSrv;
+@property(nonatomic, retain) NSNumber * _Nullable recordStereo;
 @property(nonatomic, retain) NSString * _Nullable brandName;
 @end
 

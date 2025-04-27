@@ -440,6 +440,8 @@ EXPORT void     Ini_SetRtpStartPort(IniData* ini, uint16_t rtpStartPort);
 EXPORT void     Ini_SetHomeFolder(IniData* ini, const char* homeFolder);
 EXPORT void     Ini_SetBrandName(IniData* ini, const char* brandName);
 EXPORT void     Ini_AddDnsServer(IniData* ini, const char* dns);
+EXPORT void     Ini_SetUseDnsSrv(IniData* ini, bool enabled);
+EXPORT void     Ini_SetRecordStereo(IniData* ini, bool enabled);
 EXPORT void     Ini_SetUnregOnDestroy(IniData* ini, bool enabled);
 
 ////////////////////////////////////////////////////////////////////////////
