@@ -55,6 +55,12 @@ class InitData implements ISiprixData {
   /// Unregister accounts on destroy library instance (by default `true`). Set to `false` when PushNotif is using
   bool? unregOnDestroy;
 
+  /// Set using DNS SRV for resolve IP address of SIP server/proxy (by default `true`).
+  bool? useDnsSrv;
+
+  /// Set recording call sound in stereo mode (keep sent/received sound in separate channels) (by default `false`).
+  bool? recordStereo;
+
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> ret = {};
@@ -72,6 +78,8 @@ class InitData implements ISiprixData {
     if(enableCallKitRecents!=null) ret['enableCallKitRecents'] = enableCallKitRecents;
     if(serviceClassName!=null)  ret['serviceClassName'] = serviceClassName;
     if(unregOnDestroy!=null)    ret['unregOnDestroy'] = unregOnDestroy;
+    if(useDnsSrv!=null)         ret['useDnsSrv'] = useDnsSrv;
+    if(recordStereo!=null)      ret['recordStereo'] = recordStereo;
     return ret;
   }
 }//InitData

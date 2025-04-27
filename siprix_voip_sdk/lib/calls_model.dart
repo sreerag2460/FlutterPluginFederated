@@ -205,6 +205,7 @@ class CallModel extends ChangeNotifier {
   bool get isMicMuted => _isMicMuted;
   bool get isCamMuted => _isCamMuted;
   bool get isRecStarted => _isRecStarted;
+  bool get isFilePlaying => _playerId!=0;
   bool get hasVideo   => _hasVideo;
   int  get playerId   => _playerId;
 
@@ -461,6 +462,16 @@ class CallModel extends ChangeNotifier {
     _holdState = holdState;
     _state = (holdState==HoldState.none) ?  CallState.connected : CallState.held;
     notifyListeners();
+  }
+
+  /// Handle player state changes
+  bool onPlayerStateChanged(int playerId, PlayerState state) {
+    if(_playerId != playerId) return false;//player doesn't belong to this call
+    if(state != PlayerState.started) {
+      _playerId = 0;//player finished or failed
+      notifyListeners();
+    }
+    return true;
   }
 
 }//CallModel
@@ -747,6 +758,8 @@ class CallsModel extends ChangeNotifier {
   /// Handle call switched event raised by library
   void onPlayerStateChanged(int playerId, PlayerState state) {
     _logs?.print('onPlayerStateChanged playerId:$playerId $state');
+    for(final call in _callItems) 
+      if(call.onPlayerStateChanged(playerId, state)) break;
   }
 
   /// Parse SIP uri and return extension
