@@ -383,6 +383,14 @@ static FlMethodResponse* handleModuleInitialize(FlValue* args, SiprixVoipSdkPlug
     if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_BOOL)
       Siprix::Ini_SetUnregOnDestroy(iniData, fl_value_get_bool(val));
 
+    val = fl_value_lookup_string(args, "useDnsSrv");
+    if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_BOOL)
+      Siprix::Ini_SetUseDnsSrv(iniData, fl_value_get_bool(val));
+
+    val = fl_value_lookup_string(args, "recordStereo");
+    if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_BOOL)
+      Siprix::Ini_SetRecordStereo(iniData, fl_value_get_bool(val));
+
     //Initialize
     const Siprix::ErrorCode err = Siprix::Module_Initialize(self->module_, iniData);
 
