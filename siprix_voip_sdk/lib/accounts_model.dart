@@ -290,6 +290,8 @@ class AccountModel implements ISiprixData {
   bool?   tlsUseSipScheme;
   /// Use RtcpMux (sending RTP and RTCP packets trough the same port, by default disabled).
   bool?   rtcpMuxEnabled;
+  /// Use ICE (establish connection by collect and exchange transport candidates, webrtc compatible mode, by default disabled).
+  bool?   iceEnabled;
   /// Unique instance ID of this account and device (set value using method 'genAccInstId', see more RFC 5626)
   String? instanceId;
   /// Path to the ringtone file which library will play when incoming call received
@@ -339,6 +341,7 @@ class AccountModel implements ISiprixData {
     if(tlsCaCertPath   !=null) ret['tlsCaCertPath']   = tlsCaCertPath;
     if(tlsUseSipScheme !=null) ret['tlsUseSipScheme'] = tlsUseSipScheme;
     if(rtcpMuxEnabled  !=null) ret['rtcpMuxEnabled']  = rtcpMuxEnabled;
+    if(iceEnabled      !=null) ret['iceEnabled']      = iceEnabled;
     if(instanceId      !=null) ret['instanceId']      = instanceId;
     if(ringTonePath    !=null) ret['ringTonePath']    = ringTonePath;
     if(keepAliveTime   !=null) ret['keepAliveTime']   = keepAliveTime;
@@ -370,6 +373,7 @@ class AccountModel implements ISiprixData {
       if((key == 'tlsCaCertPath')&&(value is String)) { acc.tlsCaCertPath = value;  } else
       if((key == 'tlsUseSipScheme')&&(value is bool)) { acc.tlsUseSipScheme = value;} else
       if((key == 'rtcpMuxEnabled')&&(value is bool))  { acc.rtcpMuxEnabled = value; } else
+      if((key == 'iceEnabled')&&(value is bool))      { acc.iceEnabled = value;     } else
       if((key == 'instanceId')&&(value is String))    { acc.instanceId = value;     } else
       if((key == 'ringTonePath')&&(value is String))  { acc.ringTonePath = value;   } else
       if((key == 'keepAliveTime')&&(value is int))    { acc.keepAliveTime = value;  } else
