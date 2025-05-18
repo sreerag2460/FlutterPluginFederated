@@ -1,10 +1,16 @@
+## 1.0.17
+- Fixed bug with find local account which matches received SIP request
+- Added new option 'iceEnabled'
+- Android: Added ability to request 'USE_FULL_SCREEN_INTENT' permission, when it's declared in app's manifest
+- Windows: Fixed bug with detecting is IPv4 available
+
 ## 1.0.16
 - Improved CallRecording (capture local+remote sound, use mp3 encoder, write mono or stereo)
 - Added new ini properties 'recordStereo', 'useDnsSrv'
 - Flutter example app: Added 'Record' menu, updated 'PlayFile' menu impl
-- Android.Fixed bug which prevents stop foreground service after re-create Activity
-- Android.Fixed crash when library instance has been destroyed and re-initialized in the same process
-- Android.Fixed crash on create service and resolve app name
+- Android: Fixed bug which prevents stop foreground service after re-create Activity
+- Android: Fixed crash when library instance has been destroyed and re-initialized in the same process
+- Android: Fixed crash on create service and resolve app name
 
 ## 1.0.15
 - Fixed bug with sending statusCode in the 'onTerminated' callback
