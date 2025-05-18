@@ -363,7 +363,9 @@ void SiprixVoipSdkPlugin::handleModuleInitialize(const flutter::EncodableMap& ar
           if(valName->compare("shareUdpTransport") == 0) Siprix::Ini_SetShareUdpTransport(iniData, *boolVal); else
           if(valName->compare("unregOnDestroy") == 0)    Siprix::Ini_SetUnregOnDestroy(iniData, *boolVal); else
           if(valName->compare("useDnsSrv") == 0)         Siprix::Ini_SetUseDnsSrv(iniData, *boolVal); else
-          if(valName->compare("recordStereo") == 0)      Siprix::Ini_SetRecordStereo(iniData, *boolVal);
+          if(valName->compare("recordStereo") == 0)      Siprix::Ini_SetRecordStereo(iniData, *boolVal); else
+          if(valName->compare("rtcpMuxEnabled") == 0)    Siprix::Acc_SetRtcpMuxEnabled(iniData, *boolVal);else
+          if(valName->compare("iceEnabled") == 0)        Siprix::Acc_SetIceEnabled(iniData, *boolVal);        
           continue;
         }  
     

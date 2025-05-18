@@ -1,3 +1,8 @@
+## 1.0.7
+- Fixed bug with find local account which matches received SIP request
+- Added new option 'iceEnabled'
+- Windows: Fixed bug with detecting is IPv4 available
+
 ## 1.0.6
 - Improved CallRecording (capture local+remote sound, use mp3 encoder, write mono or stereo)
 - Added new ini properties 'recordStereo', 'useDnsSrv'
