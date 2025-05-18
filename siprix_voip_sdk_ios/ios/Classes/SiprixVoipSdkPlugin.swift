@@ -762,6 +762,9 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         let rtcpMuxEnabled = args["rtcpMuxEnabled"] as? Bool
         if(rtcpMuxEnabled != nil) { accData.rtcpMuxEnabled = NSNumber(value:rtcpMuxEnabled!) }
 
+        let iceEnabled = args["iceEnabled"] as? Bool
+        if(iceEnabled != nil) { accData.iceEnabled = NSNumber(value:iceEnabled!) }
+
         let instanceId = args["instanceId"] as? String
         if(instanceId != nil) { accData.instanceId = instanceId! }
         
