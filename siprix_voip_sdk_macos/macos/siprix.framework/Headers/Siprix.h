@@ -162,6 +162,7 @@ EXPORT
 @property(nonatomic, retain) NSString * _Nullable tlsCaCertPath;
 @property(nonatomic, retain) NSNumber * _Nullable tlsUseSipScheme;
 @property(nonatomic, retain) NSNumber * _Nullable rtcpMuxEnabled;
+@property(nonatomic, retain) NSNumber * _Nullable iceEnabled;
 @property(nonatomic, retain) NSNumber * _Nullable keepAliveTime;
 @property(nonatomic, retain) NSNumber * _Nullable rewriteContactIp;
 @property(nonatomic, retain) NSNumber * _Nullable verifyIncomingCall;
