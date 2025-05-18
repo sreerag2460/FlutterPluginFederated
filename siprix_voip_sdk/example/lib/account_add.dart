@@ -22,6 +22,7 @@ class AccountPage extends StatefulWidget {
 class AccountPageState extends State<AccountPage> {
   final _formKey = GlobalKey<FormState>();
   AccountModel _account = AccountModel();
+  bool _passwordVisible=false;
   String _errText = "";
 
   @override
@@ -57,8 +58,15 @@ class AccountPageState extends State<AccountPage> {
                   enabled: isAddMode(),
                 ),
                 TextFormField(
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Sip password'),
+                  obscureText: !_passwordVisible,
+                  decoration: InputDecoration(labelText: 'Sip password',
+                    suffixIcon: IconButton(
+                        icon: Icon(_passwordVisible? Icons.visibility_off : Icons.visibility,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      onPressed: () {  setState(() { _passwordVisible = !_passwordVisible; }); },
+                    )
+                  ),
                   validator: (value) { return (value == null || value.isEmpty) ? 'Please enter password.' : null; },
                   onChanged: (String? value) { setState(() { if((value!=null) && value.isNotEmpty) _account.sipPassword = value; }); },
                   initialValue: _account.sipPassword,
@@ -114,7 +122,6 @@ class AccountPageState extends State<AccountPage> {
           border: const UnderlineInputBorder(),
           labelText: 'Sip signalling transport:',
           labelStyle: TextStyle(color: isAddMode() ? null : Theme.of(context).disabledColor),
-          contentPadding: const EdgeInsets.all(0),
         ),
         value: _account.transport,
         onChanged: isAddMode() ? (SipTransport? value) { setState(() { _account.transport = value!; }); } : null,
