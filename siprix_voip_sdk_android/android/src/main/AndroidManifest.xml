@@ -30,6 +30,6 @@
             android:name=".CallNotifService"
             android:exported="false"
             android:stopWithTask="false"
-            android:foregroundServiceType="phoneCall" />
+            android:foregroundServiceType="phoneCall|microphone" />
     </application>
 </manifest>

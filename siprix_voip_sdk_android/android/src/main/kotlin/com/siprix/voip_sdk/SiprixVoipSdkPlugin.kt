@@ -840,6 +840,9 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val rtcpMuxEnabled : Boolean? = args["rtcpMuxEnabled"] as? Boolean
     if(rtcpMuxEnabled != null) { accData.setRtcpMuxEnabled(rtcpMuxEnabled); }
 
+    val iceEnabled : Boolean? = args["iceEnabled"] as? Boolean
+    if(iceEnabled != null) { accData.setIceEnabled(iceEnabled); }
+
     val instanceId : String? = args["instanceId"] as? String
     if(instanceId != null) { accData.setInstanceId(instanceId); }
 
@@ -1476,16 +1479,24 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
     //Add 'CAMERA' if manifest contains it
     var info =_activity!!.packageManager.getPackageInfo(_activity!!.getPackageName(), PackageManager.GET_PERMISSIONS)
-    if(info.requestedPermissions.contains(Manifest.permission.CAMERA))
+    if((info.requestedPermissions!=null) &&
+      info.requestedPermissions!!.contains(Manifest.permission.CAMERA))
       permissions.add(Manifest.permission.CAMERA)
 
     //Add 'POST_NOTIFICATIONS'
     if (Build.VERSION.SDK_INT >= 33)
       permissions.add(Manifest.permission.POST_NOTIFICATIONS)
 
+    //Add 'USE_FULL_SCREEN_INTENT'
+    if((Build.VERSION.SDK_INT >= 34) &&
+      (info.requestedPermissions!=null) &&
+       info.requestedPermissions!!.contains(Manifest.permission.USE_FULL_SCREEN_INTENT))
+      permissions.add(Manifest.permission.USE_FULL_SCREEN_INTENT)
+
     //Add 'BLUETOOTH_CONNECT' if manifest contains it
     if((Build.VERSION.SDK_INT >= 31) &&
-      (info.requestedPermissions.contains(Manifest.permission.BLUETOOTH_CONNECT))) {
+       (info.requestedPermissions!=null) &&
+        info.requestedPermissions!!.contains(Manifest.permission.BLUETOOTH_CONNECT)) {
       permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
     }
 

@@ -1,3 +1,8 @@
+## 1.0.11
+- Fixed bug with find local account which matches received SIP request
+- Added new option 'iceEnabled'
+- Added ability to request 'USE_FULL_SCREEN_INTENT' permission, when it's declared in app's manifest
+
 ## 1.0.10
 - Improved CallRecording (capture local+remote sound, use mp3 encoder, write mono or stereo)
 - Added new ini properties 'recordStereo', 'useDnsSrv'
