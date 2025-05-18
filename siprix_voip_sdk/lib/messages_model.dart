@@ -101,9 +101,9 @@ class MessagesModel extends ChangeNotifier {
   final List<MessageModel> _messages = [];
   final IAccountsModel _accountsModel;
   final ILogsModel? _logs;
-  static const int kMaxItems=25;
+  final int maxItems;
 
-  MessagesModel(this._accountsModel, [this._logs]) {
+  MessagesModel(this._accountsModel, [this._logs, this.maxItems=25]) {
     SiprixVoipSdk().messagesListener = MessagesStateListener(
       sentState: onMessageSentState,
       incoming : onMessageIncoming
@@ -133,7 +133,7 @@ class MessagesModel extends ChangeNotifier {
 
       //Add to the list and notify UI
       _messages.add(MessageModel.outgoing(myMessageId, accUri, msgDest));
-      if(_messages.length > kMaxItems)  _messages.removeAt(0);
+      if(_messages.length > maxItems)  _messages.removeAt(0);
       notifyListeners();
 
       //Log and save changes
@@ -172,6 +172,8 @@ class MessagesModel extends ChangeNotifier {
     _messages.add(newMsg);
 
     notifyListeners();
+
+    if(_messages.length > maxItems)  _messages.removeAt(0);
     _raiseSaveChanges();
   }
 
