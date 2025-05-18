@@ -490,6 +490,10 @@ Siprix::AccData* parseAccData(FlValue* args)
     if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_BOOL)
         Acc_SetRtcpMuxEnabled(accData, fl_value_get_bool(val));
 
+    val = fl_value_lookup_string(args, "iceEnabled");
+    if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_BOOL)
+        Acc_SetIceEnabled(accData, fl_value_get_bool(val));
+
     val = fl_value_lookup_string(args, "instanceId");
     if (val != nullptr && fl_value_get_type(val) == FL_VALUE_TYPE_STRING)
         Acc_SetInstanceId(accData, fl_value_get_string(val));
