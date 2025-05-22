@@ -364,8 +364,6 @@ void SiprixVoipSdkPlugin::handleModuleInitialize(const flutter::EncodableMap& ar
           if(valName->compare("unregOnDestroy") == 0)    Siprix::Ini_SetUnregOnDestroy(iniData, *boolVal); else
           if(valName->compare("useDnsSrv") == 0)         Siprix::Ini_SetUseDnsSrv(iniData, *boolVal); else
           if(valName->compare("recordStereo") == 0)      Siprix::Ini_SetRecordStereo(iniData, *boolVal); else
-          if(valName->compare("rtcpMuxEnabled") == 0)    Siprix::Acc_SetRtcpMuxEnabled(iniData, *boolVal);else
-          if(valName->compare("iceEnabled") == 0)        Siprix::Acc_SetIceEnabled(iniData, *boolVal);        
           continue;
         }  
     
@@ -446,11 +444,12 @@ Siprix::AccData* SiprixVoipSdkPlugin::parseAccountData(const flutter::EncodableM
 
     const bool* boolVal = std::get_if<bool>(&val.second);
     if(boolVal) {
-      if(valName->compare("rewriteContactIp") == 0) Siprix::Acc_SetRewriteContactIp(accData,   *boolVal);else
+      if(valName->compare("rewriteContactIp") == 0)   Siprix::Acc_SetRewriteContactIp(accData,   *boolVal);else
       if(valName->compare("verifyIncomingCall") == 0) Siprix::Acc_SetVerifyIncomingCall(accData, *boolVal);else
       if(valName->compare("forceSipProxy") == 0)      Siprix::Acc_SetForceSipProxy(accData,      *boolVal);else
       if(valName->compare("tlsUseSipScheme") == 0)  Siprix::Acc_SetUseSipSchemeForTls(accData, *boolVal);else
-      if(valName->compare("rtcpMuxEnabled") == 0)   Siprix::Acc_SetRtcpMuxEnabled(accData,     *boolVal);
+      if(valName->compare("rtcpMuxEnabled") == 0)   Siprix::Acc_SetRtcpMuxEnabled(accData,     *boolVal);else
+      if(valName->compare("iceEnabled") == 0)       Siprix::Acc_SetIceEnabled(iniData, *boolVal);        
       continue;
     }
     

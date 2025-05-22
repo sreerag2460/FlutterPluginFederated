@@ -1,3 +1,6 @@
+## 1.0.8
+- Windows: Fixed plugin build error, caused by last update
+
 ## 1.0.7
 - Fixed bug with find local account which matches received SIP request
 - Added new option 'iceEnabled'
