@@ -257,7 +257,7 @@ open class CallNotifService : Service() {
 
         if (VERSION.SDK_INT >= 29) {
             startForeground(kForegroundId, builder.build(),
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
             )
         } else {
             startForeground(kForegroundId, builder.build())

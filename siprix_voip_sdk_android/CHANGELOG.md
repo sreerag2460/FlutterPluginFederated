@@ -1,3 +1,6 @@
+## 1.0.12
+- Modified foreground service type (allows to access microphone Android 15 when app is in background)
+
 ## 1.0.11
 - Fixed bug with find local account which matches received SIP request
 - Added new option 'iceEnabled'
