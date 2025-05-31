@@ -1,3 +1,14 @@
+## 1.0.5
+* Added new method:
+  - stopRingtone
+  //2025.06.04
+
+## 1.0.4
+* experimental changes
+
+## 1.0.3
+* experimental changes
+
 ## 1.0.2
 * Added new events:
   - OnPushIncoming

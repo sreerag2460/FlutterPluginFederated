@@ -14,7 +14,7 @@ abstract interface class ISiprixData {
 //SiprixVoipSdkPlatform interface
 
 abstract class SiprixVoipSdkPlatform extends PlatformInterface {
-  //Constants   
+  //Constants
   static const String kMethodModuleInitialize    = 'Module_Initialize';
   static const String kMethodModuleUnInitialize  = 'Module_UnInitialize';
   static const String kMethodModuleHomeFolder    = 'Module_HomeFolder';
@@ -27,7 +27,7 @@ abstract class SiprixVoipSdkPlatform extends PlatformInterface {
   static const String kMethodAccountUnregister   = 'Account_Unregister';
   static const String kMethodAccountDelete       = 'Account_Delete';
   static const String kMethodAccountGenInstId    = 'Account_GenInstId';
-  
+
   static const String kMethodCallInvite          = 'Call_Invite';
   static const String kMethodCallReject          = 'Call_Reject';
   static const String kMethodCallAccept          = 'Call_Accept';
@@ -41,8 +41,9 @@ abstract class SiprixVoipSdkPlatform extends PlatformInterface {
   static const String kMethodCallStopPlayFile    = 'Call_StopPlayFile';
   static const String kMethodCallRecordFile      = 'Call_RecordFile';
   static const String kMethodCallStopRecordFile  = 'Call_StopRecordFile';
-  static const String kMethodCallTransferBlind   = 'Call_TransferBlind'; 
+  static const String kMethodCallTransferBlind   = 'Call_TransferBlind';
   static const String kMethodCallTransferAttended= 'Call_TransferAttended';
+  static const String kMethodCallStopRingtone    = 'Call_StopRingtone';
   static const String kMethodCallBye             = 'Call_Bye';
 
   static const String kMethodMixerSwitchToCall   = 'Mixer_SwitchToCall';
@@ -70,13 +71,13 @@ abstract class SiprixVoipSdkPlatform extends PlatformInterface {
   static const String kMethodDvcSetVideoParams   = 'Dvc_SetVideoParams';
 
   static const String kMethodVideoRendererCreate  = 'Video_RendererCreate';
-  static const String kMethodVideoRendererSetSrc  = 'Video_RendererSetSrc';  
+  static const String kMethodVideoRendererSetSrc  = 'Video_RendererSetSrc';
   static const String kMethodVideoRendererDispose = 'Video_RendererDispose';
 
-  static const String kOnPushIncoming     = 'OnPushIncoming';  
+  static const String kOnPushIncoming     = 'OnPushIncoming';
   static const String kOnTrialModeNotif   = 'OnTrialModeNotif';
   static const String kOnDevicesChanged   = 'OnDevicesChanged';
-  
+
   static const String kOnAccountRegState  = 'OnAccountRegState';
   static const String kOnSubscriptionState= 'OnSubscriptionState';
   static const String kOnNetworkState     = 'OnNetworkState';
@@ -86,7 +87,7 @@ abstract class SiprixVoipSdkPlatform extends PlatformInterface {
   static const String kOnCallTerminated   = 'OnCallTerminated';
   static const String kOnCallConnected    = 'OnCallConnected';
   static const String kOnCallIncoming     = 'OnCallIncoming';
-  static const String kOnCallAcceptNotif  = 'OnCallAcceptNotif';  
+  static const String kOnCallAcceptNotif  = 'OnCallAcceptNotif';
   static const String kOnCallDtmfReceived = 'OnCallDtmfReceived';
   static const String kOnCallTransferred  = 'OnCallTransferred';
   static const String kOnCallRedirected   = 'OnCallRedirected';
@@ -176,7 +177,6 @@ abstract class SiprixVoipSdkPlatform extends PlatformInterface {
   Future<int?> versionCode() async {
     return _methodChannel.invokeMethod<int>(kMethodModuleVersionCode, {});
   }
-
 
   ////////////////////////////////////////////////////////////////////////////////////////
   //Siprix Account methods implementation
@@ -291,8 +291,12 @@ abstract class SiprixVoipSdkPlatform extends PlatformInterface {
       {kArgFromCallId:fromCallId, kArgToCallId:toCallId} );
   }
 
+  Future<void> stopRingtone() {
+    return _methodChannel.invokeMethod<void>(kMethodCallStopRingtone, {});
+  }
+
   ////////////////////////////////////////////////////////////////////////////////////////
-  //Siprix Mixer methods implmentation
+  //Siprix Mixer methods implementation
 
   Future<void> switchToCall(int callId) {
     return _methodChannel.invokeMethod<void>(kMethodMixerSwitchToCall,
