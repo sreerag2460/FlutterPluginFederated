@@ -190,6 +190,7 @@ class _MyAppState extends State<MyApp> {
     //}
     //if(Platform.isAndroid) {
     //  iniData.listenTelState = true;
+    //  iniData.listenVolChange = true;
     //  iniData.serviceClassName = "com.siprix.voip_sdk_example.MyNotifService";
     //}
     await SiprixVoipSdk().initialize(iniData, logsModel);

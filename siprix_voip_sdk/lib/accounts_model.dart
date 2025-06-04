@@ -37,8 +37,11 @@ class InitData implements ISiprixData {
   /// Use same UDP transport for all accounts (by default enabled)
   bool? shareUdpTransport;
 
-  ///Android only. Enable TelStateListener which holds SIP calls when GSM call started (Valid only for Android, disabled by default, requires permission 'READ_PHONE_STATE')
+  ///Android only. Enables TelStateListener which holds SIP calls when GSM call started (Valid only for Android, disabled by default, requires permission 'READ_PHONE_STATE')
   bool? listenTelState;
+
+  ///Android only. Enables listening VOLUME_CHANGED_ACTION and mute ringtone sound when detected (Valid only for Android, disabled by default)
+  bool? listenVolChange;
 
   /// iOS only. Enable PushKit support
   bool? enablePushKit;
@@ -73,6 +76,7 @@ class InitData implements ISiprixData {
     if(singleCallMode!=null)    ret['singleCallMode'] = singleCallMode;
     if(shareUdpTransport!=null) ret['shareUdpTransport'] = shareUdpTransport;
     if(listenTelState!=null)    ret['listenTelState'] = listenTelState;
+    if(listenVolChange!=null)   ret['listenVolChange'] = listenVolChange;
     if(enablePushKit!=null)     ret['enablePushKit'] = enablePushKit;
     if(enableCallKit!=null)     ret['enableCallKit'] = enableCallKit;
     if(enableCallKitRecents!=null) ret['enableCallKitRecents'] = enableCallKitRecents;
