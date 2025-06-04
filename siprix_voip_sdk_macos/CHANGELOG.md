@@ -1,3 +1,7 @@
+## 1.0.8
+- Added new method 'stopRingtone'
+  //2025.06.04
+
 ## 1.0.7
 - Fixed bug with find local account which matches received SIP request
 - Added new option 'iceEnabled'

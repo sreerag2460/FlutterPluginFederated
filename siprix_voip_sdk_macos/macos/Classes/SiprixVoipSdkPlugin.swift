@@ -38,6 +38,7 @@ private let kMethodCallRecordFile       = "Call_RecordFile"
 private let kMethodCallStopRecordFile   = "Call_StopRecordFile"
 private let kMethodCallTransferBlind    = "Call_TransferBlind"
 private let kMethodCallTransferAttended = "Call_TransferAttended"
+private let kMethodCallStopRingtone     = "Call_StopRingtone"
 private let kMethodCallBye              = "Call_Bye"
 
 private let kMethodMixerSwitchToCall   = "Mixer_SwitchToCall"
@@ -371,11 +372,9 @@ class FlutterVideoRenderer : NSObject, SiprixVideoRendererDelegate, FlutterTextu
 }//FlutterVideoRenderer
 
 
-
 ////////////////////////////////////////////////////////////////////////////////////////
 //SiprixVoipSdkPlugin
 public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
-    
     typealias ArgsMap = Dictionary<AnyHashable,Any>
     
     var _siprixModule : SiprixModule
@@ -436,7 +435,8 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
                 case kMethodCallStopRecordFile:   handleCallStopRecordFile(argsMap!, result:result)
                 case kMethodCallTransferBlind :   handleCallTransferBlind(argsMap!, result:result)
                 case kMethodCallTransferAttended : handleCallTransferAttended(argsMap!, result:result)
-                case kMethodCallBye :             handleCallBye(argsMap!, result:result)
+                case kMethodCallStopRingtone  :   handleCallStopRingtone(argsMap!, result:result)
+                case kMethodCallBye           :   handleCallBye(argsMap!, result:result)
 
                 case kMethodMixerSwitchToCall :   handleMixerSwitchToCall(argsMap!, result:result)
                 case kMethodMixerMakeConference : handleMixerMakeConference(argsMap!, result:result)
@@ -918,6 +918,11 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         }else{
             sendBadArguments(result:result)
         }
+    }
+
+    func handleCallStopRingtone(_ args : ArgsMap, result: @escaping FlutterResult) {
+        _siprixModule.callStopRingtone()
+        result(kErrorCodeEOK)
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////
