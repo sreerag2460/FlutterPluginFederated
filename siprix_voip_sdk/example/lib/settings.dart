@@ -9,7 +9,7 @@ import 'package:siprix_voip_sdk/siprix_voip_sdk.dart';
 ////////////////////////////////////////////////////////////////////////////////////////
 //SettingsPage - represents platfrom specific settings
 
-class SettingsPage extends StatefulWidget {  
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
     static const routeName = '/settings';
 
@@ -23,12 +23,12 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final devices = context.watch<DevicesModel>();
-    return 
+    return
       Scaffold(
         appBar: AppBar(
-          title: const Text('Settings'), 
+          title: const Text('Settings'),
           backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.4)),
-        body: Padding(padding: const EdgeInsets.fromLTRB(10, 0, 10, 10), 
+        body: Padding(padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
           child:Column(crossAxisAlignment: CrossAxisAlignment.stretch,
             children: _buildBody(devices)
         )
@@ -54,7 +54,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _buildPlayoutDevicesDropDown(devices),
       _buildRecordingDevicesDropDown(devices),
       _buildVideoDevicesDropDown(devices),
-      ];      
+      ];
     }
   }
 
@@ -65,10 +65,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildMediaDevicesDropDown(String labelText, List<MediaDevice> dvcList, int selIndex, OnChangedCallback onChanged) {
-    return ButtonTheme(alignedDropdown: true, child: 
+    return ButtonTheme(alignedDropdown: true, child:
       DropdownButtonFormField<int>(
         decoration: InputDecoration(
-          border: const UnderlineInputBorder(), 
+          border: const UnderlineInputBorder(),
           labelText: labelText,
           contentPadding: const EdgeInsets.all(0),
         ),
@@ -79,15 +79,15 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildPlayoutDevicesDropDown(DevicesModel devices) {
-    return _buildMediaDevicesDropDown('Playout device:', devices.playout, devices.playoutIndex, onSetPlayoutDevice);    
+    return _buildMediaDevicesDropDown('Playout device:', devices.playout, devices.playoutIndex, onSetPlayoutDevice);
   }
 
   Widget _buildRecordingDevicesDropDown(DevicesModel devices) {
-    return _buildMediaDevicesDropDown('Recording device:', devices.recording, devices.recordingIndex, onSetRecordingDevice);    
+    return _buildMediaDevicesDropDown('Recording device:', devices.recording, devices.recordingIndex, onSetRecordingDevice);
   }
 
   Widget _buildVideoDevicesDropDown(DevicesModel devices) {
-    return _buildMediaDevicesDropDown('Video device:', devices.video, devices.videoIndex, onSetVideoDevice);    
+    return _buildMediaDevicesDropDown('Video device:', devices.video, devices.videoIndex, onSetVideoDevice);
   }
 
   void onSetPlayoutDevice(int? index) {
@@ -109,7 +109,7 @@ class _SettingsPageState extends State<SettingsPage> {
     context.read<DevicesModel>().setForegroundMode(enable)
       .catchError(showSnackBar);
   }
-  
+
   void showSnackBar(dynamic err) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
   }
