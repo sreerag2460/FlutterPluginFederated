@@ -52,6 +52,7 @@ const char kMethodCallRecordFile[]      = "Call_RecordFile";
 const char kMethodCallStopRecordFile[]  = "Call_StopRecordFile";
 const char kMethodCallTransferBlind[]   = "Call_TransferBlind";
 const char kMethodCallTransferAttended[]= "Call_TransferAttended";
+const char kMethodCallStopRingtone[]    = "Call_StopRingtone";
 const char kMethodCallBye[]             = "Call_Bye";
 
 const char kMethodMixerSwitchToCall[]   = "Mixer_SwitchToCall";
@@ -203,6 +204,7 @@ void SiprixVoipSdkPlugin::buildHandlersTable()
      handlers_[kMethodCallStopRecordFile]   = std::bind(&SiprixVoipSdkPlugin::handleCallStopRecordFile, this, std::placeholders::_1, std::placeholders::_2);
      handlers_[kMethodCallTransferBlind]    = std::bind(&SiprixVoipSdkPlugin::handleCallTransferBlind,  this, std::placeholders::_1, std::placeholders::_2);
      handlers_[kMethodCallTransferAttended] = std::bind(&SiprixVoipSdkPlugin::handleCallTransferAttended, this, std::placeholders::_1, std::placeholders::_2);
+     handlers_[kMethodCallStopRingtone]     = std::bind(&SiprixVoipSdkPlugin::handleCallStopRingtone,   this, std::placeholders::_1, std::placeholders::_2);
      handlers_[kMethodCallBye]              = std::bind(&SiprixVoipSdkPlugin::handleCallBye,            this, std::placeholders::_1, std::placeholders::_2);
      
      handlers_[kMethodMixerSwitchToCall]    = std::bind(&SiprixVoipSdkPlugin::handleMixerSwitchToCall,   this, std::placeholders::_1, std::placeholders::_2);
@@ -449,7 +451,7 @@ Siprix::AccData* SiprixVoipSdkPlugin::parseAccountData(const flutter::EncodableM
       if(valName->compare("forceSipProxy") == 0)      Siprix::Acc_SetForceSipProxy(accData,      *boolVal);else
       if(valName->compare("tlsUseSipScheme") == 0)  Siprix::Acc_SetUseSipSchemeForTls(accData, *boolVal);else
       if(valName->compare("rtcpMuxEnabled") == 0)   Siprix::Acc_SetRtcpMuxEnabled(accData,     *boolVal);else
-      if(valName->compare("iceEnabled") == 0)       Siprix::Acc_SetIceEnabled(iniData, *boolVal);        
+      if(valName->compare("iceEnabled") == 0)       Siprix::Acc_SetIceEnabled(accData, *boolVal);        
       continue;
     }
     
@@ -763,6 +765,12 @@ void SiprixVoipSdkPlugin::handleCallTransferBlind(const flutter::EncodableMap& a
     if (!bFound1 || !bFound2) { sendBadArgResult(result); return; }
 
     const Siprix::ErrorCode err = Siprix::Call_TransferBlind(module_, callId, toExt.c_str());
+    sendResult(err, result);
+}
+
+void SiprixVoipSdkPlugin::handleCallStopRingtone(const flutter::EncodableMap& argsMap, MethodResultEncValPtr& result)
+{
+    const Siprix::ErrorCode err = Siprix::Call_StopRingtone(module_);
     sendResult(err, result);
 }
 

@@ -1,3 +1,8 @@
+## 1.0.9
+- Added new method 'stopRingtone'
+- Fixed build error, caused by previous update
+  //2025.06.04
+
 ## 1.0.8
 - Windows: Fixed plugin build error, caused by last update
 
