@@ -40,6 +40,7 @@ private let kMethodCallRecordFile       = "Call_RecordFile"
 private let kMethodCallStopRecordFile   = "Call_StopRecordFile"
 private let kMethodCallTransferBlind    = "Call_TransferBlind"
 private let kMethodCallTransferAttended = "Call_TransferAttended"
+private let kMethodCallStopRingtone     = "Call_StopRingtone"
 private let kMethodCallBye              = "Call_Bye"
 
 private let kMethodMixerSwitchToCall   = "Mixer_SwitchToCall"
@@ -583,6 +584,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         case kMethodCallStopRecordFile :  handleCallStopRecordFile(argsMap!, result:result)
         case kMethodCallTransferBlind  :  handleCallTransferBlind(argsMap!, result:result)
         case kMethodCallTransferAttended : handleCallTransferAttended(argsMap!, result:result)
+        case kMethodCallStopRingtone  :   handleCallStopRingtone(argsMap!, result:result)
         case kMethodCallBye :             handleCallBye(argsMap!, result:result)
 
         case kMethodMixerSwitchToCall   : handleMixerSwitchToCall(argsMap!, result:result)
@@ -1126,6 +1128,11 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         }
     }
     
+    func handleCallStopRingtone(_ args : ArgsMap, result: @escaping FlutterResult) {
+        _siprixModule.callStopRingtone()
+        result(kErrorCodeEOK)
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////
     //Siprix Mixer methods implementation
 
@@ -1591,7 +1598,8 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
         if(call == nil) { return }
             
         call!.connectedSuccessfully = true
-        call!.cxAnswerAction?.fulfill()
+        //call!.cxAnswerAction?.fulfill()
+        _siprixModule.activate( AVAudioSession.sharedInstance())
             
         //Set 'connected' time of the outgoing call
         if(!call!.isIncoming) {
@@ -1646,10 +1654,8 @@ class SiprixCxProvider : NSObject, CXProviderDelegate {
     
     func proceedCxAnswerAction(_ call: CallModel) {
         let err = _siprixModule.callAccept(Int32(call.id), withVideo:call.withVideo)
-        if (err != kErrorCodeEOK) {
-            call.cxAnswerAction?.fail()
-        }
-        _siprixModule.mixerSwitchCall(Int32(call.id))
+        if (err == kErrorCodeEOK) { call.cxAnswerAction?.fulfill() }
+        else                      { call.cxAnswerAction?.fail()    }
         print("siprix: CxProvider: proceedCxAnswerAction err:\(err) sipCallId:\(call.id) uuid:\(call.uuid))")
     }
     

@@ -1,3 +1,7 @@
+## 1.0.17
+- Fixed sound issue when received incoming call in terminated state
+  //2025.06.04
+
 ## 1.0.16
 - Fixed bug with find local account which matches received SIP request
 - Added new option 'iceEnabled'
