@@ -88,6 +88,7 @@ const val kMethodCallRecordFile       = "Call_RecordFile"
 const val kMethodCallStopRecordFile   = "Call_StopRecordFile"
 const val kMethodCallTransferBlind    = "Call_TransferBlind"
 const val kMethodCallTransferAttended = "Call_TransferAttended"
+const val kMethodCallStopRingtone     = "Call_StopRingtone"
 const val kMethodCallBye              = "Call_Bye"
 
 const val kMethodMixerSwitchToCall   = "Mixer_SwitchToCall"
@@ -683,6 +684,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
       kMethodCallStopRecordFile->   handleCallStopRecordFile(args, result)
       kMethodCallTransferBlind ->   handleCallTransferBlind(args, result)
       kMethodCallTransferAttended -> handleCallTransferAttended(args, result)
+      kMethodCallStopRingtone  ->   handleCallStopRingtone(args, result)
       kMethodCallBye ->             handleCallBye(args, result)
 
       kMethodMixerSwitchToCall ->   handleMixerSwitchToCall(args, result)
@@ -763,6 +765,9 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
     val listenTelState : Boolean? = args["listenTelState"] as? Boolean
     if(listenTelState != null) { iniData.setUseTelState(listenTelState); }
+
+    val listenVolChange : Boolean? = args["listenVolChange"] as? Boolean
+    if(listenVolChange != null) { iniData.setUseVolChange(listenVolChange); }
 
     //Init core
     iniData.setUseExternalRinger(true)
@@ -1207,6 +1212,11 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     }else{
       sendBadArguments(result)
     }
+  }
+
+  private fun handleCallStopRingtone(args : HashMap<String, Any?>, result: MethodChannel.Result) {
+    _core.callStopRingtone()
+    result.success("Success")
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////

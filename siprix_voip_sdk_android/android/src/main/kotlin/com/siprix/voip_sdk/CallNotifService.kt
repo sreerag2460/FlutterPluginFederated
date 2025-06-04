@@ -225,6 +225,8 @@ open class CallNotifService : Service() {
     }
 
     fun stopForegroundMode() {
+        if(!_foregroundModeStarted) return
+
         releaseWakelock()
         if (VERSION.SDK_INT >= 33){
             stopForeground(STOP_FOREGROUND_REMOVE)
@@ -236,6 +238,8 @@ open class CallNotifService : Service() {
     }
 
     fun startForegroundMode(): Boolean {
+        if(_foregroundModeStarted) return true
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE)
             != PackageManager.PERMISSION_GRANTED) return false
 

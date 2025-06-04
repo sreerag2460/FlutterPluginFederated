@@ -1,3 +1,8 @@
+## 1.0.13
+- Added new method 'stopRingtone'
+- Added new option 'listenVolChange'
+  //2025.06.04
+
 ## 1.0.12
 - Modified foreground service type (allows to access microphone Android 15 when app is in background)
 
