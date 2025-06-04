@@ -173,10 +173,10 @@ EXPORT
 @property(nonatomic, retain) NSString * _Nullable ringTonePath;
 @property(nonatomic, retain) NSDictionary * _Nullable xheaders;
 @property(nonatomic, retain) NSDictionary * _Nullable xContactUriParams;
-@property(nonatomic, retain) NSArray * _Nullable aCodecs;
-@property(nonatomic, retain) NSArray * _Nullable vCodecs;
--(NSDictionary* _Nonnull)toDictionary;
--(void)fromDictionary:(NSDictionary* _Nonnull)dictionary;
+@property(nonatomic, retain) NSArray  * _Nullable aCodecs;
+@property(nonatomic, retain) NSArray  * _Nullable vCodecs;
+- (NSDictionary* _Nonnull)toDictionary;
+- (void)fromDictionary:(NSDictionary* _Nonnull)dictionary;
 @end
 
 EXPORT
@@ -351,7 +351,7 @@ EXPORT
 - (int)callGetHoldState:(int)callId holdState:(SiprixHoldData* _Nonnull)data;
 - (int)callGetVideoState:(int)callId hasVideo:(SiprixVideoStateData * _Nonnull) data;
 - (int)callMuteMic:(int)callId mute:(BOOL)mute;
-- (int)callMuteCam:(int)callId mute : (BOOL)mute;
+- (int)callMuteCam:(int)callId mute:(BOOL)mute;
 - (int)callSendDtmf:(int)callId dtmfs:(NSString* _Nonnull)dtmfs
          durationMs:(int)durationMs intertoneGapMs:(int)intertoneGapMs method:(DtmfMethod)method;
 - (int)callSendDtmf:(int)callId dtmfs:(NSString* _Nonnull)dtmfs;
@@ -366,13 +366,14 @@ EXPORT
 
 - (int)callSetVideoRenderer:(int)callId renderer:(id<SiprixVideoRendererDelegate> _Nullable) renderer;
 - (NSString* _Nonnull)callGetSipHeader:(int)callId hdrName:(NSString * _Nonnull)hdrName;
+- (void)callStopRingtone;
 
 #if TARGET_OS_IPHONE
 - (int)switchCamera;
 - (int)callSetVideoWindow:(int)callId view : (UIView * _Nullable) view;
 - (UIView* _Nonnull)createVideoWindow;
 #else
-- (int)callSetVideoWindow:(int)callId view:(NSView* _Nullable) view;
+- (int)callSetVideoWindow:(int)callId view : (NSView * _Nullable) view;
 -(NSView* _Nonnull)createVideoWindow;
 #endif
 
