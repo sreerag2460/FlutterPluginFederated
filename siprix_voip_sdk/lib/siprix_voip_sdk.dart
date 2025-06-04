@@ -667,6 +667,11 @@ class SiprixVoipSdk {
     return _platform.transferAttended(fromCallId, toCallId);
   }
 
+  /// Stop playing (mute) ringtone.
+  Future<void> stopRingtone() async {
+    return _platform.stopRingtone();
+  }
+
   //-//////////////////////////////////////////////////////////////////////////////////////
   //-Siprix Mixer methods implmentation
 
