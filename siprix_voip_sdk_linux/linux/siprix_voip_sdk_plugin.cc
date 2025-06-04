@@ -56,6 +56,7 @@ const char kMethodCallRecordFile[]      = "Call_RecordFile";
 const char kMethodCallStopRecordFile[]  = "Call_StopRecordFile";
 const char kMethodCallTransferBlind[]   = "Call_TransferBlind";
 const char kMethodCallTransferAttended[]= "Call_TransferAttended";
+const char kMethodCallStopRingtone[]    = "Call_StopRingtone";
 const char kMethodCallBye[]             = "Call_Bye";
 
 const char kMethodMixerSwitchToCall[]   = "Mixer_SwitchToCall";
@@ -913,6 +914,12 @@ FlMethodResponse* handleCallTransferAttended(FlValue* args, SiprixVoipSdkPlugin*
     return sendResult(err);
 }
 
+FlMethodResponse* handleCallStopRingtone(FlValue* args, SiprixVoipSdkPlugin* self)
+{
+    const Siprix::ErrorCode err = Siprix::Call_StopRingtone(self->module_);
+    return sendResult(err);
+}
+
 FlMethodResponse* handleCallBye(FlValue* args, SiprixVoipSdkPlugin* self)
 {
     FlValue* val = fl_value_lookup_string(args, kArgCallId);
@@ -1257,6 +1264,7 @@ static void siprix_voip_sdk_plugin_handle_method_call(
     if(strcmp(method, kMethodCallStopRecordFile) == 0)   response = handleCallStopRecordFile(args, self); else    
     if(strcmp(method, kMethodCallTransferBlind) == 0)    response = handleCallTransferBlind(args, self); else
     if(strcmp(method, kMethodCallTransferAttended) == 0) response = handleCallTransferAttended(args, self); else
+    if(strcmp(method, kMethodCallStopRingtone) == 0)     response = handleCallStopRingtone(args, self); else
     if(strcmp(method, kMethodCallBye) == 0)              response = handleCallBye(args, self);    else
 
     if(strcmp(method, kMethodMixerSwitchToCall) == 0)    response = handleMixerSwitchToCall(args, self); else
