@@ -1,3 +1,11 @@
+## 1.0.19
+- Added new method 'stopRingtone'
+- iOS: fixed sound issue when received incoming call in terminated state
+- Android: added new option 'listenVolChange'
+- Android: set BLUETOOTH permissions enabled by default
+- Example app: added 'advanced mode' of the AddAccount page
+  //2025.06.04
+
 ## 1.0.18
 - Windows: Fixed plugin build error, caused by last update
 - Android: Modified foreground service type (allows to access microphone Android 15 when app is in background)
