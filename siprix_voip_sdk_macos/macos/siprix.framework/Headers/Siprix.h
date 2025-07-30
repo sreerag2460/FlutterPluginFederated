@@ -143,6 +143,7 @@ EXPORT
 @property(nonatomic, retain) NSArray  * _Nullable dnsServers;
 @property(nonatomic, retain) NSNumber * _Nullable useDnsSrv;
 @property(nonatomic, retain) NSNumber * _Nullable recordStereo;
+@property(nonatomic, retain) NSNumber * _Nullable enableVideoCall;
 @property(nonatomic, retain) NSString * _Nullable brandName;
 @end
 
@@ -171,12 +172,16 @@ EXPORT
 @property(nonatomic, retain) NSNumber * _Nullable transpPreferIPv6;
 @property(nonatomic, retain) NSString * _Nullable instanceId;
 @property(nonatomic, retain) NSString * _Nullable ringTonePath;
+@property(nonatomic, retain) NSString * _Nullable stunServer;
+@property(nonatomic, retain) NSString * _Nullable turnServer;
+@property(nonatomic, retain) NSString * _Nullable turnUser;
+@property(nonatomic, retain) NSString * _Nullable turnPassword;
 @property(nonatomic, retain) NSDictionary * _Nullable xheaders;
 @property(nonatomic, retain) NSDictionary * _Nullable xContactUriParams;
 @property(nonatomic, retain) NSArray  * _Nullable aCodecs;
 @property(nonatomic, retain) NSArray  * _Nullable vCodecs;
--(NSDictionary* _Nonnull)toDictionary;
--(void)fromDictionary:(NSDictionary* _Nonnull)dictionary;
+- (NSDictionary* _Nonnull)toDictionary;
+- (void)fromDictionary:(NSDictionary* _Nonnull)dictionary;
 @end
 
 EXPORT
@@ -373,7 +378,7 @@ EXPORT
 - (int)callSetVideoWindow:(int)callId view : (UIView * _Nullable) view;
 - (UIView* _Nonnull)createVideoWindow;
 #else
-- (int)callSetVideoWindow:(int)callId view:(NSView* _Nullable) view;
+- (int)callSetVideoWindow:(int)callId view : (NSView * _Nullable) view;
 -(NSView* _Nonnull)createVideoWindow;
 #endif
 
