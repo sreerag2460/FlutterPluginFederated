@@ -1,3 +1,11 @@
+## 1.0.14
+- Added new account properties 'stunServer','turnServer'
+- Added new ini property 'VideoCallEnabled'
+- Added new video data property 'Rotation'
+- Fixed handling ACK/SDP response (missed 'onCallConnected' event)
+- Fixed potential crash when received SIP MESSAGE without body
+  //2025.07.31
+
 ## 1.0.13
 - Added new method 'stopRingtone'
 - Added new option 'listenVolChange'

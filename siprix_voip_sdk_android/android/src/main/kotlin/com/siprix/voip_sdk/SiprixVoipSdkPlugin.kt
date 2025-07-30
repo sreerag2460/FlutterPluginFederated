@@ -763,6 +763,9 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val recordStereo : Boolean? = args["recordStereo"] as? Boolean
     if(recordStereo != null) { iniData.setRecordStereo(recordStereo); }
 
+    val enableVideoCall : Boolean? = args["enableVideoCall"] as? Boolean
+    if(enableVideoCall != null) { iniData.setEnableVideoCall(enableVideoCall); }
+
     val listenTelState : Boolean? = args["listenTelState"] as? Boolean
     if(listenTelState != null) { iniData.setUseTelState(listenTelState); }
 
@@ -868,6 +871,18 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
 
     val secureMedia : Int? = args["secureMedia"] as? Int
     if(secureMedia != null) { accData.setSecureMediaMode(AccData.SecureMediaMode.fromInt(secureMedia)); }
+
+    val stunServer : String? = args["stunServer"] as? String
+    if(stunServer != null) { accData.setStunServer(stunServer); }
+
+    val turnServer : String? = args["turnServer"] as? String
+    if(turnServer != null) { accData.setTurnServer(turnServer); }
+
+    val turnUser : String? = args["turnUser"] as? String
+    if(turnUser != null) { accData.setTurnUser(turnUser); }
+
+    val turnPassword : String? = args["turnPassword"] as? String
+    if(turnPassword != null) { accData.setTurnPassword(turnPassword); }
 
     val xheaders: HashMap<String, Any?>? = args["xheaders"] as? HashMap<String, Any?>?
     if(xheaders != null) {
@@ -1607,7 +1622,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     //When this instance of plugin doesn't have accId yet - store intent and raise it later
     if(!_accountsIds.contains(accId)) {
         Log.w(TAG, "skip as accounts from previous session hasn't restored yet")
-      _pendingIntents.add(intent)
+        _pendingIntents.add(intent)
         return false
     }
 
