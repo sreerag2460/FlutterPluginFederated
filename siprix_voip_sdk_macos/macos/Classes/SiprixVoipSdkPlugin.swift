@@ -348,8 +348,8 @@ class FlutterVideoRenderer : NSObject, SiprixVideoRendererDelegate, FlutterTextu
                 argsMap["rotation"]  = _eventData.width
                 DispatchQueue.main.async {
                     self._eventSink!(argsMap)
-    }
-}
+                }
+            }
             _eventData.rotation = frame.rotation()
         }
         
@@ -518,6 +518,9 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         let recordStereo = args["recordStereo"] as? Bool
         if(recordStereo != nil) { iniData.recordStereo = NSNumber(value: recordStereo!) }
 
+        let enableVideoCall = args["enableVideoCall"] as? Bool
+        if(enableVideoCall != nil) { iniData.enableVideoCall = NSNumber(value: enableVideoCall!) }
+
         let err = _siprixModule.initialize(_eventHandler, iniData:iniData)
         _initialized = (err == kErrorCodeEOK)
         sendResult(err, result:result)
@@ -615,6 +618,18 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
          
         let xheaders = args["xheaders"] as? Dictionary<AnyHashable,Any>
         if(xheaders != nil) { accData.xheaders = xheaders }
+
+        let stunServer = args["stunServer"] as? String
+        if(stunServer != nil) { accData.stunServer = stunServer! }
+
+        let turnServer = args["turnServer"] as? String
+        if(turnServer != nil) { accData.turnServer = turnServer! }
+
+        let turnUser = args["turnUser"] as? String
+        if(turnUser != nil) { accData.turnUser = turnUser! }
+
+        let turnPassword = args["turnPassword"] as? String
+        if(turnPassword != nil) { accData.turnPassword = turnPassword! }
         
         let xContactUriParams = args["xContactUriParams"] as? Dictionary<AnyHashable,Any>
         if(xContactUriParams != nil) { accData.xContactUriParams = xContactUriParams }
