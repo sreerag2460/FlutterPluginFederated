@@ -191,6 +191,30 @@ class AccountPageState extends State<AccountPage> {
   List<Widget> _buildMediaCtrlList() {
     return [
       _buildSecureMediaDropDown(),
+
+      TextFormField(
+        decoration: const InputDecoration(labelText: 'STUN server'),
+        onChanged: (String? value) { setState(() { _account.stunServer = value; }); },
+        initialValue: _account.stunServer,
+      ),
+
+      TextFormField(
+        decoration: const InputDecoration(labelText: 'TURN server'),
+        onChanged: (String? value) { setState(() { _account.turnServer = value; }); },
+        initialValue: _account.turnServer,
+      ),
+
+      TextFormField(
+        decoration: const InputDecoration(labelText: 'TURN user name'),
+        onChanged: (String? value) { setState(() { _account.turnUser = value; }); },
+        initialValue: _account.turnUser,
+      ),
+
+      TextFormField(
+        decoration: const InputDecoration(labelText: 'TURN password'),
+        onChanged: (String? value) { setState(() { _account.turnPassword = value; }); },
+        initialValue: _account.turnPassword,
+      )
     ];
   }
 
@@ -332,16 +356,20 @@ class AccountPageState extends State<AccountPage> {
 
   void _submit() {
     final form = _formKey.currentState;
-    if (form == null || !form.validate()) return;
+    if (form == null || !form.validate() ||
+       !Codec.validateSel(_videoCodecsList) ||
+       !Codec.validateSel(_audioCodecsList)) return;
 
-    Future<void> action;
+    _account.aCodecs = Codec.getSelectedCodecsIds(_audioCodecsList);
+    _account.vCodecs = Codec.getSelectedCodecsIds(_videoCodecsList);
+
     if(isAddMode()) {
       _account.ringTonePath = MyApp.getRingtonePath();
-      action = context.read<AppAccountsModel>().addAccount(_account);
-    } else {
-      action = context.read<AppAccountsModel>().updateAccount(_account);
     }
 
+    Future<void> action = isAddMode()
+                          ? context.read<AppAccountsModel>().addAccount(_account)
+                          : context.read<AppAccountsModel>().updateAccount(_account);
     action.then((_) { Navigator.pop(context, true); })
       .catchError((error) {
         setState(() { _errText = error;  });

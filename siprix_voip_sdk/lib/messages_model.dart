@@ -96,7 +96,7 @@ class MessageModel extends ChangeNotifier {
 typedef SaveChangesCallback = void Function(String jsonStr);
 
 
-/// Subscriptions list model ((contains list of subscriptions, methods for managing them, handlers of library event)
+/// Subscriptions list model (contains list of subscriptions, methods for managing them, handlers of library event)
 class MessagesModel extends ChangeNotifier {
   final List<MessageModel> _messages = [];
   final IAccountsModel _accountsModel;

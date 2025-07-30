@@ -112,6 +112,12 @@ class _SwitchedCallWidgetState extends State<SwitchedCallWidget> {
 
   bool _sendDtmfMode = false;
 
+  final TextEditingController _transferBlindTextCtrl = TextEditingController();
+  bool _transferBlindMode = false;
+
+  int? _transferAttendedToCallId;
+  bool _transferAttendedMode = false;
+
   @override
   void initState() {
     super.initState();
@@ -199,7 +205,9 @@ class _SwitchedCallWidgetState extends State<SwitchedCallWidget> {
       return children;
     }
 
-    if(_sendDtmfMode) { children.add(_buildSendDtmf()); return children; }
+    if(_sendDtmfMode)         { children.add(_buildSendDtmf());         return children; }
+    if(_transferBlindMode)    { children.add(_buildTransferBlind());    return children; }
+    if(_transferAttendedMode) { children.add(_buildTransferAttended()); return children; }
 
     final bool isCallConnected = (widget.myCall.state == CallState.connected);
 
@@ -249,6 +257,16 @@ class _SwitchedCallWidgetState extends State<SwitchedCallWidget> {
           MenuItemButton(leadingIcon: Icon(Icons.radio_button_checked, color: widget.myCall.isRecStarted ? Colors.red : null),
             onPressed: isCallConnected ? _recordFile : null,
             child: Text(widget.myCall.isRecStarted ? 'Stop record': 'Record')),
+
+          const Divider(),
+
+          MenuItemButton(leadingIcon: const Icon(Icons.phone_forwarded),
+              onPressed: context.read<AppCallsModel>().hasConnectedFewCalls() ? _toggleTransferAttendedMode : null,
+              child: const Text('Transfer attended')),
+
+          MenuItemButton(leadingIcon: const Icon(Icons.forward),
+              onPressed: isCallConnected ? _toggleTransferBlindMode : null,
+              child: const Text('Transfer')),
         ]
       ),
     ]));
@@ -392,6 +410,15 @@ class _SwitchedCallWidgetState extends State<SwitchedCallWidget> {
     setState(() => _sendDtmfMode = !_sendDtmfMode );
   }
 
+  void _toggleTransferBlindMode() {
+    setState(() => _transferBlindMode = !_transferBlindMode );
+  }
+
+  void _toggleTransferAttendedMode() {
+    setState(() => _transferAttendedMode = !_transferAttendedMode );
+  }
+
+
   Widget _buildSendDtmf() {
     const double spacing=8;
     return
@@ -430,5 +457,56 @@ class _SwitchedCallWidgetState extends State<SwitchedCallWidget> {
         ],
     );
   }
+
+  Widget _buildTransferBlind({String action="Transfer"}) {
+    const double spacing=10;
+    return
+      Row(spacing: spacing, mainAxisSize: MainAxisSize.min,
+        children: [
+          Text("$action to:", style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
+
+          SizedBox(width: 120,
+            child: TextField(decoration: const InputDecoration(hintText: 'Extension', isDense: true),
+              textAlign: TextAlign.center, controller: _transferBlindTextCtrl, onChanged: (data){ setState(() {}); },)
+          ),
+
+          OutlinedButton(onPressed: _transferBlindTextCtrl.text.isEmpty ? null : () {
+            _transferBlind(_transferBlindTextCtrl.text);
+            _toggleTransferBlindMode();
+          },
+              child: Text(action)),
+          IconButton.filledTonal(onPressed: _toggleTransferBlindMode, icon:const Icon(Icons.close)),
+      ]);
+  }
+
+  Widget _buildTransferAttended() {
+    const double spacing=10;
+    final calls = context.read<AppCallsModel>();
+    CallModel? srcCall = calls.switchedCall();
+    final int srcCallId = (srcCall!=null) ? srcCall.myCallId : 0;
+    for(var i = 0; i < calls.length; i++) {
+      if(srcCallId != calls[i].myCallId) { _transferAttendedToCallId = calls[i].myCallId; break; }
+    }
+
+    return
+      Row(spacing: spacing, mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text("Transfer to:", style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600)),
+
+          DropdownButton<int?>(
+            value: _transferAttendedToCallId,
+            onChanged: (int? value) { setState(() => _transferAttendedToCallId = value! );  },
+            items: [
+              for(var i = 0; i < calls.length; i++)
+                if(srcCallId != calls[i].myCallId)
+                  DropdownMenuItem<int>(value: calls[i].myCallId, child: Text(calls[i].nameAndExt))
+              ]
+          ),
+
+          OutlinedButton(onPressed: () { _transferAttended(_transferAttendedToCallId); }, child: const Text('Transfer')),
+          IconButton.filledTonal(onPressed: _toggleTransferAttendedMode, icon:const Icon(Icons.close)),
+      ]);
+  }
+
 
 }//_CallsPageState

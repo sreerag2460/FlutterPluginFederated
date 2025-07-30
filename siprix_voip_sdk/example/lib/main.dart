@@ -96,7 +96,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     String accJsonStr = prefs.getString('accounts') ?? '';
     if(accJsonStr.isNotEmpty) {
       AppAccountsModel tmpAccsModel = AppAccountsModel();
-      tmpAccsModel.loadFromJson(accJsonStr);
+      await tmpAccsModel.loadFromJson(accJsonStr);
       tmpAccsModel.refreshRegistration();
     }
   } on Exception catch (err) {
