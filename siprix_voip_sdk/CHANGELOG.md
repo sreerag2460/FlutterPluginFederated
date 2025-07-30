@@ -1,3 +1,13 @@
+## 1.0.20
+- Added new account properties 'stunServer','turnServer'
+- Added new ini property 'VideoCallEnabled'
+- Added new video data property 'Rotation'
+- iOS: Fixed conflict class names preventing upload to AppStore
+- Fixed handling ACK/SDP response (missed 'onCallConnected' event)
+- Fixed potential crash when received SIP MESSAGE without body
+- Example app: added blind/attended transfer pages
+  //2025.07.31
+
 ## 1.0.19
 - Added new method 'stopRingtone'
 - iOS: fixed sound issue when received incoming call in terminated state
