@@ -366,6 +366,7 @@ void SiprixVoipSdkPlugin::handleModuleInitialize(const flutter::EncodableMap& ar
           if(valName->compare("unregOnDestroy") == 0)    Siprix::Ini_SetUnregOnDestroy(iniData, *boolVal); else
           if(valName->compare("useDnsSrv") == 0)         Siprix::Ini_SetUseDnsSrv(iniData, *boolVal); else
           if(valName->compare("recordStereo") == 0)      Siprix::Ini_SetRecordStereo(iniData, *boolVal); else
+          if(valName->compare("enableVideoCall") == 0)   Siprix::Ini_SetVideoCallEnabled(iniData, *boolVal);
           continue;
         }  
     
@@ -430,7 +431,11 @@ Siprix::AccData* SiprixVoipSdkPlugin::parseAccountData(const flutter::EncodableM
         if(valName->compare("userAgent")     == 0) Siprix::Acc_SetUserAgent(accData,      strVal->c_str()); else
         if(valName->compare("tlsCaCertPath") == 0) Siprix::Acc_SetTranspTlsCaCert(accData,strVal->c_str()); else
         if(valName->compare("ringTonePath")  == 0) Siprix::Acc_SetRingToneFile(accData,   strVal->c_str()); else
-        if(valName->compare("instanceId")    == 0) Siprix::Acc_SetInstanceId(accData,     strVal->c_str());
+        if(valName->compare("instanceId")    == 0) Siprix::Acc_SetInstanceId(accData,     strVal->c_str()); else
+        if(valName->compare("stunServer")    == 0) Siprix::Acc_SetStunServer(accData,     strVal->c_str()); else
+        if(valName->compare("turnServer")    == 0) Siprix::Acc_SetTurnServer(accData,     strVal->c_str()); else
+        if(valName->compare("turnUser")      == 0) Siprix::Acc_SetTurnUser(accData,       strVal->c_str()); else
+        if(valName->compare("turnPassword")  == 0) Siprix::Acc_SetTurnPassword(accData,   strVal->c_str());
         continue;
     }
 
