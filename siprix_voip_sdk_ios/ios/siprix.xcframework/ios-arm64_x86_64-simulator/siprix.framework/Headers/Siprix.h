@@ -143,6 +143,7 @@ EXPORT
 @property(nonatomic, retain) NSArray  * _Nullable dnsServers;
 @property(nonatomic, retain) NSNumber * _Nullable useDnsSrv;
 @property(nonatomic, retain) NSNumber * _Nullable recordStereo;
+@property(nonatomic, retain) NSNumber * _Nullable enableVideoCall;
 @property(nonatomic, retain) NSString * _Nullable brandName;
 @end
 
@@ -171,6 +172,10 @@ EXPORT
 @property(nonatomic, retain) NSNumber * _Nullable transpPreferIPv6;
 @property(nonatomic, retain) NSString * _Nullable instanceId;
 @property(nonatomic, retain) NSString * _Nullable ringTonePath;
+@property(nonatomic, retain) NSString * _Nullable stunServer;
+@property(nonatomic, retain) NSString * _Nullable turnServer;
+@property(nonatomic, retain) NSString * _Nullable turnUser;
+@property(nonatomic, retain) NSString * _Nullable turnPassword;
 @property(nonatomic, retain) NSDictionary * _Nullable xheaders;
 @property(nonatomic, retain) NSDictionary * _Nullable xContactUriParams;
 @property(nonatomic, retain) NSArray  * _Nullable aCodecs;
