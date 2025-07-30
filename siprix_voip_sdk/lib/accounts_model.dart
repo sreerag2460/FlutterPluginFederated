@@ -64,6 +64,9 @@ class InitData implements ISiprixData {
   /// Set recording call sound in stereo mode (keep sent/received sound in separate channels) (by default `false`).
   bool? recordStereo;
 
+  /// Enable using video call feature (by default `true`). Recommended to set `false` when video call is not required
+  bool? enableVideoCall;
+
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> ret = {};
@@ -84,6 +87,7 @@ class InitData implements ISiprixData {
     if(unregOnDestroy!=null)    ret['unregOnDestroy'] = unregOnDestroy;
     if(useDnsSrv!=null)         ret['useDnsSrv'] = useDnsSrv;
     if(recordStereo!=null)      ret['recordStereo'] = recordStereo;
+    if(enableVideoCall!=null)   ret['enableVideoCall'] = enableVideoCall;
     return ret;
   }
 }//InitData
@@ -312,6 +316,15 @@ class AccountModel implements ISiprixData {
   /// Audio/video encryption setting (by default disabled)
   SecureMedia?  secureMedia;
 
+  /// STUN Server
+  String? stunServer;
+  /// TURN Server
+  String? turnServer;
+  /// TURN User
+  String? turnUser;
+  /// TURN Password
+  String? turnPassword;
+
   /// List of custom headers/values which should be added to REGISTER request
   Map<String, String>? xheaders;
   /// List of custom params which should be added to Contact's URI
@@ -353,6 +366,10 @@ class AccountModel implements ISiprixData {
     if(forceSipProxy   !=null) ret['forceSipProxy']   = forceSipProxy;
     if(verifyIncomingCall!=null) ret['verifyIncomingCall']= verifyIncomingCall;
     if(secureMedia     !=null) ret['secureMedia']     = secureMedia?.id;
+    if(stunServer      !=null) ret['stunServer']      = stunServer;
+    if(turnServer      !=null) ret['turnServer']      = turnServer;
+    if(turnUser        !=null) ret['turnUser']        = turnUser;
+    if(turnPassword    !=null) ret['turnPassword']    = turnPassword;
     if(xContactUriParams !=null) ret['xContactUriParams'] = xContactUriParams;
     if(xheaders        !=null) ret['xheaders']        = xheaders;
     if(aCodecs         !=null) ret['aCodecs']         = aCodecs;
@@ -385,6 +402,10 @@ class AccountModel implements ISiprixData {
       if((key == 'verifyIncomingCall')&&(value is bool)) { acc.verifyIncomingCall = value; } else
       if((key == 'forceSipProxy')&&(value is bool))   { acc.forceSipProxy = value; } else
       if((key == 'secureMedia')&&(value is int))      { acc.secureMedia = SecureMedia.from(value);  } else
+      if((key == 'stunServer')&&(value is String))    { acc.stunServer = value;   } else
+      if((key == 'turnServer')&&(value is String))    { acc.turnServer = value;   } else
+      if((key == 'turnUser')&&(value is String))      { acc.turnUser = value;     } else
+      if((key == 'turnPassword')&&(value is String))  { acc.turnPassword = value; } else
       if((key == 'xContactUriParams')&&(value is Map)) { acc.xContactUriParams = Map<String, String>.from(value); } else
       if((key == 'xheaders')&&(value is Map))         { acc.xheaders = Map<String, String>.from(value); } else
       if((key == 'aCodecs')&&(value is List))         { acc.aCodecs = List<int>.from(value); } else
