@@ -669,6 +669,9 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
 
         let recordStereo = args["recordStereo"] as? Bool
         if(recordStereo != nil) { iniData.recordStereo = NSNumber(value: recordStereo!) }
+
+        let enableVideoCall = args["enableVideoCall"] as? Bool
+        if(enableVideoCall != nil) { iniData.enableVideoCall = NSNumber(value: enableVideoCall!) }
       
         let enablePushKit = args["enablePushKit"] as? Bool
         let enableCallKit = args["enableCallKit"] as? Bool
@@ -790,6 +793,18 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
          
         let xheaders = args["xheaders"] as? Dictionary<AnyHashable,Any>
         if(xheaders != nil) { accData.xheaders = xheaders }
+
+        let stunServer = args["stunServer"] as? String
+        if(stunServer != nil) { accData.stunServer = stunServer! }
+
+        let turnServer = args["turnServer"] as? String
+        if(turnServer != nil) { accData.turnServer = turnServer! }
+
+        let turnUser = args["turnUser"] as? String
+        if(turnUser != nil) { accData.turnUser = turnUser! }
+
+        let turnPassword = args["turnPassword"] as? String
+        if(turnPassword != nil) { accData.turnPassword = turnPassword! }
         
         let xContactUriParams = args["xContactUriParams"] as? Dictionary<AnyHashable,Any>
         if(xContactUriParams != nil) { accData.xContactUriParams = xContactUriParams }
@@ -1309,7 +1324,7 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         switch(dvcIndex!) {
             case iOSDevices.kOutSpeaker.rawValue:    argsMap[kArgDvcName] = "Speaker"
             case iOSDevices.kOutEarPiece.rawValue:   argsMap[kArgDvcName] = "Earpiece"
-            case iOSDevices.kRouteBluetoth.rawValue: argsMap[kArgDvcName] = "Bluetoth"
+            case iOSDevices.kRouteBluetoth.rawValue: argsMap[kArgDvcName] = "Bluetooth"
             case iOSDevices.kRouteBuildIn.rawValue:  argsMap[kArgDvcName] = "BuiltIn"
             default:                                 argsMap[kArgDvcName] = "---"
         }
