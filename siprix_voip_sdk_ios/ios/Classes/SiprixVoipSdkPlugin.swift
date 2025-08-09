@@ -330,9 +330,10 @@ class SiprixEventHandler : NSObject, SiprixEventDelegate {
         }
     }
 
-    public func onMessageIncoming(_ accId:Int, hdrFrom:String, body:String) {
+    public func onMessageIncoming(_ messageId:Int, accId:Int, hdrFrom:String, body:String) {
         DispatchQueue.main.async {
             var argsMap = [String:Any]()
+            argsMap[kArgMsgId] = messageId
             argsMap[kArgAccId] = accId
             argsMap[kFrom] = hdrFrom
             argsMap[kBody] = body
