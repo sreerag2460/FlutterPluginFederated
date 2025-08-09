@@ -195,11 +195,11 @@ class SubscriptionsModel<T extends SubscriptionModel> extends ChangeNotifier {
   }
 
   /// Load list of subscriptions from json string (app should invoke it after loading accounts)
-  bool loadFromJson(String subscrJsonStr) {
+  bool loadFromJson(String jsonStr) {
     try {
-      if(subscrJsonStr.isEmpty) return false;
+      if(jsonStr.isEmpty) return false;
 
-      final List<dynamic> parsedList = jsonDecode(subscrJsonStr);
+      final List<dynamic> parsedList = jsonDecode(jsonStr);
       for (var parsedSubscr in parsedList) {
         addSubscription(_itemCreateFunc(parsedSubscr), saveChanges:false);
       }
