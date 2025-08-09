@@ -1,3 +1,10 @@
+## 1.0.10
+- Prevent potential crash on hold when call initiated as video/fixed handling Hold events
+- Fixed bug which prevents adding multiple TLS transports
+- Fixed TURN address resolution
+- 'OnMessageIncoming' API update (added messageId arg)
+  //2025.08.09
+
 ## 1.0.9
 - Added new account properties 'stunServer','turnServer'
 - Added new ini property 'VideoCallEnabled'

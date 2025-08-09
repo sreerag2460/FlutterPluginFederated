@@ -162,7 +162,8 @@ class EventHandler : public Siprix::ISiprixEventHandler {
   void OnCallSwitched(Siprix::CallId callId) override;
 
   void OnMessageSentState(Siprix::MessageId messageId, bool success, const char* response) override;
-  void OnMessageIncoming(Siprix::AccountId accId, const char* hdrFrom, const char* body) override;
+  void OnMessageIncoming(Siprix::MessageId messageId, Siprix::AccountId accId, 
+                         const char* hdrFrom, const char* body) override;
 
   FlMethodChannel* channel_;
 };
@@ -1511,10 +1512,12 @@ void EventHandler::OnMessageSentState(Siprix::MessageId messageId, bool success,
         nullptr, nullptr, nullptr);
 }
 
-void EventHandler::OnMessageIncoming(Siprix::AccountId accId, const char* hdrFrom, const char* body)
+void EventHandler::OnMessageIncoming(Siprix::MessageId messageId, Siprix::AccountId accId, 
+                                     const char* hdrFrom, const char* body)
 {
     g_autoptr(FlValue) args = fl_value_new_map();
     fl_value_set_string_take(args, kArgAccId, fl_value_new_int(accId));
+    fl_value_set_string_take(args, kArgMsgId, fl_value_new_int(messageId));
     fl_value_set_string_take(args, kFrom,     fl_value_new_string(hdrFrom));
     fl_value_set_string_take(args, kBody,     fl_value_new_string(body));
 
