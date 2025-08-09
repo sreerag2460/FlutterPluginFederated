@@ -213,10 +213,11 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void _loadModels(String accJsonStr, String cdrsJsonStr, String subsJsonStr, String msgsJsonStr) {
+  void _loadModels(String accJsonStr, String cdrsJsonStr,
+                  String subsJsonStr, String msgsJsonStr) async {
     //Accounts
-    AppAccountsModel accsModel = context.read<AppAccountsModel>();
-    accsModel.onSaveChanges = _saveAccountChanges;
+    AppAccountsModel accs = context.read<AppAccountsModel>();
+    accs.onSaveChanges = _saveAccountChanges;
 
     //Subscriptions
     SubscriptionsModel subs = context.read<SubscriptionsModel>();
@@ -229,12 +230,11 @@ class _MyAppState extends State<MyApp> {
     CdrsModel cdrs = context.read<CdrsModel>();
     cdrs.onSaveChanges = _saveCdrsChanges;
 
-    //Load accounts, then other models
-    accsModel.loadFromJson(accJsonStr).then((val)  {
-      subs.loadFromJson(subsJsonStr);
-      cdrs.loadFromJson(cdrsJsonStr);
-      msgs.loadFromJson(msgsJsonStr);
-    });
+    //Load messages, than accounts, then other models
+    await msgs.loadFromJson(msgsJsonStr);
+    await accs.loadFromJson(accJsonStr);
+    await subs.loadFromJson(subsJsonStr);
+    await cdrs.loadFromJson(cdrsJsonStr);
 
     //Assign contact name resolver
     context.read<AppCallsModel>().onResolveContactName = _resolveContactName;

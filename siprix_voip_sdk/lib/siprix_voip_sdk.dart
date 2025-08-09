@@ -286,17 +286,18 @@ class MessageSentStateArg {
 
 /// Helper class for handling 'onMessageIncoming' event raised by library
 class MessageIncomingArg {
-  int accId = 0;
+  int accId = 0, messageId=0;
   String from="";
   String body="";
   bool fromMap(Map<dynamic, dynamic> argsMap) {
     int argsCounter=0;
     argsMap.forEach((key, value) {
+      if((key == SiprixVoipSdkPlatform.kArgMsgId)&&(value is int)) { messageId = value; argsCounter+=1; } else
       if((key == SiprixVoipSdkPlatform.kArgAccId)&&(value is int)) { accId = value; argsCounter+=1; } else
-      if((key == SiprixVoipSdkPlatform.kFrom)&&(value is String)) { from = value;  argsCounter+=1; } else
-      if((key == SiprixVoipSdkPlatform.kBody)&&(value is String)) { body = value; argsCounter+=1; }
+      if((key == SiprixVoipSdkPlatform.kFrom)&&(value is String))  { from = value;  argsCounter+=1; } else
+      if((key == SiprixVoipSdkPlatform.kBody)&&(value is String))  { body = value;  argsCounter+=1; }
     });
-    return (argsCounter==3);
+    return (argsCounter==4);
   }
 }
 
@@ -378,7 +379,7 @@ class MessagesStateListener {
   ///Triggered by library when received confirmation on sent message or expired timeout
   void Function(int messageId, bool success, String response)? sentState;
   ///Triggered by library when new text message received
-  void Function(int accountId, String from, String body)?  incoming;
+  void Function(int messageId, int accountId, String from, String body)?  incoming;
 }
 
 /// Devices state listener, usign by 'DevicesModel'
@@ -975,7 +976,7 @@ class SiprixVoipSdk {
   void _onMessageIncoming(Map<dynamic, dynamic> argsMap) {
     MessageIncomingArg arg = MessageIncomingArg();
     if(arg.fromMap(argsMap)) {
-      messagesListener?.incoming?.call(arg.accId, arg.from, arg.body);
+      messagesListener?.incoming?.call(arg.messageId, arg.accId, arg.from, arg.body);
     }
   }
 

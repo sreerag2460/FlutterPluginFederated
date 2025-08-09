@@ -63,6 +63,7 @@ class _MessagesListPagePageState extends State<MessagesListPage> {
     MessageModel msg = messages[index];
     return
       ListTile(
+        dense: true,
         selected: (_selMsgRowIdx == index),
         selectedColor: Colors.black,
         selectedTileColor: Theme.of(context).secondaryHeaderColor,
@@ -72,27 +73,27 @@ class _MessagesListPagePageState extends State<MessagesListPage> {
               Icon(Icons.check, size: 14, color: msg.sentSuccess ? Colors.deepPurple : Colors.grey),
             ]),
         title: Text(msg.body,
-          overflow: TextOverflow.ellipsis,
-          //textAlign: msg.isIncoming ? TextAlign.right : TextAlign.left,
+          textAlign: msg.isIncoming ? TextAlign.right : TextAlign.left,
           style: Theme.of(context).textTheme.titleSmall
         ),
         subtitle: (_selMsgRowIdx == index) ? _getMsgRowSubTitle(msg) : null,
         trailing: _getMsgRowTrailing(index),
-        onTap: () { setState(() { _selMsgRowIdx = index; }); },
-        dense: true,
+        onTap: () {
+          setState(() {
+            _phoneNumbCtrl.text = msg.getReplyExt();
+            _selMsgRowIdx = index;
+          });
+        },
       );
   }
 
   Widget _getMsgRowSubTitle(MessageModel msg) {
+    String text  = msg.isIncoming ? "From: ${msg.ext}\nTo:${msg.accUri}\n${msg.timestamp}"
+                                  : "From: ${msg.accUri}\nTo:${msg.ext}\n${msg.timestamp}";
+    if(!msg.isIncoming) text+=". Response: ${msg.response}";
+
     return
-      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(msg.isIncoming ? "From: ${msg.ext} To:${msg.accUri}"
-                            : "From: ${msg.accUri} To:${msg.ext}",
-          style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey)
-        ),
-        if(!msg.isIncoming) Text("Response: ${msg.response}",
-           style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey))
-      ]);
+      Text(text, style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey));
   }
 
   Widget _getMsgRowTrailing(int index) {

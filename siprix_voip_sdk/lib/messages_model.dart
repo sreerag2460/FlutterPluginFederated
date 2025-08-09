@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:siprix_voip_sdk_platform_interface/siprix_voip_sdk_platform_interface.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
@@ -36,11 +37,13 @@ class MessageModel extends ChangeNotifier {
   MessageModel.incoming(String accUri, String fromExt, String body)
     : _myMessageId=0, _isIncoming = true, _ext=fromExt, _accUri=accUri, _body=body;
 
+  static final _fmt = DateFormat('MMM dd, HH:mm a');
+
   ///Unique id assigned by library (allows get message sent status)
   int _myMessageId=0;
   ///Is this message received from remote side or sent by local side
   bool _isIncoming=false;
-  ///Extension to send this message/from which received this message
+  ///Extension from which received (to which sent) this message
   String _ext="";
   ///Account URI using to send/receive this message
   String _accUri="";
@@ -52,6 +55,9 @@ class MessageModel extends ChangeNotifier {
   ///Response received from remote side in the body of SIP NOTIFY request
   String _response="";
 
+  ///Timestamp when this message sent/received
+  DateTime _timestamp = DateTime.now();
+
   //Getters
   ///Is this message received from remote side or sent by local side
   bool get isIncoming => _isIncoming;
@@ -62,6 +68,19 @@ class MessageModel extends ChangeNotifier {
   String get accUri => _accUri;
   String get ext => _ext;
 
+  /// Formatted string with date/time when message has been sent/received
+  String get timestamp => _fmt.format(_timestamp);
+
+  /// Get extension to reply this message
+  String getReplyExt() {
+    String replyExt = _ext;
+    final int startIndex = replyExt.indexOf(':');
+    if(startIndex == -1) return replyExt;
+
+    final int endIndex = replyExt.indexOf('>', startIndex + 1);
+    return (endIndex == -1) ? replyExt : replyExt.substring(startIndex+1, endIndex);
+  }
+
   /// Converts instance to json
   Map<String, dynamic> toJson() {
     Map<String, dynamic> ret = {
@@ -69,6 +88,7 @@ class MessageModel extends ChangeNotifier {
       'extension': _ext,
       'accUri'   : _accUri,
       'body'     : _body,
+      'ts'       : _timestamp.millisecondsSinceEpoch,
     };
     return ret;
   }
@@ -76,10 +96,13 @@ class MessageModel extends ChangeNotifier {
   /// Creates instance of SubscriptionModel with values read from json
   MessageModel.fromJson(Map<String, dynamic> jsonMap) {
     jsonMap.forEach((key, value) {
-      if((key == 'isIncoming')&&(value is bool))  { _isIncoming = true; } else
-      if((key == 'extension')&&(value is String)) { _ext = value;       } else
-      if((key == 'accUri')&&(value is String))    { _accUri = value;    } else
-      if((key == 'body')&&(value is String))      { _body = value; }
+      if((key == 'isIncoming')&&(value is bool))  { _isIncoming = value; } else
+      if((key == 'extension')&&(value is String)) { _ext = value;    } else
+      if((key == 'accUri')&&(value is String))    { _accUri = value; } else
+      if((key == 'body')&&(value is String))      { _body = value;   } else
+      if((key == 'ts')&&(value is int))  {
+         _timestamp = DateTime.fromMillisecondsSinceEpoch(value);
+      }
     });
   }
 
@@ -164,8 +187,14 @@ class MessagesModel extends ChangeNotifier {
   }
 
   ///Handle library event raised when received new message from remote side
-  void onMessageIncoming(int accId, String from, String body) {
-    _logs?.print('onMessageIncoming accId:$accId from:$from');
+  void onMessageIncoming(int messageId, int accId, String from, String body) {
+    _logs?.print('onMessageIncoming messageId:$messageId accId:$accId from:$from');
+
+    int idx = _messages.indexWhere((msg) => (msg.myMessageId == messageId));
+    if(idx != -1) {
+      _logs?.print('message with id:$messageId already exist');
+      return;
+    }
 
     String accUri = _accountsModel.getUri(accId);
     MessageModel newMsg = MessageModel.incoming(accUri, from, body);
@@ -191,11 +220,11 @@ class MessagesModel extends ChangeNotifier {
   }
 
   /// Load list of subscriptions from json string (app should invoke it after loading accounts)
-  bool loadFromJson(String subscrJsonStr) {
+  bool loadFromJson(String jsonStr) {
     try {
-      if(subscrJsonStr.isEmpty) return false;
+      if(jsonStr.isEmpty) return false;
 
-      final List<dynamic> parsedList = jsonDecode(subscrJsonStr);
+      final List<dynamic> parsedList = jsonDecode(jsonStr);
       for (var parsedMsg in parsedList) {
         _messages.add(MessageModel.fromJson(parsedMsg));
       }
