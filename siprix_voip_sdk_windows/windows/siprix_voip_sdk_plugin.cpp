@@ -1283,10 +1283,11 @@ void SiprixVoipSdkPlugin::OnMessageSentState(Siprix::MessageId messageId, bool s
         std::make_unique<flutter::EncodableValue>(std::move(argsMap)));
 }
 
-void SiprixVoipSdkPlugin::OnMessageIncoming(Siprix::AccountId accId, const char* hdrFrom, const char* body)
+void SiprixVoipSdkPlugin::OnMessageIncoming(Siprix::MessageId messageId, Siprix::AccountId accId, const char* hdrFrom, const char* body)
 {
     flutter::EncodableMap argsMap;
     argsMap[flutter::EncodableValue(kArgAccId)] = flutter::EncodableValue(static_cast<int32_t>(accId));  
+    argsMap[flutter::EncodableValue(kArgMsgId)] = flutter::EncodableValue(static_cast<int32_t>(messageId));
     argsMap[flutter::EncodableValue(kFrom)] = flutter::EncodableValue(hdrFrom);
     argsMap[flutter::EncodableValue(kBody)] = flutter::EncodableValue(body);
 

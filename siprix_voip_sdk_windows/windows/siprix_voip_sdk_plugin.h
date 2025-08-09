@@ -124,7 +124,7 @@ protected:
   void OnCallSwitched(Siprix::CallId callId) override;
 
   void OnMessageSentState(Siprix::MessageId messageId, bool success, const char* response);
-  void OnMessageIncoming(Siprix::AccountId accId, const char* hdrFrom, const char* body);
+  void OnMessageIncoming(Siprix::MessageId messageId, Siprix::AccountId accId, const char* hdrFrom, const char* body);
 
 protected:
    MethodChannelPtr channel_;
