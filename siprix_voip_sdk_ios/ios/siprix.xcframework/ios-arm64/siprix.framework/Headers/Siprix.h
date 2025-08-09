@@ -317,7 +317,7 @@ EXPORT
 
 - (void)onMessageSentState:(NSInteger)messageId success:(BOOL)success
           response:(NSString * _Nonnull)response;
-- (void)onMessageIncoming:(NSInteger)accId
+- (void)onMessageIncoming:(NSInteger)messageId accId:(NSInteger)accId
           hdrFrom:(NSString * _Nonnull)hdrFrom
           body:(NSString * _Nonnull)body;
 @end
