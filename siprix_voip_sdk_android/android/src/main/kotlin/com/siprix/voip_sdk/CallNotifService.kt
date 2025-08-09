@@ -41,6 +41,8 @@ open class CallNotifService : Service() {
 
     private var _foregroundModeStarted: Boolean = false
     private var _requestCode: Int = 1
+    private var _isBound: Boolean = false
+    private var _pendingMsgs : MutableList<Bundle> = mutableListOf()
 
     inner class LocalBinder : Binder() {
         val service: CallNotifService
@@ -77,7 +79,17 @@ open class CallNotifService : Service() {
     }
 
     override fun onBind(intent: Intent): IBinder? {
+        _isBound = true
         return _binder
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        _isBound = false
+        return super.onUnbind(intent) // Or return true if you want to allow rebind
+    }
+
+    fun pendingMsgs() : MutableList<Bundle> {
+        return _pendingMsgs
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -102,16 +114,20 @@ open class CallNotifService : Service() {
 
     private fun createNotifChannel() {
         if (VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            //NotificationChannel msgChannel = new NotificationChannel(kMsgChannelId,
-            //        appName, NotificationManager.IMPORTANCE_DEFAULT);
-            //msgChannel.enableLights(true);
-            //notifMgr_.createNotificationChannel(msgChannel);
+            //Create message channel
+            val msgChannel = NotificationChannel(
+                    kMsgChannelId, _appResources.appName, NotificationManager.IMPORTANCE_DEFAULT
+            )
+            msgChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            msgChannel.description = _appResources.msgChannelDescr
+            notifMgr.createNotificationChannel(msgChannel);
 
+            //Create call channel
             val callChannel = NotificationChannel(
                 kCallChannelId, _appResources.appName, NotificationManager.IMPORTANCE_HIGH
             )
             callChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            callChannel.description = _appResources.channelDescr
+            callChannel.description = _appResources.callChannelDescr
             //callChannel.enableLights(true);
             notifMgr.createNotificationChannel(callChannel)
         }
@@ -184,7 +200,7 @@ open class CallNotifService : Service() {
         callId: Int, accId: Int,
         withVideo: Boolean, hdrFrom: String?, hdrTo: String?
     ) {
-        Log.d(TAG, "displayIncomingCallNotification $callId")
+        Log.d(TAG, "displayIncomingCallNotif $callId")
         val bundle = buildBundle(callId, accId, withVideo, hdrFrom, hdrTo)
 
         val contentIntent = getIntentActivity(kActionIncomingCall, bundle)
@@ -222,6 +238,40 @@ open class CallNotifService : Service() {
 
             notifMgr.notify(getNotifId(callId), builder.build())
         }
+    }
+
+    fun buildBundle(messageId: Int, accId: Int,
+                    hdrFrom: String?, body: String?) : Bundle{
+        val bundle = Bundle()
+        bundle.putInt(kExtraMsgId, messageId)
+        bundle.putInt(kExtraAccId, accId)
+        bundle.putString(kExtraHdrFrom, hdrFrom)
+        bundle.putString(kExtraBody, body)
+        return bundle
+    }
+
+    open fun displayIncomingMsgNotification(
+        messageId: Int, accId: Int,
+        hdrFrom: String?, body: String?
+    ) {
+        Log.d(TAG, "displayIncomingMsgNotif $messageId")
+        val bundle = buildBundle(messageId, accId, hdrFrom, body)
+
+        val contentIntent = getIntentActivity(kActionIncomingMsg, bundle)
+
+        val builder: NotificationCompat.Builder = NotificationCompat.Builder(this, kMsgChannelId)
+            .setSmallIcon(_appResources.iconId)
+            .setContentTitle(_appResources.msgContentLabel)
+            .setContentText(body)
+            .setAutoCancel(true)
+            .setDefaults(Notification.DEFAULT_ALL)
+            .setContentIntent(contentIntent)
+            .setFullScreenIntent(contentIntent, true)
+            //.setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+         notifMgr.notify(getNotifId(messageId), builder.build())
+
+        if(!_isBound) _pendingMsgs.add(bundle)
     }
 
     fun stopForegroundMode() {
@@ -315,6 +365,16 @@ open class CallNotifService : Service() {
                 _service.displayIncomingCallNotification(callId, accId, withVideo, hdrFrom, hdrTo)
             }
         }
+
+        override fun onMessageIncoming(
+	        messageId: Int, accId: Int,
+            hdrFrom: String?, body: String?
+        ) {
+            Log.i(TAG, "onMessageIncoming $messageId")
+            if (!_service.isAppInForeground()) {
+                _service.displayIncomingMsgNotification(messageId, accId, hdrFrom, body)
+            }
+        }
     }
 
     private fun isAppInForeground(): Boolean {
@@ -356,9 +416,11 @@ open class CallNotifService : Service() {
     class LabelResources (service : CallNotifService) {
         private val _service = service
         val appName: String
-        val channelDescr: String
+        val callChannelDescr: String
+        val msgChannelDescr: String
         val foregroundDescr: String
 
+        val msgContentLabel: String
         val contentLabel: String
         val rejectBtnLabel: String
         val acceptBtnLabel: String
@@ -369,9 +431,11 @@ open class CallNotifService : Service() {
                         if(service.applicationInfo!=null) service.applicationInfo.loadLabel(service.packageManager).toString()
                         else _service.packageName
 
-            channelDescr = getStrResource(kResourceChannelDescrLabel)?: "Incoming calls notifications channel"
+            callChannelDescr = getStrResource(kResourceChannelDescrLabel)?: "Incoming calls notifications channel"
+            msgChannelDescr = getStrResource(kResourceMsgChannelDescrLabel)?: "Messages notifications channel"
             foregroundDescr = getStrResource(kResourceForegroundDescrLabel)?: "Siprix call notification service"
 
+            msgContentLabel = getStrResource(kResourceMsgContentLabel) ?: "Incoming message"
             contentLabel = getStrResource(kResourceContentLabel) ?: "Incoming call"
             rejectBtnLabel = getStrResource(kResourceRejectBtnLabel)?: "Reject call"
             acceptBtnLabel = getStrResource(kResourceAcceptBtnLabel)?: "Accept call"
@@ -383,9 +447,11 @@ open class CallNotifService : Service() {
         companion object {
             const val kResourceForegroundDescrLabel = "foreground_descr_label"
             const val kResourceChannelDescrLabel = "channel_descr_label"
+            const val kResourceMsgChannelDescrLabel = "msg_channel_descr_label"
             const val kResourceRejectBtnLabel = "reject_btn_label"
             const val kResourceAcceptBtnLabel = "accept_btn_label"
             const val kResourceContentLabel = "content_label"
+            const val kResourceMsgContentLabel = "msg_content_label"
             const val kResourceNotifIcon = "ic_notif_icon"
         }
 
@@ -404,7 +470,7 @@ open class CallNotifService : Service() {
     companion object {
         private const val TAG = "CallNotifService"
         const val kCallChannelId = "kSiprixCallChannelId_"
-        //const val kMsgChannelId = "kSiprixMsgChannelId"
+        const val kMsgChannelId  = "kSiprixMsgChannelId_"
 
         const val kActionAppStarted = "kActionAppStarted"
         const val kActionForeground = "kActionForeground"
@@ -413,12 +479,15 @@ open class CallNotifService : Service() {
         const val kActionIncomingCallAccept = "kActionIncomingCallAccept"
         const val kActionIncomingCallReject = "kActionIncomingCallReject"
         const val kActionIncomingCallStopRinger = "kActionIncomingCallStopRinger"
+        const val kActionIncomingMsg = "kActionIncomingMsg"
 
         const val kExtraCallId   = "kExtraCallId"
+        const val kExtraMsgId    = "kExtraMsgId"
         const val kExtraAccId    = "kExtraAccId"
         const val kExtraWithVideo= "kExtraWithVideo"
         const val kExtraHdrFrom  = "kExtraHdrFrom"
         const val kExtraHdrTo    = "kExtraHdrTo"
+        const val kExtraBody     = "kExtraBody"
 
         const val kCallBaseNotifId = 555
         const val kForegroundId = 777

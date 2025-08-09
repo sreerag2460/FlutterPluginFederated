@@ -16,6 +16,7 @@ import android.content.pm.PackageManager
 import android.graphics.SurfaceTexture
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -308,8 +309,9 @@ class EventListener: ISiprixModelListener {
     channel?.invokeMethod(kOnMessageSentState, argsMap)
 }
 
-  override fun onMessageIncoming(accId: Int, hdrFrom: String?, body: String?) {
+  override fun onMessageIncoming(messageId: Int, accId: Int, hdrFrom: String?, body: String?) {
     val argsMap = HashMap<String, Any?> ()
+    argsMap[kArgMsgId] = messageId
     argsMap[kArgAccId] = accId
     argsMap[kFrom] = hdrFrom
     argsMap[kBody] = body
@@ -933,6 +935,7 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     _accountsIds.add(accIdArg.value)
     Log.i(TAG, "handleAccountAdd id:${accIdArg.value} err:${err}/${_core.getErrText(err)}")
     raiseIncomingCallWhenAccountsRestored()
+    raiseIncomingMsgWhenAccountsRestored()
   }
 
   private fun handleAccountUpdate(args : HashMap<String, Any?>, result: MethodChannel.Result) {
@@ -1643,12 +1646,35 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     return true
   }
 
+  private fun raiseIncomingMsgEvent(args: Bundle) : Boolean {
+    val accId = args.getInt(CallNotifService.kExtraAccId)
+    if(!_accountsIds.contains(accId)) return false;
+
+    val messageId = args.getInt(CallNotifService.kExtraMsgId)
+    val from = args.getString(CallNotifService.kExtraHdrFrom)
+    val body = args.getString(CallNotifService.kExtraBody)
+
+    Log.i(TAG, "raise onMessageIncoming $args")
+    _eventListener.onMessageIncoming(messageId, accId, from, body)
+    return true
+  }
+
   private fun raiseIncomingCallWhenAccountsRestored() {
     val intentsIterator = _pendingIntents.iterator()
     while (intentsIterator.hasNext()) {
-      val intent = intentsIterator.next()
-      if(raiseIncomingCallEvent(intent)) {
+      if(raiseIncomingCallEvent(intentsIterator.next())) {
         intentsIterator.remove()
+      }
+    }
+  }
+
+  private fun raiseIncomingMsgWhenAccountsRestored() {
+    if(_bgService==null) return
+
+    val msgsIt = _bgService!!.pendingMsgs().iterator()
+    while (msgsIt.hasNext()) {
+      if (raiseIncomingMsgEvent(msgsIt.next())) {
+        msgsIt.remove()
       }
     }
   }

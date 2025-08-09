@@ -1,3 +1,13 @@
+## 1.0.15
+- Prevent potential crash on hold when call initiated as video/fixed handling Hold events
+- Fixed bug which prevents adding multiple TLS transports
+- Fixed TURN address resolution
+- 'OnMessageIncoming' API update (added messageId arg)
+- Added 16K page size support
+- Added ability to display notification when message received
+- Fixed bug with select audio device on tabled without earpice
+  //2025.08.09
+
 ## 1.0.14
 - Added new account properties 'stunServer','turnServer'
 - Added new ini property 'VideoCallEnabled'
