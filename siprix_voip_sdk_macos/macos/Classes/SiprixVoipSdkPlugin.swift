@@ -249,8 +249,9 @@ class SiprixEventHandler : NSObject, SiprixEventDelegate {
         _channel.invokeMethod(kOnMessageSentState, arguments: argsMap)
     }
 
-    public func onMessageIncoming(_ accId:Int, hdrFrom:String, body:String) {
+    public func onMessageIncoming(_ messageId:Int, accId:Int, hdrFrom:String, body:String) {
         var argsMap = [String:Any]()
+        argsMap[kArgMsgId] = messageId
         argsMap[kArgAccId] = accId
         argsMap[kFrom] = hdrFrom
         argsMap[kBody] = body
