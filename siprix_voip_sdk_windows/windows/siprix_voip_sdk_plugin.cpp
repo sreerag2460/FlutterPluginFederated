@@ -366,7 +366,8 @@ void SiprixVoipSdkPlugin::handleModuleInitialize(const flutter::EncodableMap& ar
           if(valName->compare("unregOnDestroy") == 0)    Siprix::Ini_SetUnregOnDestroy(iniData, *boolVal); else
           if(valName->compare("useDnsSrv") == 0)         Siprix::Ini_SetUseDnsSrv(iniData, *boolVal); else
           if(valName->compare("recordStereo") == 0)      Siprix::Ini_SetRecordStereo(iniData, *boolVal); else
-          if(valName->compare("enableVideoCall") == 0)   Siprix::Ini_SetVideoCallEnabled(iniData, *boolVal);
+          if(valName->compare("enableVideoCall") == 0)   Siprix::Ini_SetVideoCallEnabled(iniData, *boolVal); else
+          if(valName->compare("transpForceIPv4") == 0)   Siprix::Ini_SetTranspForceIPv4(iniData, *boolVal);
           continue;
         }  
     
