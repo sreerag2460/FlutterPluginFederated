@@ -67,6 +67,9 @@ class InitData implements ISiprixData {
   /// Enable using video call feature (by default `true`). Recommended to set `false` when video call is not required
   bool? enableVideoCall;
 
+  /// Expiremental option which forces using IPv4 interface even when NetMonitor doesn't detect it
+  bool? transpForceIPv4;
+
   @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> ret = {};
@@ -88,6 +91,7 @@ class InitData implements ISiprixData {
     if(useDnsSrv!=null)         ret['useDnsSrv'] = useDnsSrv;
     if(recordStereo!=null)      ret['recordStereo'] = recordStereo;
     if(enableVideoCall!=null)   ret['enableVideoCall'] = enableVideoCall;
+    if(transpForceIPv4!=null)   ret['transpForceIPv4'] = transpForceIPv4;
     return ret;
   }
 }//InitData
@@ -192,9 +196,10 @@ class Codec {
       }
     }
     else {
+      //Build codecs selected by default
       for(var c in Codec.availableCodecs(audio)) {
-        bool sel = ((c==SiprixVoipSdk.kAudioCodecDTMF)||(c==SiprixVoipSdk.kVideoCodecVP8)||
-                  (c==SiprixVoipSdk.kAudioCodecOpus)||(c==SiprixVoipSdk.kAudioCodecPCMA));
+        bool sel = audio ? ((c==SiprixVoipSdk.kAudioCodecDTMF)||(c==SiprixVoipSdk.kAudioCodecOpus)||(c==SiprixVoipSdk.kAudioCodecPCMA))
+                         : ((c==SiprixVoipSdk.kVideoCodecVP8)||(c==SiprixVoipSdk.kVideoCodecH264));
         ret.add(Codec(c, selected:sel));
       }
     }
