@@ -1,3 +1,12 @@
+## 1.0.22
+- Fixed crash on ios/macos when license string is empty
+- Added fix which prevents long delay on collecting candidates when enabled STUN
+- Added handler for case when connection can't be created because of wrong STUN/TURN address
+- iOS: Added ability to toggle front/back camera
+- Added new option 'ini.transpForceIPv4'
+- Example app: modified default codecs, trigger 'notifyListeners' on 'CallsModel::onConnected'
+  //2025.08.16
+
 ## 1.0.21
 - Prevent potential crash on hold when call initiated as video/fixed handling Hold events
 - Fixed bug which prevents adding multiple TLS transports
