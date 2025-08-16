@@ -522,6 +522,9 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
         let enableVideoCall = args["enableVideoCall"] as? Bool
         if(enableVideoCall != nil) { iniData.enableVideoCall = NSNumber(value: enableVideoCall!) }
 
+        let transpForceIPv4 = args["transpForceIPv4"] as? Bool
+        if(transpForceIPv4 != nil) { iniData.transpForceIPv4 = NSNumber(value: transpForceIPv4!) }
+
         let err = _siprixModule.initialize(_eventHandler, iniData:iniData)
         _initialized = (err == kErrorCodeEOK)
         sendResult(err, result:result)
