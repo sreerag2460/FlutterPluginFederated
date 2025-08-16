@@ -673,6 +673,9 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
 
         let enableVideoCall = args["enableVideoCall"] as? Bool
         if(enableVideoCall != nil) { iniData.enableVideoCall = NSNumber(value: enableVideoCall!) }
+
+        let transpForceIPv4 = args["transpForceIPv4"] as? Bool
+        if(transpForceIPv4 != nil) { iniData.transpForceIPv4 = NSNumber(value: transpForceIPv4!) }
       
         let enablePushKit = args["enablePushKit"] as? Bool
         let enableCallKit = args["enableCallKit"] as? Bool
@@ -1386,7 +1389,8 @@ public class SiprixVoipSdkPlugin: NSObject, FlutterPlugin {
     }
 
     func handleDvcSetVideo(_ args : ArgsMap, result: @escaping FlutterResult) {
-        //doGetDevice(.Video, args:args, result:result)
+        let err = _siprixModule.switchCamera();
+        sendResult(err, result:result);
     }
 
     func handleDvcSetVideoParams(_ args : ArgsMap, result: @escaping FlutterResult) {
