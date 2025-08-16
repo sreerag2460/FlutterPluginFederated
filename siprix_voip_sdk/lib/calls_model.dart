@@ -682,6 +682,7 @@ class CallsModel extends ChangeNotifier {
 
     int index = _callItems.indexWhere((c) => c.myCallId==callId);
     if(index != -1) _callItems[index].onConnected(from, to, withVideo);
+    notifyListeners();
   }
 
   /// Handle teminated call event raised by library (removes call instance from list and notifies UI)
