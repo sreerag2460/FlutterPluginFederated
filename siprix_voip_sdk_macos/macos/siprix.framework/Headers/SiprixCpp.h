@@ -446,6 +446,7 @@ EXPORT void     Ini_SetUseDnsSrv(IniData* ini, bool enabled);
 EXPORT void     Ini_SetRecordStereo(IniData* ini, bool enabled);
 EXPORT void     Ini_SetUnregOnDestroy(IniData* ini, bool enabled);
 EXPORT void     Ini_SetVideoCallEnabled(IniData* ini, bool enabled);
+EXPORT void     Ini_SetTranspForceIPv4(IniData* ini, bool enabled);
 
 ////////////////////////////////////////////////////////////////////////////
 //Set fields of Dest's data

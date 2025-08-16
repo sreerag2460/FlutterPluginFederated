@@ -144,6 +144,7 @@ EXPORT
 @property(nonatomic, retain) NSNumber * _Nullable useDnsSrv;
 @property(nonatomic, retain) NSNumber * _Nullable recordStereo;
 @property(nonatomic, retain) NSNumber * _Nullable enableVideoCall;
+@property(nonatomic, retain) NSNumber * _Nullable transpForceIPv4;
 @property(nonatomic, retain) NSString * _Nullable brandName;
 @end
 
