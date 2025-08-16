@@ -768,6 +768,9 @@ class SiprixVoipSdkPlugin: FlutterPlugin,
     val enableVideoCall : Boolean? = args["enableVideoCall"] as? Boolean
     if(enableVideoCall != null) { iniData.setEnableVideoCall(enableVideoCall); }
 
+    val transpForceIPv4 : Boolean? = args["transpForceIPv4"] as? Boolean
+    if(transpForceIPv4 != null) { iniData.setTranspForceIPv4(transpForceIPv4); }
+
     val listenTelState : Boolean? = args["listenTelState"] as? Boolean
     if(listenTelState != null) { iniData.setUseTelState(listenTelState); }
 
